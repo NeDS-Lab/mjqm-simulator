@@ -59,408 +59,6 @@ public:
 
 Policy::~Policy(){};
 
-
-class ServerFillingMem: public Policy {
-public:
-    
-    ServerFillingMem(int w, int servers, int classes) {
-        this->w = w;
-        this->servers = freeservers = servers;
-        this->state_buf.resize(classes);
-        this->state_ser.resize(classes);
-        this->stopped_jobs.resize(classes);
-        this->ongoing_jobs.resize(classes);
-        this->mset_coreNeed = 0;
-        this->debugMode = false;
-    }
-    
-    void arrival(int c, int size, int id) {
-        std::tuple<int,int,int> e(c,size,id);
-        if (debugMode) {
-            this->printBuffer();
-            this->printMset();
-            std::cout << "************" << std::endl;
-        }
-        this->buffer.push_back(e);
-        state_buf[std::get<0>(e)]++;
-        flush_buffer();
-        if (debugMode) {
-            this->printBuffer();
-            this->printMset();
-        }
-    }
-    
-    void departure(int c, int size, int id) {
-        std::tuple<int,int,int> e(c,size,id);
-        if (debugMode) {
-            this->printBuffer();
-            this->printMset();
-            std::cout << "************" << std::endl;
-        }
-        state_ser[std::get<0>(e)]--;
-        freeservers+=std::get<1>(e);
-        this->mset_coreNeed -= std::get<1>(e);
-
-        auto it = mset.begin();
-        while (it != mset.end()) {
-            if (std::get<2>(e) == std::get<2>(*it)) {
-                it = this->mset.erase(it);
-            }
-            it++;
-        }
-        // remove departing jobs
-        this->ongoing_jobs[std::get<0>(e)].remove(std::get<2>(e));
-        /*auto dep_job = std::find(ongoing_jobs.begin(), ongoing_jobs.end(), std::get<2>(e));
-        this->ongoing_jobs.erase(dep_job);*/
-        flush_buffer();
-        if (debugMode) {
-            this->printBuffer();
-            this->printMset();
-        }
-    }
-    
-    const std::vector<int>& get_state_ser() {
-        return state_ser;
-    };
-    
-    const std::vector<int>& get_state_buf() {
-        return state_buf;
-    }
-
-    const std::vector<std::list<int>>& get_stopped_jobs() {
-        return stopped_jobs;
-    }
-
-    const std::vector<std::list<int>>& get_ongoing_jobs() {
-        return ongoing_jobs;
-    }
-    
-    int get_free_ser() {
-        return freeservers;
-    }
-
-    int get_violations_counter() {
-        return 0;
-    }
-
-
-    ~ServerFillingMem(){
-
-    }
-    
-private:
-    std::list<std::tuple<int,int,int>> buffer;
-    std::list<std::tuple<int,int,int>> mset;
-    std::vector<int> state_buf;
-    std::vector<int> state_ser;
-    std::vector<std::list<int>> stopped_jobs; //vector of list of ids
-    std::vector<std::list<int>> ongoing_jobs; //vector of list of ids
-    int mset_coreNeed;
-    int freeservers;
-    int servers;
-    int w;
-    bool debugMode;
-    
-
-    void addToMset(const std::tuple<int,int,int>& e) {
-        auto it = mset.begin();
-        while( it != mset.end() && std::get<1>(e) <= std::get<1>(*it)){
-            it ++;
-        }
-        mset.insert(it, e);
-    }
-    
-    void printList(const std::list<std::pair<int,int>>& myList) {
-        for (const auto& pair : myList) {
-            std::cout << "(" << pair.first << ", " << pair.second << ") ";
-        }
-        std::cout << std::endl;
-    }
-
-    void printMset() {
-        std::cout << "Mset (class-ids): " << std::endl;
-        int size = 0;
-        for (auto& e : mset) {
-            std::cout << std::get<0>(e) << "-" << std::get<2>(e) << ", ";
-            size += std::get<1>(e);
-        }
-        std::cout << "size: " << size << std::endl;
-        std::cout << "Ongoing jobs (ids): " << std::endl;
-        for (int i = 0; i < ongoing_jobs.size(); i++) {
-            for (auto& e : ongoing_jobs[i]) {
-                std::cout << e << ", ";
-            }
-        }
-        std::cout << std::endl;
-        std::cout << "Stopped jobs (ids): " << std::endl;
-        for (int i = 0; i < stopped_jobs.size(); i++) {
-            for (auto& e : stopped_jobs[i]) {
-                std::cout << e << ", ";
-            }
-        }
-        std::cout << std::endl;
-    }
-
-    void printBuffer() {
-        std::cout << "Buffer (class-ids): " << std::endl;
-        for (auto& e : buffer) {
-            std::cout << std::get<0>(e) << "-" << std::get<2>(e) << ", ";
-        }
-        std::cout << std::endl;
-    }
-    
-    void flush_buffer() {
-
-        if (freeservers > 0) {
-            auto it = buffer.begin();
-
-            for (int i = 0; i < state_buf.size(); i++) {
-                state_buf[i] += state_ser[i];
-            }
-            
-            while(mset_coreNeed < servers && it != buffer.end()) {
-                this->addToMset(*it);
-                mset_coreNeed += std::get<1>(*it);
-                it = buffer.erase(it);
-                //it++;
-                //state_buf[it->first] --;
-            }
-
-            freeservers = servers;
-            state_ser.assign(state_buf.size(), 0);
-            stopped_jobs.clear();
-            ongoing_jobs.clear();
-            stopped_jobs.resize(state_buf.size());
-            ongoing_jobs.resize(state_buf.size());
-
-            for (auto& elem: mset) {
-                if (std::get<1>(elem) <=  freeservers) {
-                    state_ser[std::get<0>(elem)]++;
-                    state_buf[std::get<0>(elem)]--;
-                    freeservers -= std::get<1>(elem);
-                    ongoing_jobs[std::get<0>(elem)].push_back(std::get<2>(elem));
-                } else {
-                    stopped_jobs[std::get<0>(elem)].push_back(std::get<2>(elem));
-                }
-            }
-        }
-    }
-};
-
-class ServerFilling: public Policy {
-public:
-    
-    ServerFilling(int w, int servers, int classes) {
-        this->w = w;
-        this->servers = freeservers = servers;
-        this->state_buf.resize(classes);
-        this->state_ser.resize(classes);
-        this->mset_coreNeed = 0;
-    }
-    
-    void arrival(int c, int size, int id) {
-        std::pair<int,int> e(c,size);
-        this->buffer.push_back(e);
-        state_buf[e.first]++;
-        flush_buffer();
-    }
-    
-    void departure(int c, int size, int id) {
-        std::pair<int,int> e(c,size);
-        state_ser[e.first]--;
-        freeservers+=e.second;
-        this->mset_coreNeed -= e.second;
-        auto it = std::find(mset.begin(), mset.end(), e);
-        if (it != mset.end()) {
-            this->mset.erase(it);
-        }
-        //this->mset.remove(e);
-        flush_buffer();
-    }
-    
-    const std::vector<int>& get_state_ser() {
-        return state_ser;
-    };
-    
-    const std::vector<int>& get_state_buf() {
-        return state_buf;
-    }
-
-    const std::vector<std::list<int>>& get_stopped_jobs() {
-        return stopped_jobs;
-    }
-
-    const std::vector<std::list<int>>& get_ongoing_jobs() {
-        return ongoing_jobs;
-    }
-    
-    int get_free_ser() {
-        return freeservers;
-    }
-
-    int get_violations_counter() {
-        return 0;
-    }
-
-    ~ServerFilling(){
-
-    }
-    
-private:
-    std::list<std::pair<int,int>> buffer;
-    std::list<std::pair<int,int>> mset;
-    std::vector<int> state_buf;
-    std::vector<int> state_ser;
-    std::vector<std::list<int>> stopped_jobs; //vector of list of ids
-    std::vector<std::list<int>> ongoing_jobs; //vector of list of ids
-    int mset_coreNeed;
-    int freeservers;
-    int servers;
-    int w;
-    
-
-    void addToMset(const std::pair<int,int>& e) {
-        auto it = mset.begin();
-        while( it != mset.end() && e.second <= it -> second){
-            it ++;
-        }
-        mset.insert(it, e);
-    }
-    
-    void printList(const std::list<std::pair<int, int>>& myList) {
-        for (const auto& pair : myList) {
-            std::cout << "(" << pair.first << ", " << pair.second << ") ";
-        }
-        std::cout << std::endl;
-    }
-    
-    void flush_buffer() {
-
-        if (freeservers > 0) {
-            auto it = buffer.begin();
-
-            for (int i = 0; i < state_buf.size(); i++) {
-                state_buf[i] += state_ser[i];
-            }
-            
-            while(mset_coreNeed < servers && it != buffer.end()) {
-                this->addToMset(*it);
-                mset_coreNeed += it->second;
-                it = buffer.erase(it);
-            }
-
-            freeservers = servers;
-            state_ser.assign(state_buf.size(), 0);
-
-            for (auto& elem: mset) {
-                if (elem.second <=  freeservers) {
-                    state_ser[elem.first]++;
-                    state_buf[elem.first]--;
-                    freeservers -= elem.second;
-                }
-            }
-
-        }
-    }
-};
-
-class MostServerFirst: public Policy {
-public:
-    
-    MostServerFirst(int w, int servers, int classes, const std::vector<int> &sizes) {
-        this->w = w;
-        this->violations_counter = 0;
-        this->servers = freeservers = servers;
-        this->state_buf.resize(classes);
-        this->state_ser.resize(classes);
-        this->stopped_jobs.resize(classes);
-        this->ongoing_jobs.resize(classes);
-        this->sizes = sizes;
-    }
-    
-    void arrival(int c, int size, int id) {
-        std::tuple<int,int,int> e(c,size,id);
-        state_buf[c]++;
-        stopped_jobs[c].push_back(id);
-        flush_buffer();
-    }
-    
-    void departure(int c, int size, int id) {
-        std::tuple<int,int,int> e(c,size,id);
-        state_ser[c]--;
-        freeservers+=size;
-        flush_buffer();
-    }
-    
-    const std::vector<int>& get_state_ser() {
-        return state_ser;
-    };
-    
-    const std::vector<int>& get_state_buf() {
-        return state_buf;
-    }
-    
-    const std::vector<std::list<int>>& get_stopped_jobs() {
-        return stopped_jobs;
-    }
-
-    const std::vector<std::list<int>>& get_ongoing_jobs() {
-        return ongoing_jobs;
-    }
-    
-    int get_free_ser() {
-        return freeservers;
-    }
-
-    int get_violations_counter() {
-        return violations_counter;
-    }
-
-    ~MostServerFirst(){
-
-    }
-
-    
-private:
-
-    int servers;
-    int w;
-    std::vector<int> state_buf;
-    std::vector<int> state_ser;
-    std::vector<std::list<int>> stopped_jobs; //vector of list of ids
-    std::vector<std::list<int>> ongoing_jobs; //vector of list of ids
-    std::vector<int> sizes;
-    int freeservers;
-    int violations_counter;
-    
-    
-    void flush_buffer() {
-
-        ongoing_jobs.clear();
-        ongoing_jobs.resize(state_buf.size());
-
-        bool modified = true;
-        //bool zeros = std::all_of(state_buf, state_buf + state_buf.size(), [](bool elem){ return elem == 0; });
-        while (modified && freeservers > 0) {
-            modified = false;
-            for (int i = state_buf.size() - 1; i >= 0; --i) {
-                auto it = stopped_jobs[i].begin();
-                while (state_buf[i] != 0 && sizes[i] <= freeservers) {
-                    state_buf[i]--;
-                    state_ser[i]++;
-                    ongoing_jobs[i].push_back(*it);
-                    it = stopped_jobs[i].erase(it);
-                    freeservers -= sizes[i];
-                    modified = true;
-                }
-            }
-            //zeros = std::all_of(state_buf, state_buf + state_buf.size(), [](bool elem){ return elem == 0; });
-        }
-
-    }
-};
-
-
 class Smash: public Policy {
 public:
     
@@ -585,15 +183,7 @@ public:
         this->jobs_preempted.resize(sizes.size());
         this->debugMode = false;
 
-        if (w == 0) {
-            this->policy = new  MostServerFirst(w, servers, static_cast<int>(sizes.size()), sizes);
-        } else if (w == -1){
-            this->policy = new  ServerFilling(w, servers, static_cast<int>(sizes.size()));
-        } else if (w == -2){
-            this->policy = new  ServerFillingMem(w, servers, static_cast<int>(sizes.size()));
-        } else {
-            this->policy = new  Smash(w, servers, static_cast<int>(sizes.size()));
-        }
+        this->policy = new  Smash(w, servers, static_cast<int>(sizes.size()));
 
         occupancy_buf.resize(sizes.size());
         occupancy_ser.resize(sizes.size());
@@ -739,19 +329,19 @@ public:
 
                         auto ser_state = policy->get_state_ser();
                         if (ser_state[1] == 0){
-                            big_seq_amount += 1; //big sequence yg sekarang selesai, tambahin satu ke amount of big sequences
-                            if (max_big_seq_len < current_big_seq_len) { //cek max big seq length
+                            big_seq_amount += 1; 
+                            if (max_big_seq_len < current_big_seq_len) { 
                                 max_big_seq_len = current_big_seq_len;
                             }
                             tot_big_seq_len += current_big_seq_len;
                             current_big_seq_len = 0;
                             busy_periods_len_big.push_back(*itmin - last_busy_period_start_big);
 
-                            if (ser_state[0] > 0){ //nextnya lsg small jobs
+                            if (ser_state[0] > 0){ 
                                 n_small += policy->get_state_buf()[0] + policy->get_state_ser()[0];
                                 n_amount_small += 1;
                                 last_busy_period_start_small = *itmin;
-                            }else{ //nextnya gak ada job sama sekali, masuk ke idle period
+                            }else{ 
                                 idle_period = 1;
                                 last_idle_period_start = *itmin;
                                 tot_busy_time += *itmin - last_busy_period_start;
@@ -767,19 +357,19 @@ public:
                         auto ser_state = policy->get_state_ser();
 
                         if (ser_state[0] == 0){
-                            small_seq_amount += 1; //small sequence yg sekarang selesai, tambahin satu ke amount of small sequences
-                            if (max_small_seq_len < current_small_seq_len) { //cek max small seq length
+                            small_seq_amount += 1; 
+                            if (max_small_seq_len < current_small_seq_len) { 
                                 max_small_seq_len = current_small_seq_len;
                             }
                             tot_small_seq_len += current_small_seq_len;
                             current_small_seq_len = 0;
                             busy_periods_len_small.push_back(*itmin - last_busy_period_start_small);
 
-                            if (ser_state[1] > 0){ //nextnya lsg big jobs
+                            if (ser_state[1] > 0){ 
                                 n_big += policy->get_state_buf()[1] + policy->get_state_ser()[1];
                                 n_amount_big += 1;
                                 last_busy_period_start_big = *itmin;
-                            }else{ //nextnya gak ada job sama sekali, masuk ke idle period
+                            }else{ 
                                 idle_period = 1;
                                 last_idle_period_start = *itmin;
                                 tot_busy_time += *itmin - last_busy_period_start;
@@ -801,12 +391,10 @@ public:
                             n_small += 1;
                             n_amount_small += 1;
                             last_busy_period_start_small = *itmin;
-                            //n_amount_big += 1;
                         } else {
                             n_big += 1;
                             n_amount_big += 1;
                             last_busy_period_start_big = *itmin;
-                            //n_amount_small += 1;
                         }
                     }
                     policy->arrival(pos-nclasses,sizes[pos-nclasses],(k+(nevents*rep)));
@@ -885,26 +473,6 @@ public:
         for (auto& x: rep_free_servers_distro) {
             x /= simtime;
         }
-
-        /*std::ofstream output_file("bp_"+std::to_string(l[nclasses])+".txt");
-
-        std::ostream_iterator<double> output_iterator(output_file, "\n");
-        std::copy(busy_periods_len.begin(), busy_periods_len.end(), output_iterator);
-
-        std::ofstream output_file_small("bp_small_"+std::to_string(l[nclasses])+".txt");
-
-        std::ostream_iterator<double> output_iterator_small(output_file_small, "\n");
-        std::copy(busy_periods_len_small.begin(), busy_periods_len_small.end(), output_iterator_small);
-
-        std::ofstream output_file_big("bp_big_"+std::to_string(l[nclasses])+".txt");
-
-        std::ostream_iterator<double> output_iterator_big(output_file_big, "\n");
-        std::copy(busy_periods_len_big.begin(), busy_periods_len_big.end(), output_iterator_big);
-
-        std::ofstream output_file_idle("ip_"+std::to_string(l[nclasses])+".txt");
-
-        std::ostream_iterator<double> output_iterator_idle(output_file_idle, "\n");
-        std::copy(idle_periods_len.begin(), idle_periods_len.end(), output_iterator_idle);*/
     }
 
     void produce_statistics(std::vector<Confidence_inter>& occ_buff, std::vector<Confidence_inter>& occ_ser, std::vector<Confidence_inter>& throughput, std::vector<Confidence_inter>& waitTime, std::vector<Confidence_inter>& respTime,  std::vector<bool>& warnings, Confidence_inter &wasted, Confidence_inter &violations, Confidence_inter &utilisation, Confidence_inter &occ_tot, Confidence_inter &wait_tot, Confidence_inter &resp_tot, Confidence_inter &timings_tot, Confidence_inter &big_sequence, Confidence_inter &big_seq_amount, Confidence_inter &max_big_seq_len, Confidence_inter &small_sequence, Confidence_inter &small_seq_amount, Confidence_inter &max_small_seq_len, Confidence_inter &nstar_small, Confidence_inter &nstar_big, Confidence_inter &idle_counter, Confidence_inter &idle_prob, double confidence = 0.05) {
@@ -1067,53 +635,7 @@ private:
     
     void resample() {
         //add arrivals and departures
-        if (this->w == -2) { //special blocks for serverFilling (memoryful)
-            auto stopped_jobs = policy->get_stopped_jobs();
-            auto ongoing_jobs = policy->get_ongoing_jobs();
-            bool stopped;
-            for (int i=0; i<nclasses; i++) {
-                if (fel[i+nclasses] <= simtime) { // only update arrival that is executed at the time
-                    fel[i+nclasses] = sample_exp(l[i]) + simtime;
-                }
-
-                for (auto job_id = stopped_jobs[i].begin(); job_id != stopped_jobs[i].end(); ++job_id) {
-                    if (jobs_inservice[i].find(*job_id) != jobs_inservice[i].end()) { // If they are currently being served: stop them
-                        jobs_preempted[i][*job_id] = jobs_inservice[i][*job_id]-simtime; // Save the remaining service time
-                        jobs_inservice[i].erase(*job_id);
-                    }
-                }
-
-                int fastest_job_id;
-                double fastest_job_fel = std::numeric_limits<double>::infinity();
-                for (auto job_id = ongoing_jobs[i].begin(); job_id != ongoing_jobs[i].end(); ++job_id) {
-                    if (jobs_inservice[i].find(*job_id) == jobs_inservice[i].end()) { // If they are NOT already in service
-                        if (jobs_preempted[i].find(*job_id) != jobs_preempted[i].end()) { // See if they were preempted: resume them
-                            jobs_inservice[i][*job_id] = jobs_preempted[i][*job_id]+simtime;
-                            jobs_preempted[i].erase(*job_id);
-                        } else { // or they are just new jobs about to be served for the first time: add them with new service time
-                            jobs_inservice[i][*job_id] = sample_st(1/u[i]) + simtime;
-                        }
-
-                        if (jobs_inservice[i][*job_id] < fastest_job_fel) {
-                            fastest_job_id = *job_id;
-                            fastest_job_fel = jobs_inservice[i][*job_id];
-                        }
-                    } else { // They are already in service
-                        if (jobs_inservice[i][*job_id] < fastest_job_fel) {
-                            fastest_job_id = *job_id;
-                            fastest_job_fel = jobs_inservice[i][*job_id];
-                        }
-                    }
-                }
-
-                if (jobs_inservice[i].empty()) { // If no jobs in service for a given class
-                    fel[i] = std::numeric_limits<double>::infinity();
-                } else {
-                    fel[i] = fastest_job_fel;
-                    job_fel[i] = fastest_job_id;
-                }
-            }
-        } else if (this->sampling_method != 0) { //exponential distro can use the faster memoryless blocks
+        if (this->sampling_method != 0) { //exponential distro can use the faster memoryless blocks
             auto ongoing_jobs = policy->get_ongoing_jobs();
             for (int i=0; i<nclasses; i++) {
                 if (fel[i+nclasses] <= simtime) { // only update arrival that is executed at the time
@@ -1394,8 +916,7 @@ int main (int argc, char *argv[]){
         std::vector<std::string> headers;
         std::vector<double> input_utils;
 
-        std::string cell = "cell"+std::string(argv[1]);
-        int n = std::stoi(argv[2]);
+        int n = std::stoi(argv[1]);
         //int w = std::stoi(argv[3]);
         std::unordered_map<std::string,int> sampling_input = 
         {
@@ -1406,15 +927,15 @@ int main (int argc, char *argv[]){
             {"bpar", 4},
             {"fre", 5}
         };
-        int sampling_method = sampling_input[argv[4]]; //0->exp, 1->par, 2->det, 3->uni, 4->bpar
+        int sampling_method = sampling_input[argv[2]]; //0->exp, 1->par, 2->det, 3->uni, 4->bpar
         //std::string type = std::string(argv[5])+"_"+std::to_string(n);
-        std::string type = std::string(argv[5]);
-        int n_evs = std::stoi(argv[6]);
-        int n_runs = std::stoi(argv[7]);
+        std::string type = std::string(argv[3]);
+        int n_evs = std::stoi(argv[4]);
+        int n_runs = std::stoi(argv[5]);
 
         std::vector<std::string> sampling_name = {"Exponential", "Pareto", "Deterministic", "Uniform", "BoundedPareto", "Frechet"};
 
-        std::cout << "*** Processing - Cell: " << argv[1] << " - N: " << std::to_string(n) << " - Policy: " << std::to_string(w) << " - Type: " << type << " - Sampling: " << sampling_name[sampling_method] << " ***" << std::endl;
+        std::cout << "*** Processing - N: " << std::to_string(n) << " - Policy: " << std::to_string(w) << " - Type: " << type << " - Sampling: " << sampling_name[sampling_method] << " ***" << std::endl;
 
         headers = {"Arrival Rate"};
 
