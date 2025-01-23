@@ -42,3 +42,66 @@ std::ostream& operator<<(std::ostream& os, ExperimentStats const& m)
     os << m.phase_three_dur;
     return os;
 }
+void ExperimentStats::add_headers(std::vector<std::string>& headers, std::vector<int>& sizes) const
+{
+    for (int ts : sizes)
+    {
+        headers.push_back("T" + std::to_string(ts) + " Queue");
+        headers.push_back("T" + std::to_string(ts) + " Queue ConfInt");
+        headers.push_back("T" + std::to_string(ts) + " Service");
+        headers.push_back("T" + std::to_string(ts) + " Service ConfInt");
+        headers.push_back("T" + std::to_string(ts) + " System");
+        headers.push_back("T" + std::to_string(ts) + " System ConfInt");
+        headers.push_back("T" + std::to_string(ts) + " Waiting");
+        headers.push_back("T" + std::to_string(ts) + " Waiting ConfInt");
+        headers.push_back("T" + std::to_string(ts) + " Waiting Variance");
+        headers.push_back("T" + std::to_string(ts) + " Waiting Variance ConfInt");
+        headers.push_back("T" + std::to_string(ts) + " Throughput");
+        headers.push_back("T" + std::to_string(ts) + " Throughput ConfInt");
+        headers.push_back("T" + std::to_string(ts) + " RespTime");
+        headers.push_back("T" + std::to_string(ts) + " RespTime ConfInt");
+        headers.push_back("T" + std::to_string(ts) + " RespTime Variance");
+        headers.push_back("T" + std::to_string(ts) + " RespTime Variance ConfInt");
+        headers.push_back("T" + std::to_string(ts) + " Preemption");
+        headers.push_back("T" + std::to_string(ts) + " Preemption ConfInt");
+        headers.push_back("T" + std::to_string(ts) + " Stability Check");
+    }
+
+    headers.insert(headers.end(),
+                   {"Wasted Servers",
+                    "Wasted Servers ConfInt",
+                    "Utilisation",
+                    "Utilisation ConfInt",
+                    "Queue Total",
+                    "Queue Total ConfInt",
+                    "WaitTime Total",
+                    "WaitTime Total ConfInt",
+                    "WaitTime Variance",
+                    "WaitTime Variance ConfInt",
+                    "RespTime Total",
+                    "RespTime Total ConfInt",
+                    "RespTime Variance",
+                    "RespTime Variance ConfInt",
+                    "Window Size",
+                    "Window Size ConfInt",
+                    "FIFO Violations",
+                    "FIFO Violations ConfInt",
+                    "Run Duration",
+                    "Run Duration ConfInt",
+                    "Big Sequence Length",
+                    "Big Sequence Length ConfInt",
+                    "Small Sequence Length",
+                    "Small Sequence Length ConfInt",
+                    "Big Sequence Duration",
+                    "Big Sequence Duration ConfInt",
+                    "Small Sequence Duration",
+                    "Small Sequence Duration ConfInt",
+                    "Big Sequence Amount",
+                    "Big Sequence Amount ConfInt",
+                    "Small Sequence Amount",
+                    "Small Sequence Amount ConfInt",
+                    "Phase Two Duration",
+                    "Phase Two Duration ConfInt",
+                    "Phase Three Duration",
+                    "Phase Three Duration ConfInt"});
+}

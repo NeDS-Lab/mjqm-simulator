@@ -247,7 +247,141 @@ public:
         phase_three_duration = 0;
     }
 
+    void collect_run_statistics(double tot_seq_len, double seq_amount, std::chrono::system_clock::time_point start)
+    {
+        double avg_seq_len = (tot_seq_len * 1.0) / seq_amount;
 
+        double totq = 0.0;
+        for (auto& x : occupancy_buf)
+        {
+            x /= simtime;
+            totq += x;
+        }
+
+
+        rep_occupancy_buf.push_back(occupancy_buf);
+
+        double tots = 0.0;
+        for (auto& x : occupancy_ser)
+        {
+            x /= simtime;
+            tots += x;
+        }
+        rep_occupancy_ser.push_back(occupancy_ser);
+
+        for (int i = 0; i < nclasses; i++)
+            throughput[i] = completion[i] / simtime;
+        rep_th.push_back(throughput);
+
+        double totx = 0.0;
+        std::list<double> totRawWaitingTime;
+        std::list<double> totRawResponseTime;
+        std::vector<double> preemption_avg;
+        preemption_avg.resize(nclasses);
+        for (int i = 0; i < nclasses; i++)
+        {
+            // waitingTime[i] = occupancy_buf[i] / throughput[i];
+            double mean_wt =
+                std::accumulate(rawWaitingTime[i].begin(), rawWaitingTime[i].end(), 0.0) / rawWaitingTime[i].size();
+            waitingTime[i] = mean_wt;
+
+            double tot_diff = 0.0;
+            for (auto& rawWt : rawWaitingTime[i])
+            {
+                tot_diff += pow(rawWt - mean_wt, 2);
+            }
+            waitingTimeVar[i] = tot_diff / rawWaitingTime[i].size();
+
+            // responseTime[i] = (occupancy_buf[i]+occupancy_ser[i]) / throughput[i];
+            double mean_rt =
+                std::accumulate(rawResponseTime[i].begin(), rawResponseTime[i].end(), 0.0) / rawResponseTime[i].size();
+            responseTime[i] = mean_rt;
+
+            tot_diff = 0.0;
+            for (auto& rawRt : rawResponseTime[i])
+            {
+                tot_diff += pow(rawRt - mean_rt, 2);
+            }
+            responseTimeVar[i] = tot_diff / rawResponseTime[i].size();
+
+            totx += throughput[i];
+            totRawWaitingTime.insert(totRawWaitingTime.end(), rawWaitingTime[i].begin(), rawWaitingTime[i].end());
+            totRawResponseTime.insert(totRawResponseTime.end(), rawResponseTime[i].begin(), rawResponseTime[i].end());
+
+            preemption_avg[i] = ((double)preemption[i]) / (double)completion[i];
+        }
+
+        for (int i = 0; i < occupancy_ser.size(); i++)
+            util += occupancy_ser[i] * sizes[i];
+
+        rep_window_size.push_back(std::accumulate(windowSize.begin(), windowSize.end(), 0.0) / simtime);
+        rep_preemption.push_back(preemption_avg);
+
+        rep_wait.push_back(waitingTime);
+        rep_wait_var.push_back(waitingTimeVar);
+        rep_resp.push_back(responseTime);
+        rep_resp_var.push_back(responseTimeVar);
+        rep_waste.push_back(waste / simtime);
+        rep_viol.push_back(viol / simtime);
+        rep_util.push_back(util / n);
+        rep_tot_buf.push_back(totq);
+        // rep_tot_wait.push_back(totq/totx);
+        double mean_wt =
+            std::accumulate(totRawWaitingTime.begin(), totRawWaitingTime.end(), 0.0) / totRawWaitingTime.size();
+        rep_tot_wait.push_back(mean_wt);
+
+        double tot_diff = 0.0;
+        for (auto& rawWt : totRawWaitingTime)
+        {
+            tot_diff += pow(rawWt - mean_wt, 2);
+        }
+        rep_tot_wait_var.push_back(tot_diff / totRawWaitingTime.size());
+
+        // rep_tot_resp.push_back((totq+tots)/totx);
+        double mean_rt =
+            std::accumulate(totRawResponseTime.begin(), totRawResponseTime.end(), 0.0) / totRawResponseTime.size();
+        rep_tot_resp.push_back(mean_rt);
+
+        tot_diff = 0.0;
+        for (auto& rawRt : totRawResponseTime)
+        {
+            tot_diff += pow(rawRt - mean_rt, 2);
+        }
+        rep_tot_resp_var.push_back(tot_diff / totRawResponseTime.size());
+
+        // std::cout<<tot_job_seq_dur[0]<<std::endl;
+        // std::cout<<job_seq_amount[0]<<std::endl;
+
+        double avg_big_seq_len = (tot_job_seq[1] * 1.0) / job_seq_amount[1];
+        double avg_small_seq_len = (tot_job_seq[0] * 1.0) / job_seq_amount[0];
+        double avg_big_seq_dur = (tot_job_seq_dur[1] * 1.0) / job_seq_amount[1];
+        double avg_small_seq_dur = (tot_job_seq_dur[0] * 1.0) / job_seq_amount[0];
+
+        rep_big_seq_avg_len.push_back(avg_big_seq_len);
+        rep_small_seq_avg_len.push_back(avg_small_seq_len);
+        rep_big_seq_avg_dur.push_back(avg_big_seq_dur);
+        rep_small_seq_avg_dur.push_back(avg_small_seq_dur);
+        rep_big_seq_amount.push_back(job_seq_amount[1]);
+        rep_small_seq_amount.push_back(job_seq_amount[0]);
+
+        rep_phase_two_duration.push_back((phase_two_duration * 1.0) / job_seq_amount[0]);
+        rep_phase_three_duration.push_back((phase_three_duration * 1.0) / job_seq_amount[0]);
+
+        /*std::cout << phase_two_duration << std::endl;
+        std::cout << phase_three_duration << std::endl;
+        std::cout << phase_two_duration+phase_three_duration << std::endl;
+        std::cout << tot_job_seq_dur[0] << std::endl;
+        std::cout << "-------------------------------------" << std::endl;*/
+
+        // rep_big_sequences.push_back(avg_seq_len);
+        // rep_seq_amount.push_back(seq_amount);
+        // rep_seq_max_len.push_back(max_seq_len);
+
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
+
+        rep_timings.push_back(duration);
+    }
     void simulate(unsigned long nevents, unsigned int repetitions = 1)
     {
         rep_th.clear();
@@ -472,139 +606,8 @@ public:
                 }*/
             }
 
-            double avg_seq_len = (tot_seq_len * 1.0) / seq_amount;
+            collect_run_statistics(tot_seq_len, seq_amount, start);
 
-            double totq = 0.0;
-            for (auto& x : occupancy_buf)
-            {
-                x /= simtime;
-                totq += x;
-            }
-
-
-            rep_occupancy_buf.push_back(occupancy_buf);
-
-            double tots = 0.0;
-            for (auto& x : occupancy_ser)
-            {
-                x /= simtime;
-                tots += x;
-            }
-            rep_occupancy_ser.push_back(occupancy_ser);
-
-            for (int i = 0; i < completion.size(); i++)
-                throughput[i] = completion[i] / simtime;
-            rep_th.push_back(throughput);
-
-            double totx = 0.0;
-            std::list<double> totRawWaitingTime;
-            std::list<double> totRawResponseTime;
-            std::vector<double> preemption_avg;
-            preemption_avg.resize(sizes.size());
-            for (int i = 0; i < occupancy_buf.size(); i++)
-            {
-                // waitingTime[i] = occupancy_buf[i] / throughput[i];
-                double mean_wt =
-                    std::accumulate(rawWaitingTime[i].begin(), rawWaitingTime[i].end(), 0.0) / rawWaitingTime[i].size();
-                waitingTime[i] = mean_wt;
-
-                double tot_diff = 0.0;
-                for (auto& rawWt : rawWaitingTime[i])
-                {
-                    tot_diff += pow(rawWt - mean_wt, 2);
-                }
-                waitingTimeVar[i] = tot_diff / rawWaitingTime[i].size();
-
-                // responseTime[i] = (occupancy_buf[i]+occupancy_ser[i]) / throughput[i];
-                double mean_rt = std::accumulate(rawResponseTime[i].begin(), rawResponseTime[i].end(), 0.0) /
-                    rawResponseTime[i].size();
-                responseTime[i] = mean_rt;
-
-                tot_diff = 0.0;
-                for (auto& rawRt : rawResponseTime[i])
-                {
-                    tot_diff += pow(rawRt - mean_rt, 2);
-                }
-                responseTimeVar[i] = tot_diff / rawResponseTime[i].size();
-
-                totx += throughput[i];
-                totRawWaitingTime.insert(totRawWaitingTime.end(), rawWaitingTime[i].begin(), rawWaitingTime[i].end());
-                totRawResponseTime.insert(totRawResponseTime.end(), rawResponseTime[i].begin(),
-                                          rawResponseTime[i].end());
-
-                preemption_avg[i] = ((double)preemption[i]) / (double)completion[i];
-            }
-
-            for (int i = 0; i < occupancy_ser.size(); i++)
-                util += occupancy_ser[i] * sizes[i];
-
-            rep_window_size.push_back(std::accumulate(windowSize.begin(), windowSize.end(), 0.0) / simtime);
-            rep_preemption.push_back(preemption_avg);
-
-            rep_wait.push_back(waitingTime);
-            rep_wait_var.push_back(waitingTimeVar);
-            rep_resp.push_back(responseTime);
-            rep_resp_var.push_back(responseTimeVar);
-            rep_waste.push_back(waste / simtime);
-            rep_viol.push_back(viol / simtime);
-            rep_util.push_back(util / n);
-            rep_tot_buf.push_back(totq);
-            // rep_tot_wait.push_back(totq/totx);
-            double mean_wt =
-                std::accumulate(totRawWaitingTime.begin(), totRawWaitingTime.end(), 0.0) / totRawWaitingTime.size();
-            rep_tot_wait.push_back(mean_wt);
-
-            double tot_diff = 0.0;
-            for (auto& rawWt : totRawWaitingTime)
-            {
-                tot_diff += pow(rawWt - mean_wt, 2);
-            }
-            rep_tot_wait_var.push_back(tot_diff / totRawWaitingTime.size());
-
-            // rep_tot_resp.push_back((totq+tots)/totx);
-            double mean_rt =
-                std::accumulate(totRawResponseTime.begin(), totRawResponseTime.end(), 0.0) / totRawResponseTime.size();
-            rep_tot_resp.push_back(mean_rt);
-
-            tot_diff = 0.0;
-            for (auto& rawRt : totRawResponseTime)
-            {
-                tot_diff += pow(rawRt - mean_rt, 2);
-            }
-            rep_tot_resp_var.push_back(tot_diff / totRawResponseTime.size());
-
-            // std::cout<<tot_job_seq_dur[0]<<std::endl;
-            // std::cout<<job_seq_amount[0]<<std::endl;
-
-            double avg_big_seq_len = (tot_job_seq[1] * 1.0) / job_seq_amount[1];
-            double avg_small_seq_len = (tot_job_seq[0] * 1.0) / job_seq_amount[0];
-            double avg_big_seq_dur = (tot_job_seq_dur[1] * 1.0) / job_seq_amount[1];
-            double avg_small_seq_dur = (tot_job_seq_dur[0] * 1.0) / job_seq_amount[0];
-
-            rep_big_seq_avg_len.push_back(avg_big_seq_len);
-            rep_small_seq_avg_len.push_back(avg_small_seq_len);
-            rep_big_seq_avg_dur.push_back(avg_big_seq_dur);
-            rep_small_seq_avg_dur.push_back(avg_small_seq_dur);
-            rep_big_seq_amount.push_back(job_seq_amount[1]);
-            rep_small_seq_amount.push_back(job_seq_amount[0]);
-
-            rep_phase_two_duration.push_back((phase_two_duration * 1.0) / job_seq_amount[0]);
-            rep_phase_three_duration.push_back((phase_three_duration * 1.0) / job_seq_amount[0]);
-
-            /*std::cout << phase_two_duration << std::endl;
-            std::cout << phase_three_duration << std::endl;
-            std::cout << phase_two_duration+phase_three_duration << std::endl;
-            std::cout << tot_job_seq_dur[0] << std::endl;
-            std::cout << "-------------------------------------" << std::endl;*/
-
-            // rep_big_sequences.push_back(avg_seq_len);
-            // rep_seq_amount.push_back(seq_amount);
-            // rep_seq_max_len.push_back(max_seq_len);
-
-            auto end = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
-
-            rep_timings.push_back(duration);
             std::cout << "Repetition " << std::to_string(rep) << " Done" << std::endl;
             // this->reset_data();
             /*auto sb = policy->get_state_buf();
@@ -1152,27 +1155,29 @@ private:
     }
 };
 
-void read_classes(std::string fname, std::vector<double>& p, std::vector<int>& sizes, std::vector<double>& mus)
+void read_classes(std::string filename, std::vector<double>& p, std::vector<int>& sizes, std::vector<double>& mus)
 {
     std::vector<std::vector<std::string>> content;
     std::vector<std::string> row;
     std::string line, word;
-    std::fstream file(fname, std::ios::in);
-    if (file.is_open())
+    std::fstream file(filename, std::ios::in);
+
+    if (!file.is_open())
     {
-        while (getline(file, line))
-        {
-            row.clear();
-
-            std::stringstream str(line);
-
-            while (getline(str, word, ','))
-                row.push_back(word);
-            content.push_back(row);
-        }
+        std::cerr << "Error: Unable to open file " << filename << std::endl;
+        return;
     }
-    else
-        std::cout << "Could not open the file\n";
+
+    while (getline(file, line))
+    {
+        row.clear();
+
+        std::stringstream str(line);
+
+        while (getline(str, word, ','))
+            row.push_back(word);
+        content.push_back(row);
+    }
 
 
     for (int i = 0; i < content.size(); i++)
@@ -1196,11 +1201,11 @@ void read_classes(std::string fname, std::vector<double>& p, std::vector<int>& s
 void read_lambdas(const std::string& filename, std::vector<double>& values)
 {
     // Open the file
-    std::ifstream file(filename);
+    std::ifstream file(filename, std::ios::in);
 
     if (!file.is_open())
     {
-        std::cerr << "Error: Unable to open the file." << std::endl;
+        std::cerr << "Error: Unable to open file " << filename << std::endl;
         return;
     }
 
@@ -1322,69 +1327,9 @@ int main(int argc, char* argv[])
         threads[i].join();
     }
 
-    for (int ts : sizes)
-    {
-        headers.push_back("T" + std::to_string(ts) + " Queue");
-        headers.push_back("T" + std::to_string(ts) + " Queue ConfInt");
-        headers.push_back("T" + std::to_string(ts) + " Service");
-        headers.push_back("T" + std::to_string(ts) + " Service ConfInt");
-        headers.push_back("T" + std::to_string(ts) + " System");
-        headers.push_back("T" + std::to_string(ts) + " System ConfInt");
-        headers.push_back("T" + std::to_string(ts) + " Waiting");
-        headers.push_back("T" + std::to_string(ts) + " Waiting ConfInt");
-        headers.push_back("T" + std::to_string(ts) + " Waiting Variance");
-        headers.push_back("T" + std::to_string(ts) + " Waiting Variance ConfInt");
-        headers.push_back("T" + std::to_string(ts) + " Throughput");
-        headers.push_back("T" + std::to_string(ts) + " Throughput ConfInt");
-        headers.push_back("T" + std::to_string(ts) + " RespTime");
-        headers.push_back("T" + std::to_string(ts) + " RespTime ConfInt");
-        headers.push_back("T" + std::to_string(ts) + " RespTime Variance");
-        headers.push_back("T" + std::to_string(ts) + " RespTime Variance ConfInt");
-        headers.push_back("T" + std::to_string(ts) + " Preemption");
-        headers.push_back("T" + std::to_string(ts) + " Preemption ConfInt");
-        headers.push_back("T" + std::to_string(ts) + " Stability Check");
-    }
-
-    headers.insert(headers.end(),
-                   {"Wasted Servers",
-                    "Wasted Servers ConfInt",
-                    "Utilisation",
-                    "Utilisation ConfInt",
-                    "Queue Total",
-                    "Queue Total ConfInt",
-                    "WaitTime Total",
-                    "WaitTime Total ConfInt",
-                    "WaitTime Variance",
-                    "WaitTime Variance ConfInt",
-                    "RespTime Total",
-                    "RespTime Total ConfInt",
-                    "RespTime Variance",
-                    "RespTime Variance ConfInt",
-                    "Window Size",
-                    "Window Size ConfInt",
-                    "FIFO Violations",
-                    "FIFO Violations ConfInt",
-                    "Run Duration",
-                    "Run Duration ConfInt",
-                    "Big Sequence Length",
-                    "Big Sequence Length ConfInt",
-                    "Small Sequence Length",
-                    "Small Sequence Length ConfInt",
-                    "Big Sequence Duration",
-                    "Big Sequence Duration ConfInt",
-                    "Small Sequence Duration",
-                    "Small Sequence Duration ConfInt",
-                    "Big Sequence Amount",
-                    "Big Sequence Amount ConfInt",
-                    "Small Sequence Amount",
-                    "Small Sequence Amount ConfInt",
-                    "Phase Two Duration",
-                    "Phase Two Duration ConfInt",
-                    "Phase Three Duration",
-                    "Phase Three Duration ConfInt"});
-
     if (outputFile.tellp() == 0)
     {
+        experiments_stats.at(0).add_headers(headers, sizes);
         // Write the headers to the CSV file
         for (const std::string& header : headers)
         {
