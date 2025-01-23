@@ -242,7 +242,7 @@ public:
 
         double tot_lambda = std::accumulate(l.begin(), l.end(), 0.0);
         std::string out_filename =
-            "logfile_N" + std::to_string(n) + "_" + std::to_string(tot_lambda) + "_W" + std::to_string(w) + ".csv";
+            "Results/logfile_N" + std::to_string(n) + "_" + std::to_string(tot_lambda) + "_W" + std::to_string(w) + ".csv";
         remove(out_filename.c_str());
         std::ofstream outputFile_rep(out_filename, std::ios::app);
         std::vector<std::string> headers_rep;

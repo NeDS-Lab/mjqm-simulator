@@ -18,6 +18,7 @@ list:
 	@echo current: $(appname)
 
 run: $(appname)
+	@mkdir -p Results
 	@./$(appname) ${ARGS}
 
 help:
@@ -62,6 +63,9 @@ dist-clean: clean
 
 clean:
 	rm -f $(appname) $(objects)
+
+clean-out:
+	rm -rf Results/*.csv
 
 .clean_%:
 	@$(MAKE) appname=$(patsubst .clean_%,%,$@) clean
