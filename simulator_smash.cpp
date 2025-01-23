@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 #include "math/confidence_intervals.h"
+#include "math/samplers.h"
 #include "policies/policies.h"
 #include "stats/stats.h"
 
@@ -112,6 +113,49 @@ public:
         occ = 0;
         std::uint64_t seed = 1862248485;
         generator = new std::mt19937_64(static_cast<std::mt19937_64::result_type>(next(seed)));
+
+        switch (sampling_method)
+        {
+        case 0: // exponential
+            for (int i = 0; i < nclasses; i++)
+            {
+                this->class_samplers.push_back(std::make_unique<Exponential<std::mt19937_64>>(generator));
+            }
+            break;
+        case 1: // pareto
+            for (int i = 0; i < nclasses; i++)
+            {
+                this->class_samplers.push_back(std::make_unique<Pareto<std::mt19937_64>>(generator));
+            }
+            break;
+        case 2: // deterministic
+            for (int i = 0; i < nclasses; i++)
+            {
+                this->class_samplers.push_back(std::make_unique<Deterministic>());
+            }
+            break;
+        case 3: // uniform
+            for (int i = 0; i < nclasses; i++)
+            {
+                this->class_samplers.push_back(std::make_unique<Uniform<std::mt19937_64>>(generator));
+            }
+            break;
+        case 4: // bounded pareto
+            for (int i = 0; i < nclasses; i++)
+            {
+                this->class_samplers.push_back(std::make_unique<BoundedPareto<std::mt19937_64>>(generator));
+            }
+            break;
+        case 5: // frechet
+            for (int i = 0; i < nclasses; i++)
+            {
+                this->class_samplers.push_back(std::make_unique<Frechet<std::mt19937_64>>(generator));
+            }
+            break;
+        // default:
+        //     return 0;
+        }
+
     }
 
     ~Simulator()
@@ -353,7 +397,7 @@ public:
                     auto job_id = k + (nevents * rep);
                     if (this->w == -3)
                     {
-                        holdTime[job_id] = sample_st(1 / u[pos - nclasses]);
+                        holdTime[job_id] = sample_for_class(pos - nclasses);
                         // std::cout << holdTime[job_id] << std::endl;
                     }
                     policy->arrival(pos - nclasses, sizes[pos - nclasses], job_id);
@@ -653,6 +697,7 @@ public:
 private:
     std::vector<double> l;
     std::vector<double> u;
+    std::vector<std::unique_ptr<sampler<std::mt19937_64>>> class_samplers;
     std::vector<int> sizes;
     int n;
     int w;
@@ -751,82 +796,15 @@ private:
     std::uniform_real_distribution<double> ru;
 
     int sampling_method;
-    double alfa = 2;
-    double mean_ratio = (alfa - 1) / alfa;
 
-    double sample_exp(double par) { return -log(ru(*generator)) / par; }
-
-    double sample_pareto(double xm) { return xm * exp(sample_exp(alfa)); }
-
-    /*double sample_pareto_v2(double xm) {
-        double p = ru(*generator);
-        return xm*pow(1-p,-(1/alfa));
+    double sample_exp(double par) // done
+    {
+        return -log(ru(*generator)) / par;
     }
 
-    double sample_bounded_pareto(double min, double max) {
-        double p = ru(*generator);
-        double num = pow(min,alfa);
-        double den = 1-(p*(1-pow(min/max,alfa)));
-        return pow(num/den,1/alfa);
-    }*/
-
-    double sample_bPareto(double par)
+    double sample_for_class(int class_i)
     {
-        double l = (12000.0 / 23999.0) * par;
-        double h = 12000 * par;
-        double u = ru(*generator);
-        double num = (u * pow(h, alfa)) - (u * pow(l, alfa)) - pow(h, alfa);
-        double den = pow(h, alfa) * pow(l, alfa);
-        double frac = num / den;
-        return pow(-frac, -1 / alfa);
-    }
-
-    double sample_unif(double par)
-    {
-        std::uniform_real_distribution<double> ru(0.5 * par, 1.5 * par);
-        return ru(*generator);
-    }
-
-    double frec_alfa = 2.15;
-    double s_ratio = 1 / (std::tgammaf(1 - (1 / frec_alfa)));
-
-    double sample_frechet(double par)
-    {
-        // std::cout << s_ratio << std::endl;
-        return (s_ratio / par) * pow((-log(ru(*generator))), -1 / frec_alfa);
-    }
-
-    double sample_st(double rate)
-    {
-        if (this->sampling_method == 0)
-        {
-            return sample_exp(rate);
-        }
-        else if (this->sampling_method == 1)
-        {
-            // return (mean_ratio*(1/rate))*exp(sample_exp(alfa));
-            // return sample_bPareto(1/rate);
-            return sample_pareto(mean_ratio * (1 / rate));
-            // return sample_bounded_pareto(0.5*(1/rate),2*(1/rate));
-        }
-        else if (this->sampling_method == 2)
-        {
-            return 1 / rate;
-        }
-        else if (this->sampling_method == 3)
-        {
-            return sample_unif(1 / rate);
-        }
-        else if (this->sampling_method == 4)
-        {
-            return sample_bPareto(1 / rate);
-            // return sample_bounded_pareto_v2((120000.0/239999.0)*(1/rate),120000*(1/rate));
-        }
-        else if (this->sampling_method == 5)
-        {
-            return sample_frechet(rate);
-        }
-        return 0;
+        return this->class_samplers[class_i]->sample_mu(u[class_i]);
     }
 
     void resample()
@@ -871,7 +849,7 @@ private:
                         else
                         { // or they are just new jobs about to be served for the first time: add them with new service
                           // time
-                            double sampled = sample_st(1 / u[i]);
+                            double sampled = sample_for_class(i);
                             jobs_inservice[i][*job_id] = sampled + simtime;
                             // rawWaitingTime[i].push_back(simtime-arrTime[*job_id]);
                             // arrTime.erase(*job_id); //update waitingTime
@@ -937,7 +915,7 @@ private:
                     }
                     else
                     {
-                        sampled = sample_st(1 / u[i]);
+                        sampled = sample_for_class(i);
                     }
                     jobs_inservice[i][job_id] = sampled + simtime;
                     // rawWaitingTime[i].push_back();
