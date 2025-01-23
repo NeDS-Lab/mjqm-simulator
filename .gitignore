@@ -1,6 +1,17 @@
+# Ignore all
+*
+# Unignore all with extensions
+!*.*
+# Unignore all dirs
+!*/
+### Above combination will ignore all files without extension ###
+!Makefile
+
 # Compiled object files
+out
 *.o
 *.obj
+.depends*
 
 # Precompiled Headers
 *.gch
@@ -40,20 +51,14 @@ ui_*.h
 *.pro.user
 *.qmake.stash
 
-# VSCode
-.vscode/
-
-# Visual Studio
-*.VC.db
-*.VC.VC.opendb
-
-# Eclipse
+# IDE specific files
 .project
 .cproject
-
-# JetBrains IDEs
 .idea/
+.vscode/
 *.iml
+*.VC.db
+*.VC.VC.opendb
 
 # MacOS specific files
 .DS_Store
