@@ -26,6 +26,7 @@
 #include "math/samplers.h"
 #include "policies/policies.h"
 #include "stats/stats.h"
+#include "toml++/toml.hpp"
 
 
 struct Experiment
@@ -112,55 +113,52 @@ public:
         util = 0;
         occ = 0;
         std::uint64_t seed = 1862248485;
-        generator = new std::mt19937_64(static_cast<std::mt19937_64::result_type>(next(seed)));
+        generator = std::make_shared<std::mt19937_64>(next(seed));
 
         switch (sampling_method)
         {
         case 0: // exponential
             for (int i = 0; i < nclasses; i++)
             {
-                this->class_samplers.push_back(std::make_unique<Exponential<std::mt19937_64>>(generator));
+                this->class_samplers.push_back(exponential::with_mean(generator, u[i]));
             }
             break;
         case 1: // pareto
             for (int i = 0; i < nclasses; i++)
             {
-                this->class_samplers.push_back(std::make_unique<Pareto<std::mt19937_64>>(generator));
+                this->class_samplers.push_back(pareto::with_mean(generator, u[i], 2));
             }
             break;
         case 2: // deterministic
             for (int i = 0; i < nclasses; i++)
             {
-                this->class_samplers.push_back(std::make_unique<Deterministic>());
-            }
-            break;
-        case 3: // uniform
-            for (int i = 0; i < nclasses; i++)
-            {
-                this->class_samplers.push_back(std::make_unique<Uniform<std::mt19937_64>>(generator));
+                this->class_samplers.push_back(deterministic::with_mean(u[i]));
             }
             break;
         case 4: // bounded pareto
             for (int i = 0; i < nclasses; i++)
             {
-                this->class_samplers.push_back(std::make_unique<BoundedPareto<std::mt19937_64>>(generator));
+                this->class_samplers.push_back(bounded_pareto::with_mean(generator, u[i], 2));
             }
             break;
         case 5: // frechet
             for (int i = 0; i < nclasses; i++)
             {
-                this->class_samplers.push_back(std::make_unique<Frechet<std::mt19937_64>>(generator));
+                this->class_samplers.push_back(frechet::with_mean(generator, u[i], 2.15));
             }
             break;
-        // default:
-        //     return 0;
+        case 3: // uniform
+        default:
+            for (int i = 0; i < nclasses; i++)
+            {
+                this->class_samplers.push_back(uniform::with_mean(generator, u[i]));
+            }
+            break;
         }
-
     }
 
     ~Simulator()
     {
-        delete generator;
         delete policy;
     }
 
@@ -419,8 +417,8 @@ public:
 
 
         double tot_lambda = std::accumulate(l.begin(), l.end(), 0.0);
-        std::string out_filename =
-            "Results/logfile_N" + std::to_string(n) + "_" + std::to_string(tot_lambda) + "_W" + std::to_string(w) + ".csv";
+        std::string out_filename = "Results/logfile_N" + std::to_string(n) + "_" + std::to_string(tot_lambda) + "_W" +
+            std::to_string(w) + ".csv";
         remove(out_filename.c_str());
         std::ofstream outputFile_rep(out_filename, std::ios::app);
         std::vector<std::string> headers_rep;
@@ -531,7 +529,7 @@ public:
                     auto job_id = k + (nevents * rep);
                     if (this->w == -3)
                     {
-                        holdTime[job_id] = sample_for_class(pos - nclasses);
+                        holdTime[job_id] = this->class_samplers[pos - nclasses]->sample();
                         // std::cout << holdTime[job_id] << std::endl;
                     }
                     policy->arrival(pos - nclasses, sizes[pos - nclasses], job_id);
@@ -700,7 +698,7 @@ public:
 private:
     std::vector<double> l;
     std::vector<double> u;
-    std::vector<std::unique_ptr<sampler<std::mt19937_64>>> class_samplers;
+    std::vector<std::unique_ptr<sampler>> class_samplers;
     std::vector<int> sizes;
     int n;
     int w;
@@ -795,7 +793,7 @@ private:
 
     std::string logfile_name;
 
-    std::mt19937_64* generator;
+    std::shared_ptr<std::mt19937_64> generator;
     std::uniform_real_distribution<double> ru;
 
     int sampling_method;
@@ -803,11 +801,6 @@ private:
     double sample_exp(double par) // done
     {
         return -log(ru(*generator)) / par;
-    }
-
-    double sample_for_class(int class_i)
-    {
-        return this->class_samplers[class_i]->sample_mu(u[class_i]);
     }
 
     void resample()
@@ -852,7 +845,7 @@ private:
                         else
                         { // or they are just new jobs about to be served for the first time: add them with new service
                           // time
-                            double sampled = sample_for_class(i);
+                            double sampled = this->class_samplers[i]->sample();
                             jobs_inservice[i][*job_id] = sampled + simtime;
                             // rawWaitingTime[i].push_back(simtime-arrTime[*job_id]);
                             // arrTime.erase(*job_id); //update waitingTime
@@ -918,7 +911,7 @@ private:
                     }
                     else
                     {
-                        sampled = sample_for_class(i);
+                        sampled = this->class_samplers[i]->sample();
                     }
                     jobs_inservice[i][job_id] = sampled + simtime;
                     // rawWaitingTime[i].push_back();
@@ -1288,10 +1281,12 @@ int main(int argc, char* argv[])
 
     headers = {"Arrival Rate"};
 
-    std::string classes_filename = "Inputs/" + cell + "/" + cell + "_" + type + "_" + std::to_string(n) + ".txt";
+    std::string classes_filename = "Inputs/" + type + "_N" + std::to_string(n) + "_0.6.txt";
+    std::cout << classes_filename << std::endl;
     read_classes(classes_filename, p, sizes, mus);
     std::string lambdas_filename =
-        "Inputs/" + cell + "/arrRate_" + type + "_W" + std::to_string(w) + "_" + std::to_string(n) + ".txt";
+        "Inputs/arrRate_" + type + "_N" + std::to_string(n) + "_0.6_W" + std::to_string(w) + ".txt";
+    std::cout << lambdas_filename << std::endl;
     read_lambdas(lambdas_filename, arr_rate);
 
     std::string out_filename = "Results/varianceOverLambdas-nClasses" + std::to_string(sizes.size()) + "-N" +
