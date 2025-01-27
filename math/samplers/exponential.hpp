@@ -5,11 +5,9 @@
 #ifndef EXPONENTIAL_H
 #define EXPONENTIAL_H
 
-
 #include <memory>
 #include <random>
 #include "../sampler.h"
-
 
 class exponential : public sampler
 {

@@ -5,7 +5,6 @@
 #ifndef BOUNDED_PARETO_H
 #define BOUNDED_PARETO_H
 
-
 #include <memory>
 #include <random>
 #include "../sampler.h"

@@ -5,12 +5,10 @@
 #ifndef FRECHET_H
 #define FRECHET_H
 
-
 #include <cassert>
 #include <memory>
 #include <random>
 #include "../sampler.h"
-
 
 // Parameters
 //  α ∈ ( 0 , ∞ ) shape.
