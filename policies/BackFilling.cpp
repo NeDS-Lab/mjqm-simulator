@@ -2,22 +2,9 @@
 // Created by mccio on 21/01/25.
 //
 
+#include <iostream>
 #include "BackFilling.h"
 
-#include <iostream>
-
-BackFilling::BackFilling(const int w, const int servers, const int classes, const std::vector<int>& sizes)
-{
-    this->w = w;
-    this->servers = freeservers = servers;
-    this->state_buf.resize(classes);
-    this->state_ser.resize(classes);
-    this->stopped_jobs.resize(classes);
-    this->ongoing_jobs.resize(classes);
-    this->debugMode = false;
-    this->sizes = sizes;
-    this->violations_counter = 0;
-}
 void BackFilling::arrival(int c, int size, long int id)
 {
     std::tuple<int, int, long int> e(c, size, id);
@@ -38,7 +25,7 @@ void BackFilling::departure(int c, int size, long int id)
         {
             it = this->mset.erase(it);
         }
-        it++;
+        ++it;
     }
 
     // std::cout << completion_time.size() << std::endl;
@@ -88,7 +75,7 @@ bool BackFilling::fit_jobs(std::unordered_map<long int, double> holdTime, double
             }
             else
             {
-                it++;
+                ++it;
             }
         }
     }
@@ -98,13 +85,6 @@ bool BackFilling::fit_jobs(std::unordered_map<long int, double> holdTime, double
     }
     return added;
 }
-const std::vector<int>& BackFilling::get_state_ser() { return state_ser; }
-const std::vector<int>& BackFilling::get_state_buf() { return state_buf; }
-const std::vector<std::list<long int>>& BackFilling::get_stopped_jobs() { return stopped_jobs; }
-const std::vector<std::list<long int>>& BackFilling::get_ongoing_jobs() { return ongoing_jobs; }
-int BackFilling::get_free_ser() { return freeservers; }
-int BackFilling::get_window_size() { return 0; }
-int BackFilling::get_violations_counter() { return violations_counter; }
 void BackFilling::insert_completion(int size, double completion) { completion_time[completion] = size; }
 void BackFilling::reset_completion(double simtime)
 {
@@ -115,10 +95,7 @@ void BackFilling::reset_completion(double simtime)
     }
     completion_time = new_completion_time;
 }
-bool BackFilling::prio_big() { return false; }
-int BackFilling::get_state_ser_small() { return -1; }
-BackFilling::~BackFilling() = default;
-double BackFilling::schedule_next()
+double BackFilling::schedule_next() const
 {
     auto next_job = buffer.front();
     int next_job_size = std::get<1>(next_job);

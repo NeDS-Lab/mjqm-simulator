@@ -4,28 +4,31 @@
 
 #ifndef SERVERFILLINGMEM_H
 #define SERVERFILLINGMEM_H
-#include "policy.h"
 
+#include "policy.h"
 
 class ServerFillingMem : public Policy
 {
 public:
-    ServerFillingMem(int w, int servers, int classes);
+    ServerFillingMem(int w, int servers, int classes) :
+        servers(servers), w(w), state_buf(classes), state_ser(classes), stopped_jobs(classes), ongoing_jobs(classes),
+        freeservers(servers), mset_coreNeed(0)
+    {}
     void arrival(int c, int size, long int id) override;
     void departure(int c, int size, long int id) override;
-    const std::vector<int>& get_state_ser() override;
-    const std::vector<int>& get_state_buf() override;
-    const std::vector<std::list<long int>>& get_stopped_jobs() override;
-    const std::vector<std::list<long int>>& get_ongoing_jobs() override;
-    int get_free_ser() override;
-    int get_window_size() override;
-    int get_violations_counter() override;
-    void insert_completion(int size, double completion) override;
-    bool fit_jobs(std::unordered_map<long int, double> holdTime, double simTime) override;
-    bool prio_big() override;
-    int get_state_ser_small() override;
-    void reset_completion(double simtime) override;
-    ~ServerFillingMem() override;
+    const std::vector<int>& get_state_ser() override { return state_ser; }
+    const std::vector<int>& get_state_buf() override { return state_buf; }
+    const std::vector<std::list<long int>>& get_stopped_jobs() override { return stopped_jobs; }
+    const std::vector<std::list<long int>>& get_ongoing_jobs() override { return ongoing_jobs; }
+    int get_free_ser() override { return freeservers; }
+    int get_window_size() override { return mset.size(); }
+    int get_violations_counter() override { return 0; }
+    void insert_completion(int size, double completion) override {}
+    bool fit_jobs(std::unordered_map<long int, double> holdTime, double simTime) override { return false; }
+    bool prio_big() override { return false; }
+    int get_state_ser_small() override { return -1; }
+    void reset_completion(double simtime) override {}
+    ~ServerFillingMem() override = default;
 
 private:
     std::list<std::tuple<int, int, long int>> buffer;
@@ -38,7 +41,6 @@ private:
     int freeservers;
     int servers;
     int w;
-    bool debugMode;
 
     void addToMset(const std::tuple<int, int, long int>& e);
     void printMset();
@@ -47,5 +49,4 @@ private:
 };
 
 
-
-#endif //SERVERFILLINGMEM_H
+#endif // SERVERFILLINGMEM_H

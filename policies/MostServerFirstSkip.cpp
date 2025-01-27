@@ -3,20 +3,7 @@
 //
 
 #include "MostServerFirstSkip.h"
-MostServerFirstSkip::MostServerFirstSkip(int w, int servers, int classes, const std::vector<int>& sizes)
-{
-    this->w = w;
-    this->violations_counter = 0;
-    this->servers = freeservers = servers;
-    this->state_buf.resize(classes);
-    this->state_ser.resize(classes);
-    this->stopped_jobs.resize(classes);
-    this->ongoing_jobs.resize(classes);
-    this->sizes = sizes;
-    this->threshold = sizes[0];
-    this->big_priority = false;
-    this->drops_below = false;
-}
+
 void MostServerFirstSkip::arrival(int c, int size, long int id)
 {
     state_buf[c]++;
@@ -69,16 +56,6 @@ void MostServerFirstSkip::departure(int c, int size, long int id)
         }
     }
 }
-const std::vector<int>& MostServerFirstSkip::get_state_ser() { return state_ser; }
-const std::vector<int>& MostServerFirstSkip::get_state_buf() { return state_buf; }
-const std::vector<std::list<long int>>& MostServerFirstSkip::get_stopped_jobs() { return stopped_jobs; }
-const std::vector<std::list<long int>>& MostServerFirstSkip::get_ongoing_jobs() { return ongoing_jobs; }
-int MostServerFirstSkip::get_free_ser() { return freeservers; }
-int MostServerFirstSkip::get_window_size() { return 0; }
-int MostServerFirstSkip::get_violations_counter() { return violations_counter; }
-void MostServerFirstSkip::insert_completion(int size, double completion) {}
-bool MostServerFirstSkip::fit_jobs(std::unordered_map<long int, double> holdTime, double simTime) { return false; }
-bool MostServerFirstSkip::prio_big() { return big_priority; }
 int MostServerFirstSkip::get_state_ser_small()
 {
     int tot_small_ser = 0;
@@ -88,8 +65,6 @@ int MostServerFirstSkip::get_state_ser_small()
     }
     return tot_small_ser;
 }
-void MostServerFirstSkip::reset_completion(double simtime) {}
-MostServerFirstSkip::~MostServerFirstSkip() {}
 void MostServerFirstSkip::flush_buffer()
 {
 

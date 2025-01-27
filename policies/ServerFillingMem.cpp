@@ -2,20 +2,9 @@
 // Created by mccio on 21/01/25.
 //
 
+#include <iostream>
 #include "ServerFillingMem.h"
 
-#include <iostream>
-ServerFillingMem::ServerFillingMem(int w, int servers, int classes)
-{
-    this->w = w;
-    this->servers = freeservers = servers;
-    this->state_buf.resize(classes);
-    this->state_ser.resize(classes);
-    this->stopped_jobs.resize(classes);
-    this->ongoing_jobs.resize(classes);
-    this->mset_coreNeed = 0;
-    this->debugMode = false;
-}
 void ServerFillingMem::arrival(int c, int size, long int id)
 {
     std::tuple<int, int, long int> e(c, size, id);
@@ -39,7 +28,7 @@ void ServerFillingMem::departure(int c, int size, long int id)
         }
         else
         {
-            it++;
+            ++it;
         }
     }
     // remove departing jobs
@@ -48,19 +37,6 @@ void ServerFillingMem::departure(int c, int size, long int id)
     this->ongoing_jobs.erase(dep_job);*/
     flush_buffer();
 }
-const std::vector<int>& ServerFillingMem::get_state_ser() { return state_ser; }
-const std::vector<int>& ServerFillingMem::get_state_buf() { return state_buf; }
-const std::vector<std::list<long int>>& ServerFillingMem::get_stopped_jobs() { return stopped_jobs; }
-const std::vector<std::list<long int>>& ServerFillingMem::get_ongoing_jobs() { return ongoing_jobs; }
-int ServerFillingMem::get_free_ser() { return freeservers; }
-int ServerFillingMem::get_window_size() { return mset.size(); }
-int ServerFillingMem::get_violations_counter() { return 0; }
-void ServerFillingMem::insert_completion(int size, double completion) {}
-bool ServerFillingMem::fit_jobs(std::unordered_map<long int, double> holdTime, double simTime) { return false; }
-bool ServerFillingMem::prio_big() { return false; }
-int ServerFillingMem::get_state_ser_small() { return -1; }
-void ServerFillingMem::reset_completion(double simtime) {}
-ServerFillingMem::~ServerFillingMem() = default;
 void ServerFillingMem::addToMset(const std::tuple<int, int, long int>& e)
 {
     auto it = mset.begin();

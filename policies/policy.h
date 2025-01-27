@@ -4,6 +4,7 @@
 
 #ifndef INTERFACE_H
 #define INTERFACE_H
+
 #include <list>
 #include <unordered_map>
 #include <vector>
@@ -31,4 +32,4 @@ public:
 
 inline Policy::~Policy() = default;
 
-#endif //INTERFACE_H
+#endif // INTERFACE_H

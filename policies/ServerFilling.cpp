@@ -2,19 +2,9 @@
 // Created by mccio on 21/01/25.
 //
 
+#include <tuple>
 #include "ServerFilling.h"
 
-#include <tuple>
-ServerFilling::ServerFilling(int w, int servers, int classes)
-{
-    this->w = w;
-    this->servers = freeservers = servers;
-    this->state_buf.resize(classes);
-    this->state_ser.resize(classes);
-    this->mset_coreNeed = 0;
-    this->stopped_jobs.resize(classes);
-    this->ongoing_jobs.resize(classes);
-}
 void ServerFilling::arrival(int c, int size, long int id)
 {
     std::tuple<int, int, long int> e(c, size, id);
@@ -37,20 +27,13 @@ void ServerFilling::departure(int c, int size, long int id)
         }
         else
         {
-            it++;
+            ++it;
         }
     }
     // remove departing jobs
     this->ongoing_jobs[std::get<0>(e)].remove(std::get<2>(e));
     flush_buffer();
 }
-int ServerFilling::get_free_ser() { return freeservers; }
-int ServerFilling::get_window_size() { return mset.size(); }
-int ServerFilling::get_violations_counter() { return 0; }
-void ServerFilling::insert_completion(int size, double completion) {}
-bool ServerFilling::prio_big() { return false; }
-int ServerFilling::get_state_ser_small() { return -1; }
-void ServerFilling::reset_completion(double simtime) {}
 void ServerFilling::addToMset(const std::tuple<int, int, long int>& e)
 {
     auto it = mset.begin();

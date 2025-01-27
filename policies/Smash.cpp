@@ -3,16 +3,7 @@
 //
 
 #include "Smash.h"
-Smash::Smash(int w, int servers, int classes)
-{
-    this->w = w;
-    this->violations_counter = 0;
-    this->servers = freeservers = servers;
-    this->state_buf.resize(classes);
-    this->state_ser.resize(classes);
-    this->stopped_jobs.resize(classes);
-    this->ongoing_jobs.resize(classes);
-}
+
 void Smash::arrival(int c, int size, long int id)
 {
     std::tuple<int, int, long int> e(c, size, id);
@@ -26,19 +17,6 @@ void Smash::departure(int c, int size, long int id)
     freeservers += size;
     flush_buffer();
 }
-const std::vector<int>& Smash::get_state_ser() { return state_ser; }
-const std::vector<int>& Smash::get_state_buf() { return state_buf; }
-const std::vector<std::list<long int>>& Smash::get_stopped_jobs() { return stopped_jobs; }
-const std::vector<std::list<long int>>& Smash::get_ongoing_jobs() { return ongoing_jobs; }
-int Smash::get_free_ser() { return freeservers; }
-int Smash::get_window_size() { return 0; }
-int Smash::get_violations_counter() { return violations_counter; }
-void Smash::insert_completion(int size, double completion) {}
-bool Smash::fit_jobs(std::unordered_map<long int, double> holdTime, double simTime) { return false; }
-bool Smash::prio_big() { return false; }
-int Smash::get_state_ser_small() { return -1; }
-void Smash::reset_completion(double simtime) {}
-Smash::~Smash() {}
 void Smash::flush_buffer()
 {
     ongoing_jobs.clear();
@@ -58,8 +36,8 @@ void Smash::flush_buffer()
             {
                 max = it;
             }
-            i++;
-            it++;
+            ++i;
+            ++it;
         }
 
         if (max != buffer.end())

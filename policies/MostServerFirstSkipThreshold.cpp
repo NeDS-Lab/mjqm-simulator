@@ -3,21 +3,7 @@
 //
 
 #include "MostServerFirstSkipThreshold.h"
-MostServerFirstSkipThreshold::MostServerFirstSkipThreshold(int w, int servers, int classes,
-                                                           const std::vector<int>& sizes, double arr_s, double srv_s)
-{
-    this->w = w;
-    this->violations_counter = 0;
-    this->servers = freeservers = servers;
-    this->state_buf.resize(classes);
-    this->state_ser.resize(classes);
-    this->stopped_jobs.resize(classes);
-    this->ongoing_jobs.resize(classes);
-    this->sizes = sizes;
-    this->threshold = servers - static_cast<int>(sizes[0] * (arr_s / srv_s));
-    this->big_priority = false;
-    this->drops_below = false;
-}
+
 void MostServerFirstSkipThreshold::arrival(int c, int size, long int id)
 {
     state_buf[c]++;
@@ -70,19 +56,6 @@ void MostServerFirstSkipThreshold::departure(int c, int size, long int id)
         }
     }
 }
-const std::vector<int>& MostServerFirstSkipThreshold::get_state_ser() { return state_ser; }
-const std::vector<int>& MostServerFirstSkipThreshold::get_state_buf() { return state_buf; }
-const std::vector<std::list<long int>>& MostServerFirstSkipThreshold::get_stopped_jobs() { return stopped_jobs; }
-const std::vector<std::list<long int>>& MostServerFirstSkipThreshold::get_ongoing_jobs() { return ongoing_jobs; }
-int MostServerFirstSkipThreshold::get_free_ser() { return freeservers; }
-int MostServerFirstSkipThreshold::get_window_size() { return 0; }
-int MostServerFirstSkipThreshold::get_violations_counter() { return violations_counter; }
-void MostServerFirstSkipThreshold::insert_completion(int size, double completion) {}
-bool MostServerFirstSkipThreshold::fit_jobs(std::unordered_map<long int, double> holdTime, double simTime)
-{
-    return false;
-}
-bool MostServerFirstSkipThreshold::prio_big() { return big_priority; }
 int MostServerFirstSkipThreshold::get_state_ser_small()
 {
     int tot_small_ser = 0;
@@ -92,8 +65,6 @@ int MostServerFirstSkipThreshold::get_state_ser_small()
     }
     return tot_small_ser;
 }
-void MostServerFirstSkipThreshold::reset_completion(double simtime) {}
-MostServerFirstSkipThreshold::~MostServerFirstSkipThreshold() {}
 void MostServerFirstSkipThreshold::flush_buffer()
 {
 
