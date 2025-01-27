@@ -4,6 +4,7 @@ CXX ?= g++
 CXXFLAGS ?= -std=c++20 -pipe -m64 -O3
 
 srcfiles := $(shell find . -mindepth 2 -name "*.cpp" && find . -maxdepth 1 -name "$(appname).cpp")
+hdrfiles := $(shell find . -mindepth 2 -name "*.hpp" -or -name "*.h")
 objects  := $(patsubst %.cpp, %.o, $(srcfiles))
 app_sources := $(shell find . -maxdepth 1 -name "*.cpp" | sort)
 app_objects := $(patsubst %.cpp, %.o, $(app_sources))
@@ -12,6 +13,7 @@ app_names := $(patsubst ./%.cpp, %, $(app_sources))
 .PHONY: list build depend help run dist-clean clean clean-all depends-all all
 
 build: $(appname)
+	strip -s $(appname)
 
 list:
 	@echo available: $(app_names)
@@ -52,13 +54,13 @@ $(appname): depend $(objects)
 
 depend: .depends-$(appname)
 
-.depends-$(appname): $(srcfiles)
+.depends-$(appname): $(srcfiles) $(hdrfiles)
 	@rm -f .depends-$(appname)
 	$(CXX) $(CXXFLAGS) -MM $^>>./.depends-$(appname);
 
 -include .depends-$(appname)
 
-dist-clean: clean
+dist-clean:
 	rm -f *~ .depends-*
 
 clean:
