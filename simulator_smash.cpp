@@ -230,7 +230,7 @@ public:
         phase_three_duration = 0;
     }
 
-    void collect_run_statistics(double tot_seq_len, double seq_amount, std::chrono::system_clock::time_point& start)
+    void collect_run_statistics(double tot_seq_len, double seq_amount)
     {
         double avg_seq_len = (tot_seq_len * 1.0) / seq_amount;
 
@@ -359,12 +359,8 @@ public:
         // rep_big_sequences.push_back(avg_seq_len);
         // rep_seq_amount.push_back(seq_amount);
         // rep_seq_max_len.push_back(max_seq_len);
-
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
-
-        rep_timings.push_back(duration);
     }
+
     void simulate(unsigned long nevents, unsigned int repetitions = 1)
     {
         rep_th.clear();
@@ -450,20 +446,20 @@ public:
 
         headers.push_back("Simtime");
 
-        remove(logfile_name.c_str());
-        std::ofstream outputFile(logfile_name, std::ios::app);
-
-
-        if (outputFile.tellp() == 0)
         {
-            // Write the headers to the CSV file
-            for (const std::string& header : headers)
+            remove(logfile_name.c_str());
+            std::ofstream outputFile(logfile_name, std::ios::app);
+            if (outputFile.tellp() == 0)
             {
-                outputFile << header << ";";
+                // Write the headers to the CSV file
+                for (const std::string& header : headers)
+                {
+                    outputFile << header << ";";
+                }
+                outputFile << "\n";
             }
-            outputFile << "\n";
+            outputFile.close();
         }
-        outputFile.close();
 
         for (int rep = 0; rep < repetitions; rep++)
         {
@@ -480,12 +476,10 @@ public:
 
             auto start = std::chrono::high_resolution_clock::now();
             reset_statistics();
-            auto last_dep = std::chrono::steady_clock::now();
 
             for (unsigned long int k = 0; k < nevents; k++)
             {
-                int big_state;
-                auto itmin = std::min_element(fel.begin(), fel.end());
+                auto itmin = std::ranges::min_element(fel);
                 // std::cout << *itmin << std::endl;
                 int pos = static_cast<int>(itmin - fel.begin());
                 // std::cout << pos << std::endl;
@@ -493,7 +487,6 @@ public:
                 // std::cout << "collect" << std::endl;
                 if (pos < nclasses)
                 { // departure
-                    last_dep = std::chrono::steady_clock::now();
                     if (this->w == -2 || this->sampling_method != 10)
                     {
                         jobs_inservice[pos].erase(
@@ -589,7 +582,11 @@ public:
                 }*/
             }
 
-            collect_run_statistics(tot_seq_len, seq_amount, start);
+            collect_run_statistics(tot_seq_len, seq_amount);
+
+            auto end = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
+            rep_timings.push_back(duration);
 
             std::cout << "Repetition " << std::to_string(rep) << " Done" << std::endl;
             // this->reset_data();
@@ -795,7 +792,6 @@ private:
         { // special blocks for serverFilling (memoryful)
             auto stopped_jobs = policy->get_stopped_jobs();
             auto ongoing_jobs = policy->get_ongoing_jobs();
-            bool stopped;
             for (int i = 0; i < nclasses; i++)
             {
                 if (fel[i + nclasses] <= simtime)
