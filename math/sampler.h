@@ -12,6 +12,8 @@ public:
     typedef double result_type; // for mirroring how std usually does it
     virtual double sample() = 0;
     virtual ~sampler() = default;
+
+    explicit virtual operator std::string() const = 0;
 };
 
 

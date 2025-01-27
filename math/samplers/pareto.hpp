@@ -15,10 +15,11 @@ class pareto : public exponential
 {
 public:
     explicit pareto(std::shared_ptr<std::mt19937_64> generator, double alpha, double xm) :
-        exponential(std::move(generator), 1 / alpha), xm(xm)
+        exponential(std::move(generator), 1 / alpha), alpha(alpha), xm(xm)
     {}
 
 private:
+    double alpha;
     double xm;
 
 public:
@@ -33,6 +34,11 @@ public:
                                               double alpha)
     {
         return std::make_unique<pareto>(std::move(generator), alpha, (alpha - 1) / alpha * mean);
+    }
+
+    explicit operator std::string() const override
+    {
+        return "pareto (alpha=" + std::to_string(alpha) + " ; x_m=" + std::to_string(xm) + ")";
     }
 };
 

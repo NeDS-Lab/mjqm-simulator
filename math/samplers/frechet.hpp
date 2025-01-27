@@ -46,10 +46,16 @@ private:
 public:
     double sample() override { return s * pow(-log(random_uniform(*generator)), exponent); }
 
-    static std::unique_ptr<sampler> with_mean(const std::shared_ptr<std::mt19937_64>& generator, double mean, double alpha,
-                             double m = 0.)
+    static std::unique_ptr<sampler> with_mean(const std::shared_ptr<std::mt19937_64>& generator, double mean,
+                                              double alpha, double m = 0.)
     {
         return std::make_unique<frechet>(std::move(generator), alpha, (mean - m) / std::tgamma(1 - 1 / alpha), m);
+    }
+
+    explicit operator std::string() const override
+    {
+        return "frechet (alpha=" + std::to_string(alpha) + " ; s=" + std::to_string(s) + " ; m=" + std::to_string(m) +
+            " => mean=" + std::to_string(mean) + " ; variance=" + std::to_string(variance) + ")";
     }
 };
 

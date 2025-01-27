@@ -13,8 +13,8 @@
 class uniform : public sampler
 {
 public:
-    explicit uniform(std::shared_ptr<std::mt19937_64> generator, double mu) :
-        distribution(0.5 * mu, 1.5 * mu), generator(std::move(generator))
+    explicit uniform(std::shared_ptr<std::mt19937_64> generator, double mean) :
+        distribution(0.5 * mean, 1.5 * mean), generator(std::move(generator))
     {}
 
 private:
@@ -23,13 +23,15 @@ private:
 
 public:
     double sample() override { return distribution(*generator); }
-    static std::unique_ptr<sampler> with_rate(const std::shared_ptr<std::mt19937_64>& generator, double rate)
-    {
-        return with_mean(generator, 1 / rate);
-    }
     static std::unique_ptr<sampler> with_mean(const std::shared_ptr<std::mt19937_64>& generator, double mean)
     {
         return std::make_unique<uniform>(std::move(generator), mean);
+    }
+
+    explicit operator std::string() const override
+    {
+        return "uniform (range [" + std::to_string(distribution.a()) + ", " + std::to_string(distribution.b()) +
+            ") => mean=" + std::to_string((distribution.a() + distribution.b()) / 2. ) + " variance=1)";;
     }
 };
 

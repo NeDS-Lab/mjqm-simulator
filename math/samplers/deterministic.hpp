@@ -22,6 +22,8 @@ public:
     double sample() override { return mean; }
 
     static std::unique_ptr<sampler> with_mean(double mean) { return std::make_unique<deterministic>(mean); }
+
+    explicit operator std::string() const override { return "deterministic (mean=" + std::to_string(mean) + " => variance=0)"; }
 };
 
 #endif // DETERMINISTIC_H

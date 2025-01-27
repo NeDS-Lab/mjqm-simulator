@@ -102,39 +102,41 @@ void read_lambdas(const std::string& filename, std::vector<double>& values)
 }
 
 
-void from_argv(char** argv, std::vector<double> p, std::vector<int> sizes, std::vector<double> mus,
-               std::vector<double> arr_rate, std::vector<std::string>& headers, std::string& cell, int& n, int& w,
+void from_argv(char** argv, std::vector<double>& p, std::vector<int>& sizes, std::vector<double>& mus,
+               std::vector<double>& arr_rate, std::vector<std::string>& headers, std::string& cell, int& n, int& w,
                int& sampling_method, std::string& type, int& n_evs, int& n_runs,
                std::vector<std::string>& sampling_name, std::string& out_filename)
 {
-    cell = "cell" + std::string(argv[1]);
+    cell = std::string(argv[1]);
     n = std::stoi(argv[2]);
     w = std::stoi(argv[3]);
-    std::unordered_map<std::string, int> sampling_input = {{"exp", 0}, {"par", 1},  {"det", 2},
-                                                           {"uni", 3}, {"bpar", 4}, {"fre", 5}};
-    sampling_method = sampling_input[argv[4]];
-    type = std::string(argv[5]);
-    n_evs = std::stoi(argv[6]);
-    n_runs = std::stoi(argv[7]);
+    std::unordered_map<std::string,int> sampling_input =
+    {
+        {"exp", 0},
+        {"par", 1},
+        {"det", 2},
+        {"uni", 3},
+        {"bpar", 4},
+        {"fre", 5}
+    };
+    sampling_method = sampling_input[argv[4]]; //0->exp, 1->par, 2->det, 3->uni, 4->bpar
+    n_evs = std::stoi(argv[5]);
+    n_runs = std::stoi(argv[6]);
 
     sampling_name = {"Exponential", "Pareto", "Deterministic", "Uniform", "BoundedPareto", "Frechet"};
 
-    std::cout << "*** Processing - Cell: " << argv[1] << " - N: " << std::to_string(n)
-              << " - Policy: " << std::to_string(w) << " - Type: " << type
-              << " - Sampling: " << sampling_name[sampling_method] << " ***" << std::endl;
+    std::cout << "*** Processing - ID: " << argv[1] << " - N: " << std::to_string(n) << " - Policy: " << std::to_string(w) << " - Sampling: " << sampling_name[sampling_method] << " ***" << std::endl;
 
     headers = {"Arrival Rate"};
 
-    std::string classes_filename = "Inputs/" + type + "_N" + std::to_string(n) + "_0.6.txt";
+    std::string classes_filename = "Inputs/" + cell + ".txt";
     std::cout << classes_filename << std::endl;
     read_classes(classes_filename, p, sizes, mus);
-    std::string lambdas_filename =
-        "Inputs/arrRate_" + type + "_N" + std::to_string(n) + "_0.6_W" + std::to_string(w) + ".txt";
+    std::string lambdas_filename = "Inputs/arrRate_" + cell + ".txt";
     std::cout << lambdas_filename << std::endl;
     read_lambdas(lambdas_filename, arr_rate);
 
-    out_filename = "Results/varianceOverLambdas-nClasses" + std::to_string(sizes.size()) + "-N" + std::to_string(n) +
-        "-Win" + std::to_string(w) + "-" + sampling_name[sampling_method] + "-" + cell + "-" + type + ".csv";
+    out_filename = "Results/overLambdas-nClasses" + std::to_string(sizes.size()) + "-N" + std::to_string(n) + "-Win" + std::to_string(w) + "-" + sampling_name[sampling_method] + "-" + cell + ".csv";
 }
 
 #endif // LOADER_H

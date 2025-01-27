@@ -39,13 +39,21 @@ public:
         return pow(-frac, -1 / alpha);
     }
 
-    static std::unique_ptr<sampler> with_rate(const std::shared_ptr<std::mt19937_64>& generator, double rate, double alpha)
+    static std::unique_ptr<sampler> with_rate(const std::shared_ptr<std::mt19937_64>& generator, double rate,
+                                              double alpha)
     {
         return std::make_unique<bounded_pareto>(std::move(generator), alpha, (12000.0 / 23999.0) / rate, 12000 / rate);
     }
-    static std::unique_ptr<sampler> with_mean(const std::shared_ptr<std::mt19937_64>& generator, double mean, double alpha)
+    static std::unique_ptr<sampler> with_mean(const std::shared_ptr<std::mt19937_64>& generator, double mean,
+                                              double alpha)
     {
         return std::make_unique<bounded_pareto>(std::move(generator), alpha, (12000.0 / 23999.0) * mean, 12000 * mean);
+    }
+
+    explicit operator std::string() const override
+    {
+        return "bounded pareto (alpha=" + std::to_string(alpha) + " ; l=" + std::to_string(l) +
+            " ; h=" + std::to_string(h) + ")";
     }
 };
 
