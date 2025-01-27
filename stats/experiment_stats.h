@@ -9,7 +9,6 @@
 #include <vector>
 #include "../math/confidence_intervals.h"
 
-
 struct ExperimentStats
 {
     std::vector<Confidence_inter> occupancy_buf; // out: occupancy buffer per class

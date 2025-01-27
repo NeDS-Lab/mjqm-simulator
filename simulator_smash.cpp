@@ -33,7 +33,7 @@ class Simulator
 {
 public:
     Simulator(const std::vector<double>& l, const std::vector<double>& u, const std::vector<int>& sizes, int w,
-              int servers, int sampling_method, std::string logfile_name) : ru(0.0, 1.0)
+              int servers, int sampling_method, std::string logfile_name)
     {
         this->l = l;
         this->u = u;
@@ -57,32 +57,32 @@ public:
 
         if (w == 0)
         {
-            this->policy = new MostServerFirst(w, servers, static_cast<int>(sizes.size()), sizes);
+            this->policy = new MostServerFirst(w, servers, nclasses, sizes);
         }
         else if (w == -1)
         {
-            this->policy = new ServerFilling(w, servers, static_cast<int>(sizes.size()));
+            this->policy = new ServerFilling(w, servers, nclasses);
         }
         else if (w == -2)
         {
-            this->policy = new ServerFillingMem(w, servers, static_cast<int>(sizes.size()));
+            this->policy = new ServerFillingMem(w, servers, nclasses);
         }
         else if (w == -3)
         {
-            this->policy = new BackFilling(w, servers, static_cast<int>(sizes.size()), sizes);
+            this->policy = new BackFilling(w, servers, nclasses, sizes);
         }
         else if (w == -4)
         {
-            this->policy = new MostServerFirstSkip(w, servers, static_cast<int>(sizes.size()), sizes);
+            this->policy = new MostServerFirstSkip(w, servers, nclasses, sizes);
         }
         else if (w == -5)
         {
             this->policy =
-                new MostServerFirstSkipThreshold(w, servers, static_cast<int>(sizes.size()), sizes, l[0], 1 / u[0]);
+                new MostServerFirstSkipThreshold(w, servers, nclasses, sizes, l[0], 1 / u[0]);
         }
         else
         {
-            this->policy = new Smash(w, servers, static_cast<int>(sizes.size()));
+            this->policy = new Smash(w, servers, nclasses);
         }
 
         occupancy_buf.resize(sizes.size());
@@ -481,7 +481,7 @@ public:
             {
                 auto itmin = std::ranges::min_element(fel);
                 // std::cout << *itmin << std::endl;
-                int pos = static_cast<int>(itmin - fel.begin());
+                int pos = std::distance(fel.begin(), itmin);
                 // std::cout << pos << std::endl;
                 collect_statistics(pos);
                 // std::cout << "collect" << std::endl;
@@ -776,7 +776,7 @@ private:
     std::string logfile_name;
 
     std::shared_ptr<std::mt19937_64> generator;
-    std::uniform_real_distribution<double> ru;
+    std::uniform_real_distribution<double> ru{0., 1.};
 
     int sampling_method;
 
@@ -801,7 +801,7 @@ private:
 
                 for (auto job_id = stopped_jobs[i].begin(); job_id != stopped_jobs[i].end(); ++job_id)
                 {
-                    if (jobs_inservice[i].find(*job_id) != jobs_inservice[i].end())
+                    if (jobs_inservice[i].contains(*job_id))
                     { // If they are currently being served: stop them
                         jobs_preempted[i][*job_id] =
                             jobs_inservice[i][*job_id] - simtime; // Save the remaining service time
@@ -815,9 +815,9 @@ private:
                 double fastest_job_fel = std::numeric_limits<double>::infinity();
                 for (auto job_id = ongoing_jobs[i].begin(); job_id != ongoing_jobs[i].end(); ++job_id)
                 {
-                    if (jobs_inservice[i].find(*job_id) == jobs_inservice[i].end())
+                    if (!jobs_inservice[i].contains(*job_id))
                     { // If they are NOT already in service
-                        if (jobs_preempted[i].find(*job_id) != jobs_preempted[i].end())
+                        if (jobs_preempted[i].contains(*job_id))
                         { // See if they were preempted: resume them
                             jobs_inservice[i][*job_id] = jobs_preempted[i][*job_id] + simtime;
                             jobs_preempted[i].erase(*job_id);
@@ -1095,6 +1095,10 @@ private:
                 {
                     fel[i] = sample_exp((1 / u[i]) * policy->get_state_ser()[i]) + simtime;
                     // fel[i] = sample_st((1/u[i])*policy->get_state_ser()[i]) + simtime;
+                    // this can be written in a more static format as
+                    // ___exponential::with_mean(u[i])___.sample()/policy->get_state_ser()[i] + simtime;
+                    // but it needs to be understood who is the owner of the sampler
+                    // and whether it should statically be exponential or not
                 }
                 else
                 {
