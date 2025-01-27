@@ -24,10 +24,9 @@
 #include "math/confidence_intervals.h"
 #include "math/samplers.h"
 #include "policies/policies.h"
-#include "stats/stats.h"
 #include "settings/experiment.hpp"
 #include "settings/loader.hpp"
-#include "settings/toml_loader.hpp"
+#include "stats/stats.h"
 
 
 class Simulator
@@ -146,10 +145,7 @@ public:
         }
     }
 
-    ~Simulator()
-    {
-        delete policy;
-    }
+    ~Simulator() { delete policy; }
 
     void reset_simulation()
     {
@@ -234,7 +230,7 @@ public:
         phase_three_duration = 0;
     }
 
-    void collect_run_statistics(double tot_seq_len, double seq_amount, std::chrono::system_clock::time_point start)
+    void collect_run_statistics(double tot_seq_len, double seq_amount, std::chrono::system_clock::time_point& start)
     {
         double avg_seq_len = (tot_seq_len * 1.0) / seq_amount;
 
@@ -645,42 +641,42 @@ public:
             outFree.close();*/
     }
 
-    void produce_statistics(ExperimentStats* stats, const double confidence = 0.05)
+    void produce_statistics(ExperimentStats& stats, const double confidence = 0.05) const
     {
         for (int i = 0; i < nclasses; i++)
         {
-            stats->occupancy_buf.push_back(compute_interval_class_student(rep_occupancy_buf, i, confidence));
-            stats->occupancy_ser.push_back(compute_interval_class_student(rep_occupancy_ser, i, confidence));
-            stats->throughput.push_back(compute_interval_class_student(rep_th, i, confidence));
-            stats->wait_time.push_back(compute_interval_class_student(rep_wait, i, confidence));
-            stats->wait_time_var.push_back(compute_interval_class_student(rep_wait_var, i, confidence));
-            stats->resp_time.push_back(compute_interval_class_student(rep_resp, i, confidence));
-            stats->resp_time_var.push_back(compute_interval_class_student(rep_resp_var, i, confidence));
-            stats->preemption_avg.push_back(compute_interval_class_student(rep_preemption, i, confidence));
+            stats.occupancy_buf.push_back(compute_interval_class_student(rep_occupancy_buf, i, confidence));
+            stats.occupancy_ser.push_back(compute_interval_class_student(rep_occupancy_ser, i, confidence));
+            stats.throughput.push_back(compute_interval_class_student(rep_th, i, confidence));
+            stats.wait_time.push_back(compute_interval_class_student(rep_wait, i, confidence));
+            stats.wait_time_var.push_back(compute_interval_class_student(rep_wait_var, i, confidence));
+            stats.resp_time.push_back(compute_interval_class_student(rep_resp, i, confidence));
+            stats.resp_time_var.push_back(compute_interval_class_student(rep_resp_var, i, confidence));
+            stats.preemption_avg.push_back(compute_interval_class_student(rep_preemption, i, confidence));
 
-            if (1.0 - stats->throughput[stats->throughput.size() - 1].mean / l[i] > 0.05)
-                stats->warnings.push_back(true);
+            if (1.0 - stats.throughput[stats.throughput.size() - 1].mean / l[i] > 0.05)
+                stats.warnings.push_back(true);
             else
-                stats->warnings.push_back(false);
+                stats.warnings.push_back(false);
         }
-        stats->wasted = compute_interval_student(rep_waste, confidence);
-        stats->violations = compute_interval_student(rep_viol, confidence);
-        stats->utilisation = compute_interval_student(rep_util, confidence);
-        stats->occupancy_tot = compute_interval_student(rep_tot_buf, confidence);
-        stats->wait_tot = compute_interval_student(rep_tot_wait, confidence);
-        stats->wait_var_tot = compute_interval_student(rep_tot_wait_var, confidence);
-        stats->resp_tot = compute_interval_student(rep_tot_resp, confidence);
-        stats->resp_var_tot = compute_interval_student(rep_tot_resp_var, confidence);
-        stats->timings_tot = compute_interval_student(rep_timings, confidence);
-        stats->big_seq_avg_len = compute_interval_student(rep_big_seq_avg_len, confidence);
-        stats->small_seq_avg_len = compute_interval_student(rep_small_seq_avg_len, confidence);
-        stats->big_seq_avg_dur = compute_interval_student(rep_big_seq_avg_dur, confidence);
-        stats->small_seq_avg_dur = compute_interval_student(rep_small_seq_avg_dur, confidence);
-        stats->big_seq_amount = compute_interval_student(rep_big_seq_amount, confidence);
-        stats->small_seq_amount = compute_interval_student(rep_small_seq_amount, confidence);
-        stats->phase_two_dur = compute_interval_student(rep_phase_two_duration, confidence);
-        stats->phase_three_dur = compute_interval_student(rep_phase_three_duration, confidence);
-        stats->window_size = compute_interval_student(rep_window_size, confidence);
+        stats.wasted = compute_interval_student(rep_waste, confidence);
+        stats.violations = compute_interval_student(rep_viol, confidence);
+        stats.utilisation = compute_interval_student(rep_util, confidence);
+        stats.occupancy_tot = compute_interval_student(rep_tot_buf, confidence);
+        stats.wait_tot = compute_interval_student(rep_tot_wait, confidence);
+        stats.wait_var_tot = compute_interval_student(rep_tot_wait_var, confidence);
+        stats.resp_tot = compute_interval_student(rep_tot_resp, confidence);
+        stats.resp_var_tot = compute_interval_student(rep_tot_resp_var, confidence);
+        stats.timings_tot = compute_interval_student(rep_timings, confidence);
+        stats.big_seq_avg_len = compute_interval_student(rep_big_seq_avg_len, confidence);
+        stats.small_seq_avg_len = compute_interval_student(rep_small_seq_avg_len, confidence);
+        stats.big_seq_avg_dur = compute_interval_student(rep_big_seq_avg_dur, confidence);
+        stats.small_seq_avg_dur = compute_interval_student(rep_small_seq_avg_dur, confidence);
+        stats.big_seq_amount = compute_interval_student(rep_big_seq_amount, confidence);
+        stats.small_seq_amount = compute_interval_student(rep_small_seq_amount, confidence);
+        stats.phase_two_dur = compute_interval_student(rep_phase_two_duration, confidence);
+        stats.phase_three_dur = compute_interval_student(rep_phase_three_duration, confidence);
+        stats.window_size = compute_interval_student(rep_window_size, confidence);
     }
 
 
@@ -1138,7 +1134,7 @@ private:
 };
 
 void run_simulation(Experiment e, unsigned long events, unsigned int repetitions,
-                    ExperimentStats* stats // out
+                    ExperimentStats& stats // out
 )
 {
     Simulator sim(e.l, e.u, e.s, e.w, e.n, e.sm, e.logf);
@@ -1155,7 +1151,6 @@ int main(int argc, char* argv[])
     std::vector<double> p;
     std::vector<int> sizes;
     std::vector<double> mus;
-    std::vector<double> l;
     std::vector<double> arr_rate;
     std::vector<std::string> headers;
     std::vector<double> input_utils;
@@ -1177,14 +1172,14 @@ int main(int argc, char* argv[])
 
     for (int i = 0; i < arr_rate.size(); i++)
     {
-        l.clear();
+        std::vector<double> l;
         for (auto x : p)
         {
             l.push_back(x * arr_rate[i]);
         }
         std::string logfile_name = "Results/logfile-nClasses" + std::to_string(sizes.size()) + "-N" +
             std::to_string(n) + "-Win" + std::to_string(w) + "-" + sampling_name[sampling_method] + "-" + cell + "-" +
-            type + "-lambda" + std::to_string(arr_rate[i]) + ".csv";
+            "-lambda" + std::to_string(arr_rate[i]) + ".csv";
         ex.push_back(Experiment{l, mus, sizes, w, n, sampling_method, logfile_name});
     }
 
@@ -1194,7 +1189,7 @@ int main(int argc, char* argv[])
 
     for (int i = 0; i < ex.size(); i++)
     {
-        threads[i] = std::thread(run_simulation, ex[i], n_evs, n_runs, &experiments_stats[i]);
+        threads[i] = std::thread(run_simulation, ex[i], n_evs, n_runs, std::ref(experiments_stats[i]));
     }
     for (int i = 0; i < ex.size(); i++)
     {
@@ -1216,7 +1211,7 @@ int main(int argc, char* argv[])
     {
 
         outputFile << arr_rate[i] << ";";
-        outputFile << experiments_stats.at(i) << "\n";
+        outputFile << experiments_stats[i] << "\n";
     }
 
     // Close the file

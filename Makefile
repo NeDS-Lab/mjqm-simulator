@@ -13,15 +13,15 @@ app_names := $(patsubst ./%.cpp, %, $(app_sources))
 .PHONY: list build depend help run dist-clean clean clean-all depends-all all
 
 build: $(appname)
-	strip -s $(appname)
+	#strip -s $(appname)
 
 list:
 	@echo available: $(app_names)
 	@echo current: $(appname)
 
-run: $(appname)
+run: build
 	@mkdir -p Results
-	@./$(appname) ${ARGS}
+	./$(appname) ${ARGS}
 
 help:
 	@echo "Usage: make [target]"
