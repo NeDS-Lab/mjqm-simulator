@@ -16,7 +16,6 @@
 #include <map>
 #include <pthread.h>
 #include <random>
-#include <sstream>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -26,19 +25,9 @@
 #include "math/samplers.h"
 #include "policies/policies.h"
 #include "stats/stats.h"
-#include "toml++/toml.hpp"
-
-
-struct Experiment
-{
-    std::vector<double> l;
-    std::vector<double> u;
-    std::vector<int> s;
-    int w;
-    int n;
-    int sm;
-    std::string logf;
-};
+#include "settings/experiment.hpp"
+#include "settings/loader.hpp"
+#include "settings/toml_loader.hpp"
 
 
 class Simulator
@@ -1148,96 +1137,6 @@ private:
     }
 };
 
-void read_classes(std::string filename, std::vector<double>& p, std::vector<int>& sizes, std::vector<double>& mus)
-{
-    std::vector<std::vector<std::string>> content;
-    std::vector<std::string> row;
-    std::string line, word;
-    std::fstream file(filename, std::ios::in);
-
-    if (!file.is_open())
-    {
-        std::cerr << "Error: Unable to open file " << filename << std::endl;
-        return;
-    }
-
-    while (getline(file, line))
-    {
-        row.clear();
-
-        std::stringstream str(line);
-
-        while (getline(str, word, ','))
-            row.push_back(word);
-        content.push_back(row);
-    }
-
-
-    for (int i = 0; i < content.size(); i++)
-    {
-        content[i][0].erase(content[i][0].begin());
-        content[i][2].pop_back();
-
-        sizes.push_back(std::stoi(content[i][0]));
-        p.push_back(std::stod(content[i][1]));
-        mus.push_back(std::stod(content[i][2]));
-    }
-
-    double sum = 0.0;
-    for (auto x : p)
-        sum += x;
-
-    for (auto& x : p)
-        x /= sum;
-}
-
-void read_lambdas(const std::string& filename, std::vector<double>& values)
-{
-    // Open the file
-    std::ifstream file(filename, std::ios::in);
-
-    if (!file.is_open())
-    {
-        std::cerr << "Error: Unable to open file " << filename << std::endl;
-        return;
-    }
-
-    std::string line;
-    std::string content;
-
-    // Read the file line by line
-    while (std::getline(file, line))
-    {
-        content += line;
-    }
-
-    // Close the file
-    file.close();
-
-    // Find the opening and closing square brackets
-    size_t start = content.find('[');
-    size_t end = content.find(']');
-
-    if (start != std::string::npos && end != std::string::npos)
-    {
-        // Extract the content within square brackets
-        content = content.substr(start + 1, end - start - 1);
-
-        // Parse the content to extract double values
-        std::istringstream iss(content);
-        std::string token;
-        while (std::getline(iss, token, ','))
-        {
-            values.push_back(std::stod(token)); // Convert the token to a double
-        }
-    }
-    else
-    {
-        std::cerr << "No valid double values enclosed in square brackets found in the file." << std::endl;
-    }
-}
-
-
 void run_simulation(Experiment e, unsigned long events, unsigned int repetitions,
                     ExperimentStats* stats // out
 )
@@ -1261,37 +1160,17 @@ int main(int argc, char* argv[])
     std::vector<std::string> headers;
     std::vector<double> input_utils;
 
-    std::string cell = "cell" + std::string(argv[1]);
-    int n = std::stoi(argv[2]);
-    int w = std::stoi(argv[3]);
-    std::unordered_map<std::string, int> sampling_input = {{"exp", 0}, {"par", 1},  {"det", 2},
-                                                           {"uni", 3}, {"bpar", 4}, {"fre", 5}};
-    int sampling_method = sampling_input[argv[4]]; // 0->exp, 1->par, 2->det, 3->uni, 4->bpar
-    // std::string type = std::string(argv[5])+"_"+std::to_string(n);
-    std::string type = std::string(argv[5]);
-    int n_evs = std::stoi(argv[6]);
-    int n_runs = std::stoi(argv[7]);
-
-    std::vector<std::string> sampling_name = {"Exponential", "Pareto",        "Deterministic",
-                                              "Uniform",     "BoundedPareto", "Frechet"};
-
-    std::cout << "*** Processing - Cell: " << argv[1] << " - N: " << std::to_string(n)
-              << " - Policy: " << std::to_string(w) << " - Type: " << type
-              << " - Sampling: " << sampling_name[sampling_method] << " ***" << std::endl;
-
-    headers = {"Arrival Rate"};
-
-    std::string classes_filename = "Inputs/" + type + "_N" + std::to_string(n) + "_0.6.txt";
-    std::cout << classes_filename << std::endl;
-    read_classes(classes_filename, p, sizes, mus);
-    std::string lambdas_filename =
-        "Inputs/arrRate_" + type + "_N" + std::to_string(n) + "_0.6_W" + std::to_string(w) + ".txt";
-    std::cout << lambdas_filename << std::endl;
-    read_lambdas(lambdas_filename, arr_rate);
-
-    std::string out_filename = "Results/varianceOverLambdas-nClasses" + std::to_string(sizes.size()) + "-N" +
-        std::to_string(n) + "-Win" + std::to_string(w) + "-" + sampling_name[sampling_method] + "-" + cell + "-" +
-        type + ".csv";
+    std::string cell;
+    int n;
+    int w;
+    int sampling_method;
+    std::string type;
+    int n_evs;
+    int n_runs;
+    std::vector<std::string> sampling_name;
+    std::string out_filename;
+    from_argv(argv, p, sizes, mus, arr_rate, headers, cell, n, w, sampling_method, type, n_evs, n_runs, sampling_name,
+              out_filename);
     std::ofstream outputFile(out_filename, std::ios::app);
     std::vector<Experiment> ex;
 
