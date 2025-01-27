@@ -1,7 +1,7 @@
 appname ?= simulator_smash
 
 CXX ?= g++
-CXXFLAGS ?= -std=c++20 -pipe -m64 -O3
+CXXFLAGS ?= -std=c++20 -pipe -m64 -Ofast
 
 srcfiles := $(shell find . -mindepth 2 -name "*.cpp" && find . -maxdepth 1 -name "$(appname).cpp")
 hdrfiles := $(shell find . -mindepth 2 -name "*.hpp" -or -name "*.h")
