@@ -51,10 +51,7 @@ def compare_results(data1, data2):
             if not math.isclose(curr, prev, rel_tol=1e-3):
                 if column == 'Run Duration':
                     if curr < prev:
-                        if curr == 0:
-                            duration_diff = f'Speedup: {prev}/0'
-                        else:
-                            duration_diff = f'Speedup: {(1 - curr / prev) * 100:.2f}%'
+                        duration_diff = f' Speedup: {(1 - curr / prev) * 100:.2f}%'
                     else:
                         duration_diff = f'Slowdown: {(curr / prev - 1) * 100:.2f}%'
                     continue
@@ -62,6 +59,7 @@ def compare_results(data1, data2):
                     print(f'{columns2[0]}: {key}')
                     key_header = True
                 print(f'\t{column}:')
+                print(f'\t\tdivergence: {((curr/prev)-1)*100:+.2f}%')
                 if "Stability Check" not in column:
                     print(f'\t\tcurr: {data1[key][column]} {data1[key][column + " ConfInt"]}')
                     print(f'\t\tprev: {data2[key][column]} {data2[key][column + " ConfInt"]}')

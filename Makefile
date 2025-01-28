@@ -13,6 +13,15 @@ app_sources := $(shell find . -maxdepth 1 -name "*.cpp" | sort)
 app_objects := $(patsubst %.cpp, %.o, $(app_sources))
 app_names := $(patsubst ./%.cpp, %, $(app_sources))
 
+COLOR_RESET = \033[0m
+GREEN = \033[0;32m
+RED = \033[0;31m
+YELLOW = \033[0;33m
+BOLD_GREEN = \033[1;32m
+BOLD_RED = \033[1;31m
+BOLD_YELLOW = \033[1;33m
+
+
 .PHONY: format list build depend help run dist-clean clean clean-all depends-all all test
 
 build: $(appname)
@@ -103,35 +112,40 @@ test: build
 	Results/overLambdas-nClasses4-N16-Win1-Frechet-testing_4C_16.csv \
 	Results/overLambdas-nClasses4-N16-Win1-Uniform-testing_4C_16.csv
 
+define compare_results
+	@python3 ensure_same_results.py $@ test/expected/$(@F) > $@.diff.txt 2>&1
+	@grep -q "Data is the same" $@.diff.txt && echo -e "$(GREEN)$(appname) $(BOLD_GREEN)PASSED$(GREEN) test $(@F)$(COLOR_RESET)" || echo -e "$(RED)$(appname) $(BOLD_RED)FAILED$(RED) test $(@F)$(COLOR_RESET)"
+endef
+
 Results/overLambdas-nClasses2-N50-Win1-Exponential-oneOrAll-test1.csv: $(appname)
 	$(MAKE) run ARGS="oneOrAll-test1 50 1 exp 100000 10" > $@.out.txt 2>&1
-	python3 ensure_same_results.py $@ test/$@ > $@.diff.txt 2>&1
+	$(compare_results)
 
 Results/overLambdas-nClasses4-N16-Win0-Exponential-testing_4C_16.csv: $(appname)
 	$(MAKE) run ARGS="testing_4C_16 16 0 exp 100000 20" > $@.out.txt 2>&1
-	python3 ensure_same_results.py $@ test/$@ > $@.diff.txt 2>&1
+	$(compare_results)
 
 Results/overLambdas-nClasses4-N16-Win1-Exponential-testing_4C_16.csv: $(appname)
 	$(MAKE) run ARGS="testing_4C_16 16 1 exp 100000 20" > $@.out.txt 2>&1
-	python3 ensure_same_results.py $@ test/$@ > $@.diff.txt 2>&1
+	$(compare_results)
 
 Results/overLambdas-nClasses4-N16-Win4-Exponential-testing_4C_16.csv: $(appname)
 	$(MAKE) run ARGS="testing_4C_16 16 4 exp 100000 20" > $@.out.txt 2>&1
-	python3 ensure_same_results.py $@ test/$@ > $@.diff.txt 2>&1
+	$(compare_results)
 
 Results/overLambdas-nClasses4-N16-Win-2-Exponential-testing_4C_16.csv: $(appname)
 	$(MAKE) run ARGS="testing_4C_16 16 -2 exp 100000 20" > $@.out.txt 2>&1
-	python3 ensure_same_results.py $@ test/$@ > $@.diff.txt 2>&1
+	$(compare_results)
 
 Results/overLambdas-nClasses4-N16-Win-3-Exponential-testing_4C_16.csv: $(appname)
 	$(MAKE) run ARGS="testing_4C_16 16 -3 exp 100000 20" > $@.out.txt 2>&1
-	python3 ensure_same_results.py $@ test/$@ > $@.diff.txt 2>&1
+	$(compare_results)
 
 Results/overLambdas-nClasses4-N16-Win1-Frechet-testing_4C_16.csv: $(appname)
 	$(MAKE) run ARGS="testing_4C_16 16 1 fre 100000 20" > $@.out.txt 2>&1
-	python3 ensure_same_results.py $@ test/$@ > $@.diff.txt 2>&1
+	$(compare_results)
 
 Results/overLambdas-nClasses4-N16-Win1-Uniform-testing_4C_16.csv: $(appname)
 	$(MAKE) run ARGS="testing_4C_16 16 1 uni 100000 20" > $@.out.txt 2>&1
-	python3 ensure_same_results.py $@ test/$@ > $@.diff.txt 2>&1
+	$(compare_results)
 
