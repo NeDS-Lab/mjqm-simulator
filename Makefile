@@ -81,3 +81,8 @@ clean-out:
 clean-all: $(foreach T,$(app_names),.clean_$T) dist-clean
 depend-all: dist-clean $(foreach T,$(app_names),.depends_$T)
 all: $(foreach T,$(app_names),.app_$T)
+
+test:
+	$(MAKE) appname=$(appname) build
+	$(MAKE) appname=$(appname) run ARGS="oneOrAll-test1 50 1 exp 100000 10"
+	python3 ensure_same_results.py Results/overLambdas-nClasses2-N50-Win1-Exponential-oneOrAll-test1.csv Results/overLambdas-nClasses2-N50-Win1-Exponential-oneOrAll-test1.csv
