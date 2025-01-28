@@ -479,7 +479,7 @@ public:
 
             for (unsigned long int k = 0; k < nevents; k++)
             {
-                auto itmin = std::ranges::min_element(fel);
+                auto itmin = std::min_element(fel.begin(), fel.end());
                 // std::cout << *itmin << std::endl;
                 int pos = std::distance(fel.begin(), itmin);
                 // std::cout << pos << std::endl;
@@ -801,7 +801,7 @@ private:
 
                 for (auto job_id = stopped_jobs[i].begin(); job_id != stopped_jobs[i].end(); ++job_id)
                 {
-                    if (jobs_inservice[i].contains(*job_id))
+                    if (jobs_inservice[i].find(*job_id) != jobs_inservice[i].end())
                     { // If they are currently being served: stop them
                         jobs_preempted[i][*job_id] =
                             jobs_inservice[i][*job_id] - simtime; // Save the remaining service time
@@ -815,9 +815,9 @@ private:
                 double fastest_job_fel = std::numeric_limits<double>::infinity();
                 for (auto job_id = ongoing_jobs[i].begin(); job_id != ongoing_jobs[i].end(); ++job_id)
                 {
-                    if (!jobs_inservice[i].contains(*job_id))
+                    if (jobs_inservice[i].find(*job_id) == jobs_inservice[i].end())
                     { // If they are NOT already in service
-                        if (jobs_preempted[i].contains(*job_id))
+                        if (jobs_preempted[i].find(*job_id) != jobs_preempted[i].end())
                         { // See if they were preempted: resume them
                             jobs_inservice[i][*job_id] = jobs_preempted[i][*job_id] + simtime;
                             jobs_preempted[i].erase(*job_id);
