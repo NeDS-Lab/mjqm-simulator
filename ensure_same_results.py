@@ -62,8 +62,12 @@ def compare_results(data1, data2):
                     print(f'{columns2[0]}: {key}')
                     key_header = True
                 print(f'\tColumn: {column}')
-                print(f'\t\t  ours: {data1[key][column]} {data1[key][column + " ConfInt"]}')
-                print(f'\t\ttheirs: {data2[key][column]} {data2[key][column + " ConfInt"]}')
+                if "Stability Check" not in column:
+                    print(f'\t\t  ours: {data1[key][column]} {data1[key][column + " ConfInt"]}')
+                    print(f'\t\ttheirs: {data2[key][column]} {data2[key][column + " ConfInt"]}')
+                else:
+                    print(f'\t\t  ours: {data1[key][column]}')
+                    print(f'\t\ttheirs: {data2[key][column]}')
                 different = True
         if print_speedup and duration_diff:
             if not key_header:
