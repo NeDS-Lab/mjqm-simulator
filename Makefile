@@ -1,3 +1,6 @@
+CPUS ?= $(shell (nproc --all || sysctl -n hw.ncpu) 2>/dev/null || echo 1)
+MAKEFLAGS += --jobs=$(CPUS)
+
 appname ?= simulator_smash
 
 CXX ?= g++
@@ -67,7 +70,7 @@ clean:
 	rm -f $(appname) $(objects)
 
 clean-out:
-	rm -rf Results/*.csv
+	rm -rf Results/*.csv Results/*.txt
 
 .clean_%:
 	@$(MAKE) appname=$(patsubst .clean_%,%,$@) clean
@@ -83,7 +86,7 @@ depend-all: dist-clean $(foreach T,$(app_names),.depends_$T)
 all: $(foreach T,$(app_names),.app_$T)
 
 test: build
-	$(MAKE) Results/overLambdas-nClasses2-N50-Win1-Exponential-oneOrAll-test1.csv \
+	$(MAKE) CPUS=1 Results/overLambdas-nClasses2-N50-Win1-Exponential-oneOrAll-test1.csv \
 	Results/overLambdas-nClasses4-N16-Win0-Exponential-testing_4C_16.csv \
 	Results/overLambdas-nClasses4-N16-Win1-Exponential-testing_4C_16.csv \
 	Results/overLambdas-nClasses4-N16-Win4-Exponential-testing_4C_16.csv \
@@ -93,34 +96,34 @@ test: build
 	Results/overLambdas-nClasses4-N16-Win1-Uniform-testing_4C_16.csv
 
 Results/overLambdas-nClasses2-N50-Win1-Exponential-oneOrAll-test1.csv: $(appname)
-	$(MAKE) run ARGS="oneOrAll-test1 50 1 exp 100000 10" > $@.out.txt 2> $@.err.txt
+	$(MAKE) run ARGS="oneOrAll-test1 50 1 exp 100000 10" > $@.out.txt 2>&1
 	python3 ensure_same_results.py $@ test/$@ > $@.diff.txt 2>&1
 
 Results/overLambdas-nClasses4-N16-Win0-Exponential-testing_4C_16.csv: $(appname)
-	$(MAKE) run ARGS="testing_4C_16 16 0 exp 100000 20" > $@.out.txt 2> $@.err.txt
+	$(MAKE) run ARGS="testing_4C_16 16 0 exp 100000 20" > $@.out.txt 2>&1
 	python3 ensure_same_results.py $@ test/$@ > $@.diff.txt 2>&1
 
 Results/overLambdas-nClasses4-N16-Win1-Exponential-testing_4C_16.csv: $(appname)
-	$(MAKE) run ARGS="testing_4C_16 16 1 exp 100000 20" > $@.out.txt 2> $@.err.txt
+	$(MAKE) run ARGS="testing_4C_16 16 1 exp 100000 20" > $@.out.txt 2>&1
 	python3 ensure_same_results.py $@ test/$@ > $@.diff.txt 2>&1
 
 Results/overLambdas-nClasses4-N16-Win4-Exponential-testing_4C_16.csv: $(appname)
-	$(MAKE) run ARGS="testing_4C_16 16 4 exp 100000 20" > $@.out.txt 2> $@.err.txt
+	$(MAKE) run ARGS="testing_4C_16 16 4 exp 100000 20" > $@.out.txt 2>&1
 	python3 ensure_same_results.py $@ test/$@ > $@.diff.txt 2>&1
 
 Results/overLambdas-nClasses4-N16-Win-2-Exponential-testing_4C_16.csv: $(appname)
-	$(MAKE) run ARGS="testing_4C_16 16 -2 exp 100000 20" > $@.out.txt 2> $@.err.txt
+	$(MAKE) run ARGS="testing_4C_16 16 -2 exp 100000 20" > $@.out.txt 2>&1
 	python3 ensure_same_results.py $@ test/$@ > $@.diff.txt 2>&1
 
 Results/overLambdas-nClasses4-N16-Win-3-Exponential-testing_4C_16.csv: $(appname)
-	$(MAKE) run ARGS="testing_4C_16 16 -3 exp 100000 20" > $@.out.txt 2> $@.err.txt
+	$(MAKE) run ARGS="testing_4C_16 16 -3 exp 100000 20" > $@.out.txt 2>&1
 	python3 ensure_same_results.py $@ test/$@ > $@.diff.txt 2>&1
 
 Results/overLambdas-nClasses4-N16-Win1-Frechet-testing_4C_16.csv: $(appname)
-	$(MAKE) run ARGS="testing_4C_16 16 1 fre 100000 20" > $@.out.txt 2> $@.err.txt
+	$(MAKE) run ARGS="testing_4C_16 16 1 fre 100000 20" > $@.out.txt 2>&1
 	python3 ensure_same_results.py $@ test/$@ > $@.diff.txt 2>&1
 
 Results/overLambdas-nClasses4-N16-Win1-Uniform-testing_4C_16.csv: $(appname)
-	$(MAKE) run ARGS="testing_4C_16 16 1 uni 100000 20" > $@.out.txt 2> $@.err.txt
+	$(MAKE) run ARGS="testing_4C_16 16 1 uni 100000 20" > $@.out.txt 2>&1
 	python3 ensure_same_results.py $@ test/$@ > $@.diff.txt 2>&1
 
