@@ -24,19 +24,34 @@ def print_with_columns_key(columns, data, filter_column=None):
 def compare_results(data1, data2):
     columns1, data1 = data1
     columns2, data2 = data2
-    if columns1 != columns2:
-        print('Columns are different')
+    if any(map(lambda x: x not in columns1, columns2)):
+        print('Missing stat in ours')
+        print(set(columns2) - set(columns1))
         return
-    if data1.keys() != data2.keys():
-        print('Keys are different')
+    if any(map(lambda x: x not in data1.keys(), data2.keys())):
+        print('Missing keys in ours')
+        print(set(data2.keys()) - set(data1.keys()))
         return
     different = False
-    for key in data1.keys():
-        for column in columns1[1:]:
+    for key in data2.keys():
+        for column in columns2[1:]:
             if data1[key][column] != data2[key][column]:
-                print(f'Key: {key}, Column: {column} '
+                if column == 'Run Duration ConfInt':
+                    continue
+                if column == 'Run Duration':
+                    ours = float(data1[key][column])
+                    theirs = float(data2[key][column])
+                    if ours < theirs:
+                        if ours == 0:
+                            print(f'Speedup: {theirs}/0 ({columns2[0]} {key})')
+                        else:
+                            print(f'Speedup: {(1 - ours / theirs)*100:.2f}% ({columns2[0]} {key})')
+                    else:
+                        print(f'Slowdown: {(ours / theirs - 1)*100:.2f}% ({columns2[0]} {key})')
+                    continue
+                print(f'{columns2[0]}: {key}, Column: {column} '
                       f'Data1: {data1[key][column]} ')
-                print(f'Key: {key}, Column: {column} '
+                print(f'{columns2[0]}: {key}, Column: {column} '
                       f'Data2: {data2[key][column]} ')
                 different = True
     if not different:
