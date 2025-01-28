@@ -7,13 +7,11 @@
 
 #include "policy.h"
 
-class ServerFillingMem : public Policy
-{
+class ServerFillingMem : public Policy {
 public:
     ServerFillingMem(const int w, const int servers, const int classes) :
         state_buf(classes, 0), state_ser(classes, 0), stopped_jobs(classes), ongoing_jobs(classes), mset_coreNeed(0),
-        freeservers(servers), servers(servers), w(w)
-    {}
+        freeservers(servers), servers(servers), w(w) {}
     void arrival(int c, int size, long int id) override;
     void departure(int c, int size, long int id) override;
     const std::vector<int>& get_state_ser() override { return state_ser; }
@@ -47,6 +45,5 @@ private:
     void printBuffer();
     void flush_buffer() override;
 };
-
 
 #endif // SERVERFILLINGMEM_H

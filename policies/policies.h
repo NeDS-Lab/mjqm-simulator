@@ -5,7 +5,6 @@
 #ifndef POLICIES_H
 #define POLICIES_H
 
-#include "policy.h"
 #include "BackFilling.h"
 #include "MostServerFirst.h"
 #include "MostServerFirstSkip.h"
@@ -13,5 +12,6 @@
 #include "ServerFilling.h"
 #include "ServerFillingMem.h"
 #include "Smash.h"
+#include "policy.h"
 
-#endif //POLICIES_H
+#endif // POLICIES_H

@@ -28,13 +28,10 @@
 #include "settings/loader.hpp"
 #include "stats/stats.h"
 
-
-class Simulator
-{
+class Simulator {
 public:
     Simulator(const std::vector<double>& l, const std::vector<double>& u, const std::vector<int>& sizes, int w,
-              int servers, int sampling_method, std::string logfile_name)
-    {
+              int servers, int sampling_method, std::string logfile_name) {
         this->l = l;
         this->u = u;
         this->n = servers;
@@ -55,33 +52,19 @@ public:
         this->debugMode = false;
         this->logfile_name = std::move(logfile_name);
 
-        if (w == 0)
-        {
+        if (w == 0) {
             this->policy = new MostServerFirst(w, servers, nclasses, sizes);
-        }
-        else if (w == -1)
-        {
+        } else if (w == -1) {
             this->policy = new ServerFilling(w, servers, nclasses);
-        }
-        else if (w == -2)
-        {
+        } else if (w == -2) {
             this->policy = new ServerFillingMem(w, servers, nclasses);
-        }
-        else if (w == -3)
-        {
+        } else if (w == -3) {
             this->policy = new BackFilling(w, servers, nclasses, sizes);
-        }
-        else if (w == -4)
-        {
+        } else if (w == -4) {
             this->policy = new MostServerFirstSkip(w, servers, nclasses, sizes);
-        }
-        else if (w == -5)
-        {
-            this->policy =
-                new MostServerFirstSkipThreshold(w, servers, nclasses, sizes, l[0], 1 / u[0]);
-        }
-        else
-        {
+        } else if (w == -5) {
+            this->policy = new MostServerFirstSkipThreshold(w, servers, nclasses, sizes, l[0], 1 / u[0]);
+        } else {
             this->policy = new Smash(w, servers, nclasses);
         }
 
@@ -103,37 +86,31 @@ public:
         std::uint64_t seed = 1862248485;
         generator = std::make_shared<std::mt19937_64>(next(seed));
 
-        switch (sampling_method)
-        {
+        switch (sampling_method) {
         case 0: // exponential
-            for (int i = 0; i < nclasses; i++)
-            {
+            for (int i = 0; i < nclasses; i++) {
                 this->class_samplers.push_back(exponential::with_mean(generator, u[i]));
                 // exponential::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
                 // this->class_samplers.push_back(exponential::with_rate(generator, 1/u[i]));
             }
             break;
         case 1: // pareto
-            for (int i = 0; i < nclasses; i++)
-            {
+            for (int i = 0; i < nclasses; i++) {
                 this->class_samplers.push_back(pareto::with_mean(generator, u[i], 2));
             }
             break;
         case 2: // deterministic
-            for (int i = 0; i < nclasses; i++)
-            {
+            for (int i = 0; i < nclasses; i++) {
                 this->class_samplers.push_back(deterministic::with_mean(u[i]));
             }
             break;
         case 4: // bounded pareto
-            for (int i = 0; i < nclasses; i++)
-            {
+            for (int i = 0; i < nclasses; i++) {
                 this->class_samplers.push_back(bounded_pareto::with_mean(generator, u[i], 2));
             }
             break;
         case 5: // frechet
-            for (int i = 0; i < nclasses; i++)
-            {
+            for (int i = 0; i < nclasses; i++) {
                 this->class_samplers.push_back(frechet::with_mean(generator, u[i], 2.15));
                 // frechet::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
                 // this->class_samplers.push_back(frechet::with_rate(generator, 1/u[i], 2.15));
@@ -141,8 +118,7 @@ public:
             break;
         case 3: // uniform
         default:
-            for (int i = 0; i < nclasses; i++)
-            {
+            for (int i = 0; i < nclasses; i++) {
                 this->class_samplers.push_back(uniform::with_mean(generator, u[i]));
             }
             break;
@@ -151,14 +127,12 @@ public:
 
     ~Simulator() { delete policy; }
 
-    void reset_simulation()
-    {
+    void reset_simulation() {
         simtime = 0.0;
         resample();
     }
 
-    std::uint64_t next(std::uint64_t u)
-    {
+    std::uint64_t next(std::uint64_t u) {
         std::uint64_t v = u * 3935559000370003845 + 2691343689449507681;
 
         v ^= v >> 21;
@@ -174,8 +148,7 @@ public:
         return v;
     }
 
-    void reset_statistics()
-    {
+    void reset_statistics() {
         for (auto& e : occupancy_ser)
             e = 0;
         for (auto& e : occupancy_buf)
@@ -203,18 +176,14 @@ public:
         for (auto& e : fel)
             e -= simtime;
 
-        if (this->w == -2 || this->sampling_method != 10)
-        {
-            for (int i = 0; i < jobs_inservice.size(); ++i)
-            {
-                for (auto job = jobs_inservice[i].begin(); job != jobs_inservice[i].end(); ++job)
-                {
+        if (this->w == -2 || this->sampling_method != 10) {
+            for (int i = 0; i < jobs_inservice.size(); ++i) {
+                for (auto job = jobs_inservice[i].begin(); job != jobs_inservice[i].end(); ++job) {
                     jobs_inservice[i][job->first] -= simtime;
                 }
             }
 
-            for (auto job_id = arrTime.begin(); job_id != arrTime.end(); ++job_id)
-            {
+            for (auto job_id = arrTime.begin(); job_id != arrTime.end(); ++job_id) {
                 arrTime[job_id->first] -= simtime;
             }
         }
@@ -234,23 +203,19 @@ public:
         phase_three_duration = 0;
     }
 
-    void collect_run_statistics(double tot_seq_len, double seq_amount)
-    {
+    void collect_run_statistics(double tot_seq_len, double seq_amount) {
         double avg_seq_len = (tot_seq_len * 1.0) / seq_amount;
 
         double totq = 0.0;
-        for (auto& x : occupancy_buf)
-        {
+        for (auto& x : occupancy_buf) {
             x /= simtime;
             totq += x;
         }
 
-
         rep_occupancy_buf.push_back(occupancy_buf);
 
         double tots = 0.0;
-        for (auto& x : occupancy_ser)
-        {
+        for (auto& x : occupancy_ser) {
             x /= simtime;
             tots += x;
         }
@@ -265,16 +230,14 @@ public:
         std::list<double> totRawResponseTime;
         std::vector<double> preemption_avg;
         preemption_avg.resize(nclasses);
-        for (int i = 0; i < nclasses; i++)
-        {
+        for (int i = 0; i < nclasses; i++) {
             // waitingTime[i] = occupancy_buf[i] / throughput[i];
             double mean_wt =
                 std::accumulate(rawWaitingTime[i].begin(), rawWaitingTime[i].end(), 0.0) / rawWaitingTime[i].size();
             waitingTime[i] = mean_wt;
 
             double tot_diff = 0.0;
-            for (auto& rawWt : rawWaitingTime[i])
-            {
+            for (auto& rawWt : rawWaitingTime[i]) {
                 tot_diff += pow(rawWt - mean_wt, 2);
             }
             waitingTimeVar[i] = tot_diff / rawWaitingTime[i].size();
@@ -285,8 +248,7 @@ public:
             responseTime[i] = mean_rt;
 
             tot_diff = 0.0;
-            for (auto& rawRt : rawResponseTime[i])
-            {
+            for (auto& rawRt : rawResponseTime[i]) {
                 tot_diff += pow(rawRt - mean_rt, 2);
             }
             responseTimeVar[i] = tot_diff / rawResponseTime[i].size();
@@ -318,8 +280,7 @@ public:
         rep_tot_wait.push_back(mean_wt);
 
         double tot_diff = 0.0;
-        for (auto& rawWt : totRawWaitingTime)
-        {
+        for (auto& rawWt : totRawWaitingTime) {
             tot_diff += pow(rawWt - mean_wt, 2);
         }
         rep_tot_wait_var.push_back(tot_diff / totRawWaitingTime.size());
@@ -330,8 +291,7 @@ public:
         rep_tot_resp.push_back(mean_rt);
 
         tot_diff = 0.0;
-        for (auto& rawRt : totRawResponseTime)
-        {
+        for (auto& rawRt : totRawResponseTime) {
             tot_diff += pow(rawRt - mean_rt, 2);
         }
         rep_tot_resp_var.push_back(tot_diff / totRawResponseTime.size());
@@ -365,8 +325,7 @@ public:
         // rep_seq_max_len.push_back(max_seq_len);
     }
 
-    void simulate(unsigned long nevents, unsigned int repetitions = 1)
-    {
+    void simulate(unsigned long nevents, unsigned int repetitions = 1) {
         rep_th.clear();
         rep_occupancy_buf.clear();
         rep_occupancy_ser.clear();
@@ -400,7 +359,6 @@ public:
         rep_window_size.clear();
         rep_preemption.clear();
 
-
         double tot_lambda = std::accumulate(l.begin(), l.end(), 0.0);
         std::string out_filename = "Results/logfile_N" + std::to_string(n) + "_" + std::to_string(tot_lambda) + "_W" +
             std::to_string(w) + ".csv";
@@ -408,8 +366,7 @@ public:
         std::ofstream outputFile_rep(out_filename, std::ios::app);
         std::vector<std::string> headers_rep;
         headers_rep = {"Repetition"};
-        for (int ts : sizes)
-        {
+        for (int ts : sizes) {
             headers_rep.push_back("T" + std::to_string(ts) + " Queue");
             headers_rep.push_back("T" + std::to_string(ts) + " MQL");
         }
@@ -417,11 +374,9 @@ public:
         headers_rep.push_back("Total Queue");
         headers_rep.push_back("Total MQL");
 
-        if (outputFile_rep.tellp() == 0)
-        {
+        if (outputFile_rep.tellp() == 0) {
             // Write the headers to the CSV file
-            for (const std::string& header : headers_rep)
-            {
+            for (const std::string& header : headers_rep) {
                 outputFile_rep << header << ";";
             }
             outputFile_rep << "\n";
@@ -429,8 +384,7 @@ public:
         outputFile_rep.close();
         std::vector<std::string> headers;
         headers = {"Repetition", "Event"};
-        for (int ts : sizes)
-        {
+        for (int ts : sizes) {
             headers.push_back("T" + std::to_string(ts) + " Queue");
             headers.push_back("T" + std::to_string(ts) + " Service");
         }
@@ -438,13 +392,11 @@ public:
         headers.push_back("Total Queue");
         headers.push_back("Total Service");
 
-        for (int i = 0; i < sizes.size(); ++i)
-        {
+        for (int i = 0; i < sizes.size(); ++i) {
             headers.push_back("Fel" + std::to_string(i));
         }
 
-        for (int i = 0; i < sizes.size(); ++i)
-        {
+        for (int i = 0; i < sizes.size(); ++i) {
             headers.push_back("Fel" + std::to_string(i + sizes.size()));
         }
 
@@ -453,11 +405,9 @@ public:
         {
             remove(logfile_name.c_str());
             std::ofstream outputFile(logfile_name, std::ios::app);
-            if (outputFile.tellp() == 0)
-            {
+            if (outputFile.tellp() == 0) {
                 // Write the headers to the CSV file
-                for (const std::string& header : headers)
-                {
+                for (const std::string& header : headers) {
                     outputFile << header << ";";
                 }
                 outputFile << "\n";
@@ -465,8 +415,7 @@ public:
             outputFile.close();
         }
 
-        for (int rep = 0; rep < repetitions; rep++)
-        {
+        for (int rep = 0; rep < repetitions; rep++) {
 
             /*int buf_size = std::reduce(policy->get_state_buf().begin(), policy->get_state_buf().end());
             if (buf_size > 180000000) {
@@ -481,18 +430,15 @@ public:
             auto start = std::chrono::high_resolution_clock::now();
             reset_statistics();
 
-            for (unsigned long int k = 0; k < nevents; k++)
-            {
+            for (unsigned long int k = 0; k < nevents; k++) {
                 auto itmin = std::min_element(fel.begin(), fel.end());
                 // std::cout << *itmin << std::endl;
                 int pos = std::distance(fel.begin(), itmin);
                 // std::cout << pos << std::endl;
                 collect_statistics(pos);
                 // std::cout << "collect" << std::endl;
-                if (pos < nclasses)
-                { // departure
-                    if (this->w == -2 || this->sampling_method != 10)
-                    {
+                if (pos < nclasses) { // departure
+                    if (this->w == -2 || this->sampling_method != 10) {
                         jobs_inservice[pos].erase(
                             job_fel[pos]); // Remove jobs from in_service (they cannot be in preempted list)
                         rawWaitingTime[pos].push_back(waitTime[job_fel[pos]]);
@@ -505,12 +451,9 @@ public:
 
                     policy->departure(pos, sizes[pos], job_fel[pos]);
                     // std::cout << "dep" << std::endl;
-                }
-                else
-                {
+                } else {
                     auto job_id = k + (nevents * rep);
-                    if (this->w == -3)
-                    {
+                    if (this->w == -3) {
                         holdTime[job_id] = this->class_samplers[pos - nclasses]->sample();
                         // std::cout << holdTime[job_id] << std::endl;
                     }
@@ -523,15 +466,13 @@ public:
 
                 resample();
                 // std::cout << "resample" << std::endl;
-                if (this->w == -3)
-                {
+                if (this->w == -3) {
                     // std::cout << policy->get_state_buf()[0] << " " << simtime << std::endl;
                     bool added;
                     added = policy->fit_jobs(holdTime, simtime);
                     resample();
                     int idx = 0;
-                    while (added)
-                    {
+                    while (added) {
                         // std::cout << idx << " " << simtime << std::endl;
                         added = policy->fit_jobs(holdTime, simtime);
                         // std::cout << "added" << std::endl;
@@ -602,8 +543,7 @@ public:
             std::ofstream outputFile(out_filename, std::ios::app);
             outputFile << rep << ";";
             auto state_buf = policy->get_state_buf();
-            for (int i = 0; i < occupancy_buf.size(); i++)
-            {
+            for (int i = 0; i < occupancy_buf.size(); i++) {
                 outputFile << state_buf[i] << ";";
                 outputFile << occupancy_buf[i] << ";";
             }
@@ -614,8 +554,7 @@ public:
         }
 
         // outputFile.close();
-        for (auto& x : rep_free_servers_distro)
-        {
+        for (auto& x : rep_free_servers_distro) {
             x /= simtime;
         }
 
@@ -642,10 +581,8 @@ public:
             outFree.close();*/
     }
 
-    void produce_statistics(ExperimentStats& stats, const double confidence = 0.05) const
-    {
-        for (int i = 0; i < nclasses; i++)
-        {
+    void produce_statistics(ExperimentStats& stats, const double confidence = 0.05) const {
+        for (int i = 0; i < nclasses; i++) {
             stats.occupancy_buf.push_back(compute_interval_class_student(rep_occupancy_buf, i, confidence));
             stats.occupancy_ser.push_back(compute_interval_class_student(rep_occupancy_ser, i, confidence));
             stats.throughput.push_back(compute_interval_class_student(rep_th, i, confidence));
@@ -679,7 +616,6 @@ public:
         stats.phase_three_dur = compute_interval_student(rep_phase_three_duration, confidence);
         stats.window_size = compute_interval_student(rep_window_size, confidence);
     }
-
 
 private:
     std::vector<double> l;
@@ -789,24 +725,18 @@ private:
         return -log(ru(*generator)) / par;
     }
 
-    void resample()
-    {
+    void resample() {
         // add arrivals and departures
-        if (this->w == -2)
-        { // special blocks for serverFilling (memoryful)
+        if (this->w == -2) { // special blocks for serverFilling (memoryful)
             auto stopped_jobs = policy->get_stopped_jobs();
             auto ongoing_jobs = policy->get_ongoing_jobs();
-            for (int i = 0; i < nclasses; i++)
-            {
-                if (fel[i + nclasses] <= simtime)
-                { // only update arrival that is executed at the time
+            for (int i = 0; i < nclasses; i++) {
+                if (fel[i + nclasses] <= simtime) { // only update arrival that is executed at the time
                     fel[i + nclasses] = sample_exp(l[i]) + simtime;
                 }
 
-                for (auto job_id = stopped_jobs[i].begin(); job_id != stopped_jobs[i].end(); ++job_id)
-                {
-                    if (jobs_inservice[i].find(*job_id) != jobs_inservice[i].end())
-                    { // If they are currently being served: stop them
+                for (auto job_id = stopped_jobs[i].begin(); job_id != stopped_jobs[i].end(); ++job_id) {
+                    if (jobs_inservice[i].contains(*job_id)) { // If they are currently being served: stop them
                         jobs_preempted[i][*job_id] =
                             jobs_inservice[i][*job_id] - simtime; // Save the remaining service time
                         jobs_inservice[i].erase(*job_id);
@@ -817,19 +747,14 @@ private:
 
                 long int fastest_job_id;
                 double fastest_job_fel = std::numeric_limits<double>::infinity();
-                for (auto job_id = ongoing_jobs[i].begin(); job_id != ongoing_jobs[i].end(); ++job_id)
-                {
-                    if (jobs_inservice[i].find(*job_id) == jobs_inservice[i].end())
-                    { // If they are NOT already in service
-                        if (jobs_preempted[i].find(*job_id) != jobs_preempted[i].end())
-                        { // See if they were preempted: resume them
+                for (auto job_id = ongoing_jobs[i].begin(); job_id != ongoing_jobs[i].end(); ++job_id) {
+                    if (!jobs_inservice[i].contains(*job_id)) { // If they are NOT already in service
+                        if (jobs_preempted[i].contains(*job_id)) { // See if they were preempted: resume them
                             jobs_inservice[i][*job_id] = jobs_preempted[i][*job_id] + simtime;
                             jobs_preempted[i].erase(*job_id);
                             waitTime[*job_id] = simtime - arrTime[*job_id] + waitTime[*job_id];
-                        }
-                        else
-                        { // or they are just new jobs about to be served for the first time: add them with new service
-                          // time
+                        } else { // or they are just new jobs about to be served for the first time: add them with new
+                                 // service time
                             double sampled = this->class_samplers[i]->sample();
                             jobs_inservice[i][*job_id] = sampled + simtime;
                             // rawWaitingTime[i].push_back(simtime-arrTime[*job_id]);
@@ -838,64 +763,46 @@ private:
                             holdTime[*job_id] = sampled;
                         }
 
-                        if (jobs_inservice[i][*job_id] < fastest_job_fel)
-                        {
+                        if (jobs_inservice[i][*job_id] < fastest_job_fel) {
                             fastest_job_id = *job_id;
                             fastest_job_fel = jobs_inservice[i][*job_id];
                         }
-                    }
-                    else
-                    { // They are already in service
-                        if (jobs_inservice[i][*job_id] < fastest_job_fel)
-                        {
+                    } else { // They are already in service
+                        if (jobs_inservice[i][*job_id] < fastest_job_fel) {
                             fastest_job_id = *job_id;
                             fastest_job_fel = jobs_inservice[i][*job_id];
                         }
                     }
                 }
 
-                if (jobs_inservice[i].empty())
-                { // If no jobs in service for a given class
+                if (jobs_inservice[i].empty()) { // If no jobs in service for a given class
                     fel[i] = std::numeric_limits<double>::infinity();
-                }
-                else
-                {
+                } else {
                     fel[i] = fastest_job_fel;
                     job_fel[i] = fastest_job_id;
                 }
             }
-        }
-        else if (this->sampling_method != 10)
-        { // exponential distro can use the faster memoryless blocks
+        } else if (this->sampling_method != 10) { // exponential distro can use the faster memoryless blocks
             auto ongoing_jobs = policy->get_ongoing_jobs();
             int pooled_i;
-            for (int i = 0; i < nclasses; i++)
-            {
-                if (i < nclasses - 1)
-                {
+            for (int i = 0; i < nclasses; i++) {
+                if (i < nclasses - 1) {
                     pooled_i = 0;
-                }
-                else
-                {
+                } else {
                     pooled_i = 1;
                 }
 
-                if (fel[i + nclasses] <= simtime)
-                { // only update arrival that is executed at the time
+                if (fel[i + nclasses] <= simtime) { // only update arrival that is executed at the time
                     fel[i + nclasses] = sample_exp(l[i]) + simtime;
                 }
 
                 // std::cout << ongoing_jobs[i].size() << std::endl;
-                for (long int job_id : ongoing_jobs[i])
-                {
+                for (long int job_id : ongoing_jobs[i]) {
                     double sampled;
-                    if (this->w == -3)
-                    {
+                    if (this->w == -3) {
                         sampled = holdTime[job_id];
                         policy->insert_completion(this->sizes[i], sampled + simtime);
-                    }
-                    else
-                    {
+                    } else {
                         sampled = this->class_samplers[i]->sample();
                     }
                     jobs_inservice[i][job_id] = sampled + simtime;
@@ -903,33 +810,26 @@ private:
                     waitTime[job_id] = simtime - arrTime[job_id];
                     holdTime[job_id] = sampled;
                     // arrTime.erase(job_id); //update waitingTime
-                    if (jobs_inservice[i][job_id] < fel[i])
-                    {
+                    if (jobs_inservice[i][job_id] < fel[i]) {
                         fel[i] = jobs_inservice[i][job_id];
                         job_fel[i] = job_id;
                     }
 
-                    if (last_job < 0)
-                    {
+                    if (last_job < 0) {
                         // std::cout << "sequence " << i << " starting from idle" << " simtime " << simtime <<
                         // std::endl;
                         curr_job_seq[pooled_i] = 1;
                         curr_job_seq_start[pooled_i] = simtime;
                         last_job = pooled_i;
-                        if (pooled_i == 0)
-                        {
+                        if (pooled_i == 0) {
                             // std::cout << "phase three starting from idle" << " simtime " << simtime << std::endl;
                             phase_three_start = simtime;
                             curr_phase = 3;
                         }
                         // std::cout << "-------------------------------------" << std::endl;
-                    }
-                    else if (last_job == pooled_i)
-                    {
+                    } else if (last_job == pooled_i) {
                         curr_job_seq[pooled_i] = curr_job_seq[pooled_i] + 1;
-                    }
-                    else
-                    {
+                    } else {
                         // std::cout << "sequence " << pooled_i << " starting from sequence " << last_job << " simtime "
                         // << simtime << std::endl;
                         tot_job_seq[last_job] = tot_job_seq[last_job] + curr_job_seq[last_job];
@@ -943,31 +843,24 @@ private:
                         curr_job_seq_start[pooled_i] = simtime;
                         // std::cout << tot_job_seq_dur[last_job] << std::endl;
                         last_job = pooled_i;
-                        if (pooled_i == 0)
-                        {
-                            if (policy->get_free_ser() == 0)
-                            {
+                        if (pooled_i == 0) {
+                            if (policy->get_free_ser() == 0) {
                                 // std::cout << "phase two starting from phase one" << " simtime " << simtime <<
                                 // std::endl;
                                 phase_two_start = simtime;
                                 curr_phase = 2;
-                            }
-                            else
-                            {
+                            } else {
                                 // std::cout << "phase three starting from phase one" << " simtime " << simtime <<
                                 // std::endl;
                                 phase_three_start = simtime;
                                 curr_phase = 3;
                             }
                             // std::cout << "-------------------------------------" << std::endl;
-                        }
-                        else
-                        {
+                        } else {
                             // std::cout << "phase one starting from phase three" << " simtime " << simtime <<
                             // std::endl;
                             phase_three_duration += (simtime - phase_three_start);
-                            if (add_phase_two)
-                            {
+                            if (add_phase_two) {
                                 phase_two_duration += (phase_three_start - phase_two_start);
                                 add_phase_two = false;
                             }
@@ -976,8 +869,7 @@ private:
                             // std::cout << (phase_three_duration+phase_two_duration == tot_job_seq_dur[0]) <<
                             // std::endl;
                             if (phase_two_start < 0 && phase_two_duration == 0 &&
-                                phase_three_duration < tot_job_seq_dur[0])
-                            {
+                                phase_three_duration < tot_job_seq_dur[0]) {
                                 // phase_two_duration += (phase_three_start-phase_two_start);
                             }
                             curr_phase = 1;
@@ -994,17 +886,12 @@ private:
                     }
                 }
 
-                if (jobs_inservice[i].empty())
-                { // If no jobs in service for a given class
+                if (jobs_inservice[i].empty()) { // If no jobs in service for a given class
                     fel[i] = std::numeric_limits<double>::infinity();
-                }
-                else if (fel[i] <= simtime)
-                {
+                } else if (fel[i] <= simtime) {
                     fel[i] = std::numeric_limits<double>::infinity();
-                    for (auto& job : jobs_inservice[i])
-                    {
-                        if (job.second < fel[i])
-                        {
+                    for (auto& job : jobs_inservice[i]) {
+                        if (job.second < fel[i]) {
                             fel[i] = job.second;
                             job_fel[i] = job.first;
                         }
@@ -1012,10 +899,8 @@ private:
                 }
             }
 
-            if (curr_phase == 2)
-            {
-                if (this->w > -4 && policy->get_free_ser() > 0)
-                {
+            if (curr_phase == 2) {
+                if (this->w > -4 && policy->get_free_ser() > 0) {
                     // std::cout << "phase three starting from phase two" << " simtime " << simtime << std::endl;
                     // phase_two_duration += (simtime-phase_two_start);
                     phase_three_start = simtime;
@@ -1023,9 +908,7 @@ private:
                     add_phase_two = true;
                     // std::cout << phase_two_duration << std::endl;
                     // std::cout << "-------------------------------------" << std::endl;
-                }
-                else if (this->w <= -4 && policy->prio_big() == true)
-                {
+                } else if (this->w <= -4 && policy->prio_big() == true) {
                     // std::cout << "phase three starting from phase two" << " simtime " << simtime << std::endl;
                     // phase_two_duration += (simtime-phase_two_start);
                     phase_three_start = simtime;
@@ -1036,41 +919,32 @@ private:
                 }
             }
 
-            if (policy->get_free_ser() == this->n && last_job >= 0)
-            {
+            if (policy->get_free_ser() == this->n && last_job >= 0) {
                 // std::cout << "sequence " << last_job << " ending" << " simtime " << simtime << std::endl;
                 tot_job_seq[last_job] = tot_job_seq[last_job] + curr_job_seq[last_job];
                 tot_job_seq_dur[last_job] = tot_job_seq_dur[last_job] + simtime - curr_job_seq_start[last_job];
                 job_seq_amount[last_job] = job_seq_amount[last_job] + 1;
                 curr_job_seq[last_job] = 0;
                 // std::cout << tot_job_seq_dur[last_job] << std::endl;
-                if (last_job == 0)
-                {
+                if (last_job == 0) {
                     // std::cout << "phase three ending" << " simtime " << simtime << std::endl;
                     // std::cout << add_phase_two << std::endl;
                     // std::cout << phase_two_start << std::endl;
                     // std::cout << phase_three_start << std::endl;
-                    if (curr_phase == 3)
-                    {
+                    if (curr_phase == 3) {
                         phase_three_duration += (simtime - phase_three_start);
-                        if (add_phase_two)
-                        {
+                        if (add_phase_two) {
                             phase_two_duration += (phase_three_start - phase_two_start);
                             add_phase_two = false;
                         }
                         if (phase_two_start < 0 && phase_two_duration == 0 &&
-                            phase_two_duration + phase_three_duration < tot_job_seq_dur[0])
-                        {
+                            phase_two_duration + phase_three_duration < tot_job_seq_dur[0]) {
                             // std::cout << "HEHE-------------------------------------" << std::endl;
                             // phase_two_duration += (phase_three_start-phase_two_start);
                         }
-                    }
-                    else if (curr_phase == 2)
-                    {
+                    } else if (curr_phase == 2) {
                         phase_two_duration += (simtime - phase_two_start);
-                    }
-                    else
-                    {
+                    } else {
                         std::cout << "WADAW-------------------------------------" << std::endl;
                     }
                     // std::cout << phase_two_duration << std::endl;
@@ -1085,48 +959,38 @@ private:
                 // std::cout << "-------------------------------------" << std::endl;
             }
 
-            if (curr_phase == 3)
-            {
+            if (curr_phase == 3) {
                 // std::cout << policy->get_state_ser()[0] << " " << policy->get_state_buf()[1] << std::endl;
             }
-        }
-        else
-        {
-            for (int i = 0; i < nclasses; i++)
-            {
+        } else {
+            for (int i = 0; i < nclasses; i++) {
                 fel[i + nclasses] = sample_exp(l[i]) + simtime;
-                if (policy->get_state_ser()[i] > 0)
-                {
+                if (policy->get_state_ser()[i] > 0) {
                     fel[i] = sample_exp((1 / u[i]) * policy->get_state_ser()[i]) + simtime;
                     // fel[i] = sample_st((1/u[i])*policy->get_state_ser()[i]) + simtime;
                     // this can be written in a more static format as
                     // ___exponential::with_mean(u[i])___.sample()/policy->get_state_ser()[i] + simtime;
                     // but it needs to be understood who is the owner of the sampler
                     // and whether it should statically be exponential or not
-                }
-                else
-                {
+                } else {
                     fel[i] = std::numeric_limits<double>::infinity();
                 }
             }
         }
     }
 
-    void collect_statistics(int pos)
-    {
+    void collect_statistics(int pos) {
 
         if (pos < nclasses)
             completion[pos]++;
 
         double delta = fel[pos] - simtime;
-        for (int i = 0; i < nclasses; i++)
-        {
+        for (int i = 0; i < nclasses; i++) {
             occupancy_buf[i] += policy->get_state_buf()[i] * delta;
             occupancy_ser[i] += policy->get_state_ser()[i] * delta;
         }
         auto occ = 0;
-        for (int i = 0; i < nclasses; i++)
-        {
+        for (int i = 0; i < nclasses; i++) {
             occ += policy->get_state_ser()[i] * sizes[i];
         }
         waste += (n - occ) * delta;
@@ -1139,8 +1003,7 @@ private:
 
 void run_simulation(Experiment e, unsigned long events, unsigned int repetitions,
                     ExperimentStats& stats // out
-)
-{
+) {
     Simulator sim(e.l, e.u, e.s, e.w, e.n, e.sm, e.logf);
     sim.reset_simulation();
     sim.reset_statistics();
@@ -1149,8 +1012,7 @@ void run_simulation(Experiment e, unsigned long events, unsigned int repetitions
     sim.produce_statistics(stats);
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
 
     std::vector<double> p;
     std::vector<int> sizes;
@@ -1173,12 +1035,9 @@ int main(int argc, char* argv[])
     std::ofstream outputFile(out_filename, std::ios::app);
     std::vector<Experiment> ex;
 
-
-    for (int i = 0; i < arr_rate.size(); i++)
-    {
+    for (int i = 0; i < arr_rate.size(); i++) {
         std::vector<double> l;
-        for (auto x : p)
-        {
+        for (auto x : p) {
             l.push_back(x * arr_rate[i]);
         }
         std::string logfile_name = "Results/logfile-nClasses" + std::to_string(sizes.size()) + "-N" +
@@ -1191,28 +1050,23 @@ int main(int argc, char* argv[])
 
     std::vector<std::thread> threads(ex.size());
 
-    for (int i = 0; i < ex.size(); i++)
-    {
+    for (int i = 0; i < ex.size(); i++) {
         threads[i] = std::thread(run_simulation, ex[i], n_evs, n_runs, std::ref(experiments_stats[i]));
     }
-    for (int i = 0; i < ex.size(); i++)
-    {
+    for (int i = 0; i < ex.size(); i++) {
         threads[i].join();
     }
 
-    if (outputFile.tellp() == 0)
-    {
+    if (outputFile.tellp() == 0) {
         experiments_stats.at(0).add_headers(headers, sizes);
         // Write the headers to the CSV file
-        for (const std::string& header : headers)
-        {
+        for (const std::string& header : headers) {
             outputFile << header << ";";
         }
         outputFile << "\n";
     }
 
-    for (int i = 0; i < ex.size(); i++)
-    {
+    for (int i = 0; i < ex.size(); i++) {
 
         outputFile << arr_rate[i] << ";";
         outputFile << experiments_stats[i] << "\n";
@@ -1220,7 +1074,6 @@ int main(int argc, char* argv[])
 
     // Close the file
     outputFile.close();
-
 
     return 0;
 }

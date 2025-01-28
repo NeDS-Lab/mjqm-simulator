@@ -7,13 +7,11 @@
 
 #include "policy.h"
 
-class Smash : public Policy
-{
+class Smash : public Policy {
 public:
     Smash(const int w, const int servers, const int classes) :
         servers(servers), w(w), state_buf(classes), state_ser(classes), stopped_jobs(classes), ongoing_jobs(classes),
-        freeservers(servers), violations_counter(0)
-    {}
+        freeservers(servers), violations_counter(0) {}
     void arrival(int c, int size, long int id) override;
     void departure(int c, int size, long int id) override;
     const std::vector<int>& get_state_ser() override { return state_ser; }
@@ -43,6 +41,5 @@ private:
 
     void flush_buffer() override;
 };
-
 
 #endif // SMASH_H

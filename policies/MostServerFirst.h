@@ -7,13 +7,11 @@
 
 #include "policy.h"
 
-class MostServerFirst : public Policy
-{
+class MostServerFirst : public Policy {
 public:
     MostServerFirst(int w, int servers, int classes, const std::vector<int>& sizes) :
         servers(servers), w(w), state_buf(classes), state_ser(classes), stopped_jobs(classes), ongoing_jobs(classes),
-        sizes(sizes), freeservers(servers), violations_counter(0)
-    {}
+        sizes(sizes), freeservers(servers), violations_counter(0) {}
     void arrival(int c, int size, long int id) override;
     void departure(int c, int size, long int id) override;
     const std::vector<int>& get_state_ser() override { return state_ser; }
@@ -40,7 +38,6 @@ private:
     std::vector<int> sizes;
     int freeservers;
     int violations_counter;
-
 
     void flush_buffer() override;
 };

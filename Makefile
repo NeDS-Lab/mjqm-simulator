@@ -13,10 +13,13 @@ app_sources := $(shell find . -maxdepth 1 -name "*.cpp" | sort)
 app_objects := $(patsubst %.cpp, %.o, $(app_sources))
 app_names := $(patsubst ./%.cpp, %, $(app_sources))
 
-.PHONY: list build depend help run dist-clean clean clean-all depends-all all test
+.PHONY: format list build depend help run dist-clean clean clean-all depends-all all test
 
 build: $(appname)
 	strip -s $(appname)
+
+format:
+	clang-format -i $(srcfiles) $(hdrfiles)
 
 list:
 	@echo available: $(app_names)

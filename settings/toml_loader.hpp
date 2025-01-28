@@ -28,8 +28,7 @@
 #include "toml++/toml.hpp"
 using namespace std::string_literals;
 
-class DistributionConfig
-{
+class DistributionConfig {
 public:
     const std::string name;
     // Constructor to initialize the name
@@ -40,13 +39,11 @@ public:
     virtual ~DistributionConfig() = default;
 };
 
-class ExponentialDistributionConfig : public DistributionConfig
-{
+class ExponentialDistributionConfig : public DistributionConfig {
 public:
     explicit ExponentialDistributionConfig() : DistributionConfig("exponential"s) {}
     explicit ExponentialDistributionConfig(const toml::parse_result& data, const std::string& key) :
-        ExponentialDistributionConfig()
-    {
+        ExponentialDistributionConfig() {
         mean = data.at_path(key + ".mean").value<double>();
         lambda = data.at_path(key + ".lambda").value<double>();
         prob = data.at_path(key + ".prob").value<double>();
@@ -56,12 +53,10 @@ public:
     std::optional<double> lambda = std::nullopt;
     std::optional<double> rate = std::nullopt;
     std::optional<double> prob = std::nullopt;
-    bool is_valid() const override
-    {
+    bool is_valid() const override {
         return DistributionConfig::is_valid() && XOR(XOR(mean.has_value(), lambda.has_value()), rate.has_value());
     }
-    std::string to_string() const override
-    {
+    std::string to_string() const override {
         return DistributionConfig::to_string() + " with" +
             (!mean.has_value() && !lambda.has_value() && !rate.has_value()
                  ? " unknown mean/lambda/rate"
@@ -72,19 +67,16 @@ public:
     }
 };
 
-class FrechetDistributionConfig : public DistributionConfig
-{
+class FrechetDistributionConfig : public DistributionConfig {
 public:
     explicit FrechetDistributionConfig() : DistributionConfig("frechet"s) {}
     explicit FrechetDistributionConfig(const toml::parse_result& data, const std::string& key) :
-        FrechetDistributionConfig()
-    {
+        FrechetDistributionConfig() {
         mean = data.at_path(key + ".mean").value<double>();
         alpha = data.at_path(key + ".alpha").value<double>();
         s = data.at_path(key + ".s").value<double>();
         m = data.at_path(key + ".m").value<double>();
-        if (!m.has_value())
-        {
+        if (!m.has_value()) {
             m.emplace(0.);
         }
     }
@@ -92,13 +84,11 @@ public:
     std::optional<double> alpha = std::nullopt;
     std::optional<double> s = std::nullopt;
     std::optional<double> m = std::nullopt;
-    bool is_valid() const override
-    {
+    bool is_valid() const override {
         return DistributionConfig::is_valid() && alpha.has_value() && m.has_value() &&
             XOR(mean.has_value(), s.has_value());
     }
-    std::string to_string() const override
-    {
+    std::string to_string() const override {
         return DistributionConfig::to_string() + " with " + ("m=" + std::to_string(m.value())) +
             (!(mean.has_value() || s.has_value()) ? " ; unknown mean/s" : "") +
             (mean.has_value() ? " ; mean=" + std::to_string(mean.value()) : "") +
@@ -107,13 +97,11 @@ public:
     }
 };
 
-class BoundedParetoDistributionConfig : public DistributionConfig
-{
+class BoundedParetoDistributionConfig : public DistributionConfig {
 public:
     explicit BoundedParetoDistributionConfig() : DistributionConfig("bounded pareto"s) {}
     explicit BoundedParetoDistributionConfig(const toml::parse_result& data, const std::string& key) :
-        BoundedParetoDistributionConfig()
-    {
+        BoundedParetoDistributionConfig() {
         alpha = data.at_path(key + ".alpha").value<double>();
         mean = data.at_path(key + ".mean").value<double>();
         rate = data.at_path(key + ".rate").value<double>();
@@ -125,13 +113,11 @@ public:
     std::optional<double> rate = std::nullopt;
     std::optional<double> l = std::nullopt;
     std::optional<double> h = std::nullopt;
-    bool is_valid() const override
-    {
+    bool is_valid() const override {
         return DistributionConfig::is_valid() && alpha.has_value() &&
             XOR(XOR(mean.has_value(), rate.has_value()), l.has_value() && h.has_value());
     }
-    std::string to_string() const override
-    {
+    std::string to_string() const override {
         return DistributionConfig::to_string() + " with " +
             (alpha.has_value() ? "alpha=" + std::to_string(alpha.value()) : "unknown alpha") +
             (!(mean.has_value() || rate.has_value() || (l.has_value() && h.has_value())) ? " ; unknown mean/rate/l+h"
@@ -143,9 +129,7 @@ public:
     }
 };
 
-
-struct ClassConfig
-{
+struct ClassConfig {
     std::string name;
     unsigned int cores;
     DistributionConfig* arrival_distribution;
@@ -157,9 +141,7 @@ struct ClassConfig
     // };
 };
 
-
-struct ExperimentConfig
-{
+struct ExperimentConfig {
     std::string name;
     unsigned int events;
     unsigned int repetitions;
@@ -171,13 +153,11 @@ struct ExperimentConfig
 };
 
 template <typename _T>
-bool load(const toml::parse_result& data, const std::string_view path, _T& value)
-{
+bool load(const toml::parse_result& data, const std::string_view path, _T& value) {
     auto val = data.at_path(path).value<_T>();
     if (val.has_value())
         value = val.value();
-    else
-    {
+    else {
         std::cerr << BOLDRED << "Error:" << RESET << RED << " Value missing in TOML file " << path << RESET
                   << std::endl;
         return false;
@@ -186,46 +166,35 @@ bool load(const toml::parse_result& data, const std::string_view path, _T& value
 }
 
 template <typename _T>
-bool load(const toml::parse_result& data, const std::string_view path, _T& value, const _T& def)
-{
+bool load(const toml::parse_result& data, const std::string_view path, _T& value, const _T& def) {
     auto val = data.at_path(path).value<_T>();
     value = val.value_or(def);
     return true;
 }
 
 inline bool load_distribution(const toml::parse_result& data, const std::string& path,
-                              DistributionConfig*& distribution, const std::string& def)
-{
+                              DistributionConfig*& distribution, const std::string& def) {
     const auto type = data.at_path(path + ".distribution"s).value_or(def);
-    if (type.compare("exponential"s) == 0)
-    {
+    if (type.compare("exponential"s) == 0) {
         distribution = new ExponentialDistributionConfig{data, path};
-    }
-    else if (type.compare("frechet"s) == 0)
-    {
+    } else if (type.compare("frechet"s) == 0) {
         distribution = new FrechetDistributionConfig{data, path};
-    }
-    else if (type.compare("bounded pareto"s) == 0)
-    {
+    } else if (type.compare("bounded pareto"s) == 0) {
         distribution = new BoundedParetoDistributionConfig{data, path};
-    }
-    else
-    {
+    } else {
         std::cerr << BOLDRED << "Error:" << RESET << RED << " Unsupported distribution " << BOLDRED << type << RESET
                   << RED << " at path " << BOLDRED << path << RESET << std::endl;
 
         return false;
     }
-    if (!distribution->is_valid())
-    {
+    if (!distribution->is_valid()) {
         std::cerr << BOLDRED << "Error:" << RESET << RED << " Invalid definition for distribution at path " << BOLDRED
                   << path << RESET << RED << ": " << BOLDRED << distribution->to_string() << RESET << std::endl;
     }
     return distribution->is_valid();
 }
 
-inline bool load_class_from_toml(const toml::parse_result& data, const std::string& key, ExperimentConfig& conf)
-{
+inline bool load_class_from_toml(const toml::parse_result& data, const std::string& key, ExperimentConfig& conf) {
     const auto full_key = "class."s + key;
     ClassConfig class_conf;
     class_conf.name = key;
@@ -239,9 +208,7 @@ inline bool load_class_from_toml(const toml::parse_result& data, const std::stri
     return cores_ok && arrival_ok && service_ok;
 }
 
-
-inline bool from_toml(const std::string& filename, ExperimentConfig& conf)
-{
+inline bool from_toml(const std::string& filename, ExperimentConfig& conf) {
     const auto data = toml::parse_file(filename);
     bool ok = true;
     ok = ok && load(data, "simulation.identifier", conf.name);
@@ -257,13 +224,11 @@ inline bool from_toml(const std::string& filename, ExperimentConfig& conf)
     ok = ok && classes.is_table();
 
     if (ok)
-        for (const auto& [key, value] : *classes.as_table())
-        {
+        for (const auto& [key, value] : *classes.as_table()) {
             ok = load_class_from_toml(data, key.data(), conf) && ok; // keep going if one fails
         }
 
     return ok;
 }
-
 
 #endif // TOML_LOADER_H

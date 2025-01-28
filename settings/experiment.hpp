@@ -5,12 +5,10 @@
 #ifndef EXPERIMENT_H
 #define EXPERIMENT_H
 
-#include <vector>
 #include <string>
+#include <vector>
 
-
-struct Experiment
-{
+struct Experiment {
     std::vector<double> l;
     std::vector<double> u;
     std::vector<int> s;
@@ -19,6 +17,5 @@ struct Experiment
     int sm;
     std::string logf;
 };
-
 
 #endif // EXPERIMENT_H

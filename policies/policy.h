@@ -9,8 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
-class Policy
-{
+class Policy {
 public:
     virtual void arrival(int c, int size, long int id) = 0;
     virtual void departure(int c, int size, long int id) = 0;

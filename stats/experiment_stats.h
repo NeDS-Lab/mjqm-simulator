@@ -9,8 +9,7 @@
 #include <vector>
 #include "../math/confidence_intervals.h"
 
-struct ExperimentStats
-{
+struct ExperimentStats {
     std::vector<Confidence_inter> occupancy_buf; // out: occupancy buffer per class
     std::vector<Confidence_inter> occupancy_ser; // out: occupancy servers per class
     std::vector<Confidence_inter> throughput; // out: throughput per class
@@ -42,6 +41,5 @@ struct ExperimentStats
     friend std::ostream& operator<<(std::ostream& os, ExperimentStats const& m);
     void add_headers(std::vector<std::string>& headers, std::vector<int>& sizes) const;
 };
-
 
 #endif // EXPERIMENT_STATS_H

@@ -7,4 +7,4 @@
 
 #include "experiment_stats.h"
 
-#endif //STATS_H
+#endif // STATS_H

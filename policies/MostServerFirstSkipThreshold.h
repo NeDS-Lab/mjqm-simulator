@@ -7,14 +7,12 @@
 
 #include "policy.h"
 
-class MostServerFirstSkipThreshold : public Policy
-{
+class MostServerFirstSkipThreshold : public Policy {
 public:
     MostServerFirstSkipThreshold(int w, int servers, int classes, const std::vector<int>& sizes, double arr_s,
                                  double srv_s) :
         servers(servers), w(w), state_buf(classes), state_ser(classes), stopped_jobs(classes), ongoing_jobs(classes),
-        sizes(sizes), freeservers(servers), violations_counter(0), drops_below(false), big_priority(false)
-    {
+        sizes(sizes), freeservers(servers), violations_counter(0), drops_below(false), big_priority(false) {
         this->threshold = servers - static_cast<int>(sizes[0] * (arr_s / srv_s));
     }
     void arrival(int c, int size, long int id) override;
@@ -49,6 +47,5 @@ private:
 
     void flush_buffer() override;
 };
-
 
 #endif // MOSTSERVERFIRSTSKIPTHRESHOLD_H

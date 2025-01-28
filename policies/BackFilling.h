@@ -8,13 +8,11 @@
 #include <map>
 #include "policy.h"
 
-class BackFilling final : public Policy
-{
+class BackFilling final : public Policy {
 public:
     BackFilling(const int w, const int servers, const int classes, const std::vector<int>& sizes) :
         state_buf(classes), state_ser(classes), stopped_jobs(classes), ongoing_jobs(classes), freeservers(servers),
-        servers(servers), w(w), sizes(sizes), violations_counter(0)
-    {}
+        servers(servers), w(w), sizes(sizes), violations_counter(0) {}
     void arrival(int c, int size, long int id) override;
     void departure(int c, int size, long int id) override;
     bool fit_jobs(std::unordered_map<long int, double> holdTime, double simTime) override;
@@ -48,6 +46,5 @@ private:
     double schedule_next() const;
     void flush_buffer() override;
 };
-
 
 #endif // BACKFILLING_H

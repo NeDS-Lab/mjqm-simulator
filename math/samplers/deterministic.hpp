@@ -9,8 +9,7 @@
 
 #include <memory>
 
-class deterministic : public sampler
-{
+class deterministic : public sampler {
 public:
     explicit deterministic(const double mean) : mean(mean) {}
 
@@ -23,7 +22,9 @@ public:
 
     static std::unique_ptr<sampler> with_mean(double mean) { return std::make_unique<deterministic>(mean); }
 
-    explicit operator std::string() const override { return "deterministic (mean=" + std::to_string(mean) + " => variance=0)"; }
+    explicit operator std::string() const override {
+        return "deterministic (mean=" + std::to_string(mean) + " => variance=0)";
+    }
 };
 
 #endif // DETERMINISTIC_H

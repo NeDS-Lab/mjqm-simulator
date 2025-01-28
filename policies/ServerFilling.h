@@ -7,13 +7,11 @@
 
 #include "policy.h"
 
-class ServerFilling : public Policy
-{
+class ServerFilling : public Policy {
 public:
     ServerFilling(int w, int servers, int classes) :
         state_buf(classes), state_ser(classes), stopped_jobs(classes), ongoing_jobs(classes), mset_coreNeed(0),
-        freeservers(servers), servers(servers), w(w)
-    {}
+        freeservers(servers), servers(servers), w(w) {}
     void arrival(int c, int size, long int id) override;
     void departure(int c, int size, long int id) override;
     const std::vector<int>& get_state_ser() override { return state_ser; };
@@ -45,6 +43,5 @@ private:
     void addToMset(const std::tuple<int, int, long int>& e);
     void flush_buffer() override;
 };
-
 
 #endif // SERVERFILLING_H

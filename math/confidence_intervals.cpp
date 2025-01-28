@@ -9,9 +9,7 @@
 #include <cmath>
 #include <vector>
 
-
-Confidence_inter compute_interval_student(const std::vector<double>& rep, const double confidence)
-{
+Confidence_inter compute_interval_student(const std::vector<double>& rep, const double confidence) {
     double mean = 0.0;
     double stdv = 0.0;
 
@@ -36,8 +34,7 @@ Confidence_inter compute_interval_student(const std::vector<double>& rep, const 
 }
 
 Confidence_inter compute_interval_class_student(const std::vector<std::vector<double>>& rep, const int cl,
-                                                const double confidence)
-{
+                                                const double confidence) {
 
     double mean = 0.0;
     double stdv = 0.0;
@@ -63,8 +60,7 @@ Confidence_inter compute_interval_class_student(const std::vector<std::vector<do
 }
 
 Confidence_inter compute_interval_class_chi(const std::vector<std::vector<double>>& rep, const int cl,
-                                            const double confidence)
-{
+                                            const double confidence) {
 
     double mean = 0.0;
     double stdv = 0.0;

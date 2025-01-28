@@ -5,10 +5,8 @@
 #include "experiment_stats.h"
 #include <iostream>
 
-std::ostream& operator<<(std::ostream& os, ExperimentStats const& m)
-{
-    for (int c = 0; c < m.occupancy_buf.size(); c++)
-    {
+std::ostream& operator<<(std::ostream& os, ExperimentStats const& m) {
+    for (int c = 0; c < m.occupancy_buf.size(); c++) {
 
         os << m.occupancy_buf.at(c);
         os << m.occupancy_ser.at(c);
@@ -42,10 +40,8 @@ std::ostream& operator<<(std::ostream& os, ExperimentStats const& m)
     return os;
 }
 
-void ExperimentStats::add_headers(std::vector<std::string>& headers, std::vector<int>& sizes) const
-{
-    for (int ts : sizes)
-    {
+void ExperimentStats::add_headers(std::vector<std::string>& headers, std::vector<int>& sizes) const {
+    for (int ts : sizes) {
         headers.insert(headers.end(),
                        {
                            "T" + std::to_string(ts) + " Queue",

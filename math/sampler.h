@@ -5,9 +5,7 @@
 #ifndef SAMPLER_H
 #define SAMPLER_H
 
-
-class sampler
-{
+class sampler {
 public:
     typedef double result_type; // for mirroring how std usually does it
     virtual double sample() = 0;
@@ -15,6 +13,5 @@ public:
 
     explicit virtual operator std::string() const = 0;
 };
-
 
 #endif // SAMPLER_H

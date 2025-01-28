@@ -10,12 +10,10 @@
 #include <random>
 #include "exponential.hpp"
 
-class pareto : public exponential
-{
+class pareto : public exponential {
 public:
     explicit pareto(std::shared_ptr<std::mt19937_64> generator, double alpha, double xm) :
-        exponential(std::move(generator), 1 / alpha), alpha(alpha), xm(xm)
-    {
+        exponential(std::move(generator), 1 / alpha), alpha(alpha), xm(xm) {
         assert(alpha > 1); // otherwise the mean is infinite
     }
 
@@ -30,22 +28,18 @@ public:
     double sample() override { return xm * exp(exponential::sample()); }
 
     static std::unique_ptr<sampler> with_rate(const std::shared_ptr<std::mt19937_64> generator, double rate,
-                                              double alpha)
-    {
+                                              double alpha) {
         return std::make_unique<pareto>(std::move(generator), alpha, (alpha - 1) / alpha / rate);
     }
     static std::unique_ptr<sampler> with_mean(const std::shared_ptr<std::mt19937_64> generator, double mean,
-                                              double alpha)
-    {
+                                              double alpha) {
         return std::make_unique<pareto>(std::move(generator), alpha, (alpha - 1) / alpha * mean);
     }
 
-    explicit operator std::string() const override
-    {
-        return "pareto (alpha=" + std::to_string(alpha) + " ; x_m=" + std::to_string(xm) + " => mean=" +
-            std::to_string(mean) + " ; variance=" + std::to_string(variance) + ")";
+    explicit operator std::string() const override {
+        return "pareto (alpha=" + std::to_string(alpha) + " ; x_m=" + std::to_string(xm) +
+            " => mean=" + std::to_string(mean) + " ; variance=" + std::to_string(variance) + ")";
     }
 };
-
 
 #endif // PARETO_H
