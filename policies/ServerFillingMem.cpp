@@ -9,13 +9,13 @@ void ServerFillingMem::arrival(int c, int size, long int id)
 {
     std::tuple<int, int, long int> e(c, size, id);
     this->buffer.push_back(e);
-    state_buf[std::get<0>(e)]++;
+    ++state_buf[std::get<0>(e)];
     flush_buffer();
 }
 void ServerFillingMem::departure(int c, int size, long int id)
 {
     std::tuple<int, int, long int> e(c, size, id);
-    state_ser[std::get<0>(e)]--;
+    --state_ser[std::get<0>(e)];
     freeservers += std::get<1>(e);
     this->mset_coreNeed -= std::get<1>(e);
 

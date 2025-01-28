@@ -29,12 +29,12 @@ private:
 public:
     double sample() override { return xm * exp(exponential::sample()); }
 
-    static std::unique_ptr<sampler> with_rate(const std::shared_ptr<std::mt19937_64>& generator, double rate,
+    static std::unique_ptr<sampler> with_rate(const std::shared_ptr<std::mt19937_64> generator, double rate,
                                               double alpha)
     {
         return std::make_unique<pareto>(std::move(generator), alpha, (alpha - 1) / alpha / rate);
     }
-    static std::unique_ptr<sampler> with_mean(const std::shared_ptr<std::mt19937_64>& generator, double mean,
+    static std::unique_ptr<sampler> with_mean(const std::shared_ptr<std::mt19937_64> generator, double mean,
                                               double alpha)
     {
         return std::make_unique<pareto>(std::move(generator), alpha, (alpha - 1) / alpha * mean);

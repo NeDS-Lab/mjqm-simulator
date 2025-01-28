@@ -109,6 +109,8 @@ public:
             for (int i = 0; i < nclasses; i++)
             {
                 this->class_samplers.push_back(exponential::with_mean(generator, u[i]));
+                // exponential::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
+                // this->class_samplers.push_back(exponential::with_rate(generator, 1/u[i]));
             }
             break;
         case 1: // pareto
@@ -133,6 +135,8 @@ public:
             for (int i = 0; i < nclasses; i++)
             {
                 this->class_samplers.push_back(frechet::with_mean(generator, u[i], 2.15));
+                // frechet::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
+                // this->class_samplers.push_back(frechet::with_rate(generator, 1/u[i], 2.15));
             }
             break;
         case 3: // uniform

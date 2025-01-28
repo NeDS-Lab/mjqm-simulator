@@ -27,7 +27,7 @@ private:
 
 public:
     double sample() override { return distribution(*generator); }
-    static std::unique_ptr<sampler> with_mean(const std::shared_ptr<std::mt19937_64>& generator, double mean,
+    static std::unique_ptr<sampler> with_mean(const std::shared_ptr<std::mt19937_64> generator, double mean,
                                               double variance = 1.)
     {
         return std::make_unique<uniform>(std::move(generator), mean, variance);
