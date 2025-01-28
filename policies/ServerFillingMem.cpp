@@ -94,16 +94,14 @@ void ServerFillingMem::printBuffer()
 }
 void ServerFillingMem::flush_buffer()
 {
-
     if (freeservers > 0)
     {
-        auto it = buffer.begin();
-
-        for (int i = 0; i < state_buf.size(); i++)
+        for (int i = 0; i < state_buf.size(); ++i)
         {
             state_buf[i] += state_ser[i];
         }
 
+        auto it = buffer.begin();
         while (mset_coreNeed < servers && it != buffer.end())
         {
             this->addToMset(*it);
@@ -124,8 +122,8 @@ void ServerFillingMem::flush_buffer()
         {
             if (std::get<1>(elem) <= freeservers)
             {
-                state_ser[std::get<0>(elem)]++;
-                state_buf[std::get<0>(elem)]--;
+                ++state_ser[std::get<0>(elem)];
+                --state_buf[std::get<0>(elem)];
                 freeservers -= std::get<1>(elem);
                 ongoing_jobs[std::get<0>(elem)].push_back(std::get<2>(elem));
             }

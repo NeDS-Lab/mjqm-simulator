@@ -10,9 +10,9 @@
 class ServerFillingMem : public Policy
 {
 public:
-    ServerFillingMem(int w, int servers, int classes) :
-        servers(servers), w(w), state_buf(classes), state_ser(classes), stopped_jobs(classes), ongoing_jobs(classes),
-        freeservers(servers), mset_coreNeed(0)
+    ServerFillingMem(const int w, const int servers, const int classes) :
+        state_buf(classes, 0), state_ser(classes, 0), stopped_jobs(classes), ongoing_jobs(classes), mset_coreNeed(0),
+        freeservers(servers), servers(servers), w(w)
     {}
     void arrival(int c, int size, long int id) override;
     void departure(int c, int size, long int id) override;
