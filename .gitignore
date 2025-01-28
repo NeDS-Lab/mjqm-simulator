@@ -8,6 +8,7 @@
 !Makefile
 
 # Compiled object files
+Results/
 out
 *.o
 *.obj
