@@ -1,15 +1,21 @@
 import sys
 from pathlib import Path
 
+import math
+
+print_speedup = True
+
+
 def load_results(path: Path):
     data = {}
     with open(path, 'r') as file:
         columns = file.readline().strip().split(';')
         for line in file:
             values = line.strip().split(';')
-            data[values[0]] = {}
-            for column, value in zip(columns[1:], values[1:]):
-                data[values[0]][column] = value
+            if values[0]:
+                data[values[0]] = {}
+                for column, value in zip(columns[1:], values[1:]):
+                    data[values[0]][column] = value
     return columns, data
 
 
@@ -20,6 +26,7 @@ def print_with_columns_key(columns, data, filter_column=None):
         for column, value in zip(columns[1:], values):
             if filter_column is None or filter_column(column):
                 print(f'{column}: {value}')
+
 
 def compare_results(data1, data2):
     columns1, data1 = data1
@@ -34,28 +41,37 @@ def compare_results(data1, data2):
         return
     different = False
     for key in data2.keys():
+        key_header = False
+        duration_diff = ""
         for column in columns2[1:]:
-            if data1[key][column] != data2[key][column]:
-                if column == 'Run Duration ConfInt':
-                    continue
+            if column.endswith('ConfInt') or not data2[key][column]:
+                continue
+            ours = float(data1[key][column])
+            theirs = float(data2[key][column])
+            if not math.isclose(ours, theirs, rel_tol=1e-3):
                 if column == 'Run Duration':
-                    ours = float(data1[key][column])
-                    theirs = float(data2[key][column])
                     if ours < theirs:
                         if ours == 0:
-                            print(f'Speedup: {theirs}/0 ({columns2[0]} {key})')
+                            duration_diff = f'Speedup: {theirs}/0'
                         else:
-                            print(f'Speedup: {(1 - ours / theirs)*100:.2f}% ({columns2[0]} {key})')
+                            duration_diff = f'Speedup: {(1 - ours / theirs) * 100:.2f}%'
                     else:
-                        print(f'Slowdown: {(ours / theirs - 1)*100:.2f}% ({columns2[0]} {key})')
+                        duration_diff = f'Slowdown: {(ours / theirs - 1) * 100:.2f}%'
                     continue
-                print(f'{columns2[0]}: {key}, Column: {column} '
-                      f'Data1: {data1[key][column]} ')
-                print(f'{columns2[0]}: {key}, Column: {column} '
-                      f'Data2: {data2[key][column]} ')
+                if not key_header:
+                    print(f'{columns2[0]}: {key}')
+                    key_header = True
+                print(f'\tColumn: {column}')
+                print(f'\t\t  ours: {data1[key][column]} {data1[key][column + " ConfInt"]}')
+                print(f'\t\ttheirs: {data2[key][column]} {data2[key][column + " ConfInt"]}')
                 different = True
+        if print_speedup and duration_diff:
+            if not key_header:
+                print(f'{columns2[0]}: {key}')
+            print(f'\t{duration_diff} (ours: {data1[key]["Run Duration"]} ; theirs: {data2[key]["Run Duration"]})')
     if not different:
         print('Data is the same')
+
 
 if __name__ == '__main__':
     # get the two paths from arguments
