@@ -116,7 +116,7 @@ void from_argv(char** argv, std::vector<double>& p, std::vector<int>& sizes, std
     std::cout << lambdas_filename << std::endl;
     read_lambdas(lambdas_filename, arr_rate);
 
-    out_filename = "Results/overLambdas-nClasses" + std::to_string(sizes.size()) + "-N" + std::to_string(n) + "-Win" +
+    out_filename = "Results/simulator_smash/overLambdas-nClasses" + std::to_string(sizes.size()) + "-N" + std::to_string(n) + "-Win" +
         std::to_string(w) + "-" + sampling_name[sampling_method] + "-" + cell + ".csv";
 }
 

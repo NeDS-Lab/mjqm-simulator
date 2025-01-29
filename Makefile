@@ -35,7 +35,7 @@ list:
 	@echo current: $(appname)
 
 run: build
-	@mkdir -p Results
+	@mkdir -p Results/$(appname)
 	./$(appname) ${ARGS}
 
 help:
@@ -87,7 +87,7 @@ clean:
 	rm -f $(appname) $(objects)
 
 clean-out:
-	rm -rf Results/*.csv Results/*.txt
+	rm -rf Results/**.csv Results/**.txt
 
 .clean_%:
 	@$(MAKE) appname=$(patsubst .clean_%,%,$@) clean
@@ -103,6 +103,7 @@ depend-all: dist-clean $(foreach T,$(app_names),.depends_$T)
 all: $(foreach T,$(app_names),.app_$T)
 
 test: build
+	@mkdir -p Results/$(appname)
 	$(MAKE) CPUS=1 Results/overLambdas-nClasses2-N50-Win1-Exponential-oneOrAll-test1.csv \
 	Results/overLambdas-nClasses4-N16-Win0-Exponential-testing_4C_16.csv \
 	Results/overLambdas-nClasses4-N16-Win1-Exponential-testing_4C_16.csv \
@@ -113,39 +114,39 @@ test: build
 	Results/overLambdas-nClasses4-N16-Win1-Uniform-testing_4C_16.csv
 
 define compare_results
-	@python3 ensure_same_results.py $@ test/expected/$(@F) > $@.diff.txt 2>&1
-	@grep -q "Data is the same" $@.diff.txt && echo -e "$(GREEN)$(appname) $(BOLD_GREEN)PASSED$(GREEN) test $(@F)$(COLOR_RESET)" || echo -e "$(RED)$(appname) $(BOLD_RED)FAILED$(RED) test $(@F)$(COLOR_RESET)"
+	@python3 ensure_same_results.py Results/$(appname)/$(@F) test/expected/$(@F) > Results/$(appname)/$(@F).diff.txt 2>&1
+	@grep -q "Data is the same" Results/$(appname)/$(@F).diff.txt && echo -e "$(GREEN)$(appname) $(BOLD_GREEN)PASSED$(GREEN) test $(@F)$(COLOR_RESET)" || echo -e "$(RED)$(appname) $(BOLD_RED)FAILED$(RED) test $(@F)$(COLOR_RESET)"
 endef
 
 Results/overLambdas-nClasses2-N50-Win1-Exponential-oneOrAll-test1.csv: $(appname)
-	$(MAKE) run ARGS="oneOrAll-test1 50 1 exp 100000 10" > $@.out.txt 2>&1
+	$(MAKE) run ARGS="oneOrAll-test1 50 1 exp 100000 10" > Results/$(appname)/$(@F).out.txt 2>&1
 	$(compare_results)
 
 Results/overLambdas-nClasses4-N16-Win0-Exponential-testing_4C_16.csv: $(appname)
-	$(MAKE) run ARGS="testing_4C_16 16 0 exp 100000 20" > $@.out.txt 2>&1
+	$(MAKE) run ARGS="testing_4C_16 16 0 exp 100000 20" > Results/$(appname)/$(@F).out.txt 2>&1
 	$(compare_results)
 
 Results/overLambdas-nClasses4-N16-Win1-Exponential-testing_4C_16.csv: $(appname)
-	$(MAKE) run ARGS="testing_4C_16 16 1 exp 100000 20" > $@.out.txt 2>&1
+	$(MAKE) run ARGS="testing_4C_16 16 1 exp 100000 20" > Results/$(appname)/$(@F).out.txt 2>&1
 	$(compare_results)
 
 Results/overLambdas-nClasses4-N16-Win4-Exponential-testing_4C_16.csv: $(appname)
-	$(MAKE) run ARGS="testing_4C_16 16 4 exp 100000 20" > $@.out.txt 2>&1
+	$(MAKE) run ARGS="testing_4C_16 16 4 exp 100000 20" > Results/$(appname)/$(@F).out.txt 2>&1
 	$(compare_results)
 
 Results/overLambdas-nClasses4-N16-Win-2-Exponential-testing_4C_16.csv: $(appname)
-	$(MAKE) run ARGS="testing_4C_16 16 -2 exp 100000 20" > $@.out.txt 2>&1
+	$(MAKE) run ARGS="testing_4C_16 16 -2 exp 100000 20" > Results/$(appname)/$(@F).out.txt 2>&1
 	$(compare_results)
 
 Results/overLambdas-nClasses4-N16-Win-3-Exponential-testing_4C_16.csv: $(appname)
-	$(MAKE) run ARGS="testing_4C_16 16 -3 exp 100000 20" > $@.out.txt 2>&1
+	$(MAKE) run ARGS="testing_4C_16 16 -3 exp 100000 20" > Results/$(appname)/$(@F).out.txt 2>&1
 	$(compare_results)
 
 Results/overLambdas-nClasses4-N16-Win1-Frechet-testing_4C_16.csv: $(appname)
-	$(MAKE) run ARGS="testing_4C_16 16 1 fre 100000 20" > $@.out.txt 2>&1
+	$(MAKE) run ARGS="testing_4C_16 16 1 fre 100000 20" > Results/$(appname)/$(@F).out.txt 2>&1
 	$(compare_results)
 
 Results/overLambdas-nClasses4-N16-Win1-Uniform-testing_4C_16.csv: $(appname)
-	$(MAKE) run ARGS="testing_4C_16 16 1 uni 100000 20" > $@.out.txt 2>&1
+	$(MAKE) run ARGS="testing_4C_16 16 1 uni 100000 20" > Results/$(appname)/$(@F).out.txt 2>&1
 	$(compare_results)
 

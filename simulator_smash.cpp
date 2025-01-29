@@ -359,61 +359,61 @@ public:
         rep_window_size.clear();
         rep_preemption.clear();
 
-        double tot_lambda = std::accumulate(l.begin(), l.end(), 0.0);
-        std::string out_filename = "Results/logfile_N" + std::to_string(n) + "_" + std::to_string(tot_lambda) + "_W" +
-            std::to_string(w) + ".csv";
-        remove(out_filename.c_str());
-        std::ofstream outputFile_rep(out_filename, std::ios::app);
-        std::vector<std::string> headers_rep;
-        headers_rep = {"Repetition"};
-        for (int ts : sizes) {
-            headers_rep.push_back("T" + std::to_string(ts) + " Queue");
-            headers_rep.push_back("T" + std::to_string(ts) + " MQL");
-        }
-
-        headers_rep.push_back("Total Queue");
-        headers_rep.push_back("Total MQL");
-
-        if (outputFile_rep.tellp() == 0) {
-            // Write the headers to the CSV file
-            for (const std::string& header : headers_rep) {
-                outputFile_rep << header << ";";
-            }
-            outputFile_rep << "\n";
-        }
-        outputFile_rep.close();
-        std::vector<std::string> headers;
-        headers = {"Repetition", "Event"};
-        for (int ts : sizes) {
-            headers.push_back("T" + std::to_string(ts) + " Queue");
-            headers.push_back("T" + std::to_string(ts) + " Service");
-        }
-
-        headers.push_back("Total Queue");
-        headers.push_back("Total Service");
-
-        for (int i = 0; i < sizes.size(); ++i) {
-            headers.push_back("Fel" + std::to_string(i));
-        }
-
-        for (int i = 0; i < sizes.size(); ++i) {
-            headers.push_back("Fel" + std::to_string(i + sizes.size()));
-        }
-
-        headers.push_back("Simtime");
-
-        {
-            remove(logfile_name.c_str());
-            std::ofstream outputFile(logfile_name, std::ios::app);
-            if (outputFile.tellp() == 0) {
-                // Write the headers to the CSV file
-                for (const std::string& header : headers) {
-                    outputFile << header << ";";
-                }
-                outputFile << "\n";
-            }
-            outputFile.close();
-        }
+        // double tot_lambda = std::accumulate(l.begin(), l.end(), 0.0);
+        // std::string out_filename = "Results/logfile_N" + std::to_string(n) + "_" + std::to_string(tot_lambda) + "_W" +
+        //     std::to_string(w) + ".csv";
+        // remove(out_filename.c_str());
+        // std::ofstream outputFile_rep(out_filename, std::ios::app);
+        // std::vector<std::string> headers_rep;
+        // headers_rep = {"Repetition"};
+        // for (int ts : sizes) {
+        //     headers_rep.push_back("T" + std::to_string(ts) + " Queue");
+        //     headers_rep.push_back("T" + std::to_string(ts) + " MQL");
+        // }
+        //
+        // headers_rep.push_back("Total Queue");
+        // headers_rep.push_back("Total MQL");
+        //
+        // if (outputFile_rep.tellp() == 0) {
+        //     // Write the headers to the CSV file
+        //     for (const std::string& header : headers_rep) {
+        //         outputFile_rep << header << ";";
+        //     }
+        //     outputFile_rep << "\n";
+        // }
+        // outputFile_rep.close();
+        // std::vector<std::string> headers;
+        // headers = {"Repetition", "Event"};
+        // for (int ts : sizes) {
+        //     headers.push_back("T" + std::to_string(ts) + " Queue");
+        //     headers.push_back("T" + std::to_string(ts) + " Service");
+        // }
+        //
+        // headers.push_back("Total Queue");
+        // headers.push_back("Total Service");
+        //
+        // for (int i = 0; i < sizes.size(); ++i) {
+        //     headers.push_back("Fel" + std::to_string(i));
+        // }
+        //
+        // for (int i = 0; i < sizes.size(); ++i) {
+        //     headers.push_back("Fel" + std::to_string(i + sizes.size()));
+        // }
+        //
+        // headers.push_back("Simtime");
+        //
+        // {
+        //     remove(logfile_name.c_str());
+        //     std::ofstream outputFile(logfile_name, std::ios::app);
+        //     if (outputFile.tellp() == 0) {
+        //         // Write the headers to the CSV file
+        //         for (const std::string& header : headers) {
+        //             outputFile << header << ";";
+        //         }
+        //         outputFile << "\n";
+        //     }
+        //     outputFile.close();
+        // }
 
         for (int rep = 0; rep < repetitions; rep++) {
 
@@ -540,17 +540,17 @@ public:
                 std::cout << sb[i] << ", ";
             }
             std::cout << std::endl;*/
-            std::ofstream outputFile(out_filename, std::ios::app);
-            outputFile << rep << ";";
-            auto state_buf = policy->get_state_buf();
-            for (int i = 0; i < occupancy_buf.size(); i++) {
-                outputFile << state_buf[i] << ";";
-                outputFile << occupancy_buf[i] << ";";
-            }
-            outputFile << std::accumulate(state_buf.begin(), state_buf.end(), 0.0) << ";";
-            outputFile << std::accumulate(occupancy_buf.begin(), occupancy_buf.end(), 0.0) << ";";
-            outputFile << "\n";
-            outputFile.close();
+            // std::ofstream outputFile(out_filename, std::ios::app);
+            // outputFile << rep << ";";
+            // auto state_buf = policy->get_state_buf();
+            // for (int i = 0; i < occupancy_buf.size(); i++) {
+            //     outputFile << state_buf[i] << ";";
+            //     outputFile << occupancy_buf[i] << ";";
+            // }
+            // outputFile << std::accumulate(state_buf.begin(), state_buf.end(), 0.0) << ";";
+            // outputFile << std::accumulate(occupancy_buf.begin(), occupancy_buf.end(), 0.0) << ";";
+            // outputFile << "\n";
+            // outputFile.close();
         }
 
         // outputFile.close();
