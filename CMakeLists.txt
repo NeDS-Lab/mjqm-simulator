@@ -12,6 +12,8 @@ add_link_options($<$<CONFIG:RELEASE>:-s>)
 add_compile_options($<$<CONFIG:RELEASE>:-Ofast>)
 add_compile_options($<$<CONFIG:RELEASE>:-march=native>)
 
+link_libraries("-static")
+
 project(mjqm-simulator
         VERSION 0.1.0
         DESCRIPTION "Simulator for Multiserver Job Queuing Model (MJQM)"
