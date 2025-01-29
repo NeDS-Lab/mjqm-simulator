@@ -44,6 +44,8 @@ CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
 build/
+_deps/
+Makefile
 
 # Qt specific files
 moc_*.cpp
