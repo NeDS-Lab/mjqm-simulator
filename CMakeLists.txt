@@ -1,12 +1,9 @@
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 3.28)
+#cmake_policy(SET CMP0167 NEW)
 #set(CMAKE_VERBOSE_MAKEFILE ON)
-
-set(CMAKE_C_COMPILER g++)
-set(CMAKE_CXX_COMPILER g++)
-set(CMAKE_CXX_STANDARD 20)
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-m64)
 add_link_options($<$<CONFIG:RELEASE>:-s>)
 add_compile_options($<$<CONFIG:RELEASE>:-Ofast>)
@@ -42,7 +39,7 @@ add_executable(simulator_smash simulator_smash.cpp)
 target_link_libraries(simulator_smash math policies stats settings)
 
 add_executable(toml_loader_test toml_loader_test.cpp)
-target_link_libraries(simulator_smash settings_toml)
+target_link_libraries(simulator_smash toml_loader)
 
 add_custom_target(test_all)
 
@@ -58,6 +55,7 @@ function(add_custom_test_ff)
     add_custom_command(
             OUTPUT Results/${T_TARGET}/${T_FILE}
             BYPRODUCTS Results/${T_TARGET}/${T_FILE}.out.txt Results/${T_TARGET}/${T_FILE}.diff.txt
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMAND mkdir -p Results/${T_TARGET}
             COMMAND ${T_TARGET} ${T_ARGS} > Results/${T_TARGET}/${T_FILE}.out.txt 2>&1
             COMMAND python3 ensure_same_results.py Results/${T_TARGET}/${T_FILE} test/expected/${T_FILE} > Results/${T_TARGET}/${T_FILE}.diff.txt 2>&1

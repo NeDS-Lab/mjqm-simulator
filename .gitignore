@@ -5,7 +5,8 @@
 # Unignore all dirs
 !*/
 ### Above combination will ignore all files without extension ###
-!Makefile
+!configure
+!simula
 
 # Compiled object files
 Results/
@@ -47,6 +48,7 @@ build/
 _deps/
 Makefile
 .cmake/
+CMakeUserPresets.json
 
 # Qt specific files
 moc_*.cpp
