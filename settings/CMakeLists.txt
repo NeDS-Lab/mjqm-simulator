@@ -1,13 +1,4 @@
-add_library(settings
-        experiment.hpp
-        loader.hpp
-)
-set_target_properties(settings PROPERTIES LINKER_LANGUAGE CXX)
-
-add_library(settings_toml
-        toml_loader.hpp
-)
-
+set(FETCHCONTENT_TRY_FIND_PACKAGE_MODE NEVER)
 include(FetchContent)
 FetchContent_Declare(
         tomlplusplus
@@ -15,9 +6,9 @@ FetchContent_Declare(
         GIT_TAG        c4369ae1d8955cae20c4ab40b9813ef4b60e48be
 )
 FetchContent_MakeAvailable(tomlplusplus)
-target_link_libraries(settings_toml tomlplusplus::tomlplusplus)
-set_target_properties(settings_toml PROPERTIES LINKER_LANGUAGE CXX)
 
-#if(EXAMPLE_PROJECT_BUILD_TESTING)
-#    add_subdirectory(tests)
-#endif()
+add_library(toml_loader
+        toml_loader.cpp
+        toml_loader.h
+)
+target_link_libraries(toml_loader tomlplusplus::tomlplusplus)

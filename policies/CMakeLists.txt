@@ -16,7 +16,3 @@ add_library(policies
         Smash.cpp
         Smash.h
 )
-
-#if(EXAMPLE_PROJECT_BUILD_TESTING)
-#    add_subdirectory(tests)
-#endif()

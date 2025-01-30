@@ -3,15 +3,18 @@
 //
 
 #include <iostream>
-#include "settings/toml_loader.hpp"
+#include "settings/toml_loader.h"
 
 // watchexec --clear --timings --env appname=toml_loader_test --debounce 5s --restart --exts h,hpp,cpp,toml -- "make run"
 int main()
 {
-    std::string filename = "oneOrAll_N32_0.6.toml";
+    std::string_view filename = "oneOrAll_N32_0.6.toml";
     std::cout << "Reading TOML file: " << filename << std::endl;
     ExperimentConfig config;
-    from_toml(filename, config);
+    if (!from_toml(filename, config)) {
+        std::cerr << "Error reading TOML file" << std::endl;
+        return 1;
+    }
     std::cout << "Experiment name: " << config.name << std::endl;
     std::cout << "Number of events: " << config.events << std::endl;
     std::cout << "Number of repetitions: " << config.repetitions << std::endl;

@@ -18,28 +18,22 @@ project(mjqm-simulator
         LANGUAGES CXX
 )
 
-#if(EXAMPLE_PROJECT_BUILD_TESTING)
-#    enable_testing()
-#    # or alternatively, `include(CTest)`, if you want to use CDash
-#    # https://cmake.org/cmake/help/book/mastering-cmake/chapter/CDash.html
-#endif()
-
 add_subdirectory(math)
 add_subdirectory(policies)
 add_subdirectory(stats)
 add_subdirectory(settings)
 
 add_executable(main_allPols main_allPols.cpp)
-target_link_libraries(main_allPols math policies stats settings)
+target_link_libraries(main_allPols math policies stats)
 
 add_executable(simulator_toc simulator_toc.cpp)
-target_link_libraries(simulator_toc math policies stats settings)
+target_link_libraries(simulator_toc math policies stats)
 
 add_executable(simulator_smash simulator_smash.cpp)
-target_link_libraries(simulator_smash math policies stats settings)
+target_link_libraries(simulator_smash math policies stats)
 
 add_executable(toml_loader_test toml_loader_test.cpp)
-target_link_libraries(simulator_smash toml_loader)
+target_link_libraries(toml_loader_test toml_loader)
 
 add_custom_target(test_all)
 
