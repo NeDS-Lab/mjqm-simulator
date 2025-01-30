@@ -47,13 +47,13 @@ private:
 public:
     double sample() override { return s * pow(-log(random_uniform(*generator)), exponent); }
 
-    static std::unique_ptr<sampler> with_mean(const std::shared_ptr<std::mt19937_64> generator, double mean,
+    static std::unique_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean,
                                               double alpha, double m = 0.) {
         return std::make_unique<frechet>(std::move(generator), alpha, mean / std::tgamma(1 - 1 / alpha), m, true);
     }
 
     // frechet::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
-    static std::unique_ptr<sampler> with_rate(const std::shared_ptr<std::mt19937_64> generator, double rate,
+    static std::unique_ptr<sampler> with_rate(std::shared_ptr<std::mt19937_64> generator, double rate,
                                               double alpha, double m = 0.) {
         return std::make_unique<frechet>(std::move(generator), 1 / std::tgammaf(1 - 1 / alpha), alpha, rate, m);
     }

@@ -23,11 +23,11 @@ private:
 
 public:
     double sample() override { return -log(random_uniform(*generator)) * mean; }
-    static std::unique_ptr<sampler> with_rate(const std::shared_ptr<std::mt19937_64> generator, double rate) {
-        return std::make_unique<exponential>(generator, 1 / rate);
+    static std::unique_ptr<sampler> with_rate(std::shared_ptr<std::mt19937_64> generator, const double rate) {
+        return std::make_unique<exponential>(std::move(generator), 1 / rate);
     }
-    static std::unique_ptr<sampler> with_mean(const std::shared_ptr<std::mt19937_64> generator, double mean) {
-        return std::make_unique<exponential>(generator, mean);
+    static std::unique_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, const double mean) {
+        return std::make_unique<exponential>(std::move(generator), mean);
     }
 
     explicit operator std::string() const override {
