@@ -73,7 +73,7 @@ foreach (target main_allPols simulator_toc simulator_smash)
     )
     add_custom_test_ff(
             TARGET ${target}
-            NAME testing_4C_16_smash0_exp
+            NAME testing_4C_16_MostServerFirst_exp
             FILE overLambdas-nClasses4-N16-Win0-Exponential-testing_4C_16.csv
             ARGS testing_4C_16 16 0 exp 100000 20
     )

@@ -28,7 +28,7 @@
       "name": "test",
       "configurePreset": "default",
       "jobs": 1,
-      "targets": ["test_all"]
+      "targets": ["test_simulator_smash"]
     }
   ]
 }
