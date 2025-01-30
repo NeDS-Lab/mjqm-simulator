@@ -89,37 +89,71 @@ public:
         switch (sampling_method) {
         case 0: // exponential
             for (int i = 0; i < nclasses; i++) {
-                this->class_samplers.push_back(exponential::with_mean(generator, u[i]));
+                ser_time_samplers.push_back(exponential::with_mean(generator, u[i]));
                 // exponential::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
-                // this->class_samplers.push_back(exponential::with_rate(generator, 1/u[i]));
+                // ser_time_samplers.push_back(exponential::with_rate(generator, 1/u[i]));
             }
             break;
         case 1: // pareto
             for (int i = 0; i < nclasses; i++) {
-                this->class_samplers.push_back(pareto::with_mean(generator, u[i], 2));
+                ser_time_samplers.push_back(pareto::with_mean(generator, u[i], 2));
             }
             break;
         case 2: // deterministic
             for (int i = 0; i < nclasses; i++) {
-                this->class_samplers.push_back(deterministic::with_mean(u[i]));
+                ser_time_samplers.push_back(deterministic::with_mean(u[i]));
             }
             break;
         case 4: // bounded pareto
             for (int i = 0; i < nclasses; i++) {
-                this->class_samplers.push_back(bounded_pareto::with_mean(generator, u[i], 2));
+                ser_time_samplers.push_back(bounded_pareto::with_mean(generator, u[i], 2));
             }
             break;
         case 5: // frechet
             for (int i = 0; i < nclasses; i++) {
-                this->class_samplers.push_back(frechet::with_mean(generator, u[i], 2.15));
+                // ser_time_samplers.push_back(frechet::with_mean(generator, u[i], 2.15));
                 // frechet::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
-                // this->class_samplers.push_back(frechet::with_rate(generator, 1/u[i], 2.15));
+                ser_time_samplers.push_back(frechet::with_rate(generator, 1/u[i], 2.15));
             }
             break;
         case 3: // uniform
         default:
             for (int i = 0; i < nclasses; i++) {
-                this->class_samplers.push_back(uniform::with_mean(generator, u[i]));
+                ser_time_samplers.push_back(uniform::with_mean(generator, u[i]));
+            }
+            break;
+        }
+
+        switch (0) {
+        case 0: // exponential
+            for (int i = 0; i < nclasses; i++) {
+                arr_time_samplers.push_back(exponential::with_rate(generator, l[i]));
+            }
+            break;
+        case 1: // pareto
+            for (int i = 0; i < nclasses; i++) {
+                arr_time_samplers.push_back(pareto::with_rate(generator, l[i], 2));
+            }
+            break;
+        case 2: // deterministic
+            for (int i = 0; i < nclasses; i++) {
+                arr_time_samplers.push_back(deterministic::with_mean(l[i]));
+            }
+            break;
+        case 4: // bounded pareto
+            for (int i = 0; i < nclasses; i++) {
+                arr_time_samplers.push_back(bounded_pareto::with_rate(generator, l[i], 2));
+            }
+            break;
+        case 5: // frechet
+            for (int i = 0; i < nclasses; i++) {
+                arr_time_samplers.push_back(frechet::with_rate(generator, l[i], 2.15));
+            }
+            break;
+        case 3: // uniform
+        default:
+            for (int i = 0; i < nclasses; i++) {
+                arr_time_samplers.push_back(uniform::with_mean(generator, l[i]));
             }
             break;
         }
@@ -454,7 +488,7 @@ public:
                 } else {
                     auto job_id = k + (nevents * rep);
                     if (this->w == -3) {
-                        holdTime[job_id] = this->class_samplers[pos - nclasses]->sample();
+                        holdTime[job_id] = ser_time_samplers[pos - nclasses]->sample();
                         // std::cout << holdTime[job_id] << std::endl;
                     }
                     policy->arrival(pos - nclasses, sizes[pos - nclasses], job_id);
@@ -620,7 +654,8 @@ public:
 private:
     std::vector<double> l;
     std::vector<double> u;
-    std::vector<std::unique_ptr<sampler>> class_samplers;
+    std::vector<std::unique_ptr<sampler>> ser_time_samplers;
+    std::vector<std::unique_ptr<sampler>> arr_time_samplers;
     std::vector<int> sizes;
     int n;
     int w;
@@ -732,7 +767,7 @@ private:
             auto ongoing_jobs = policy->get_ongoing_jobs();
             for (int i = 0; i < nclasses; i++) {
                 if (fel[i + nclasses] <= simtime) { // only update arrival that is executed at the time
-                    fel[i + nclasses] = sample_exp(l[i]) + simtime;
+                    fel[i + nclasses] = arr_time_samplers[i]->sample() + simtime;
                 }
 
                 for (auto job_id = stopped_jobs[i].begin(); job_id != stopped_jobs[i].end(); ++job_id) {
@@ -755,7 +790,7 @@ private:
                             waitTime[*job_id] = simtime - arrTime[*job_id] + waitTime[*job_id];
                         } else { // or they are just new jobs about to be served for the first time: add them with new
                                  // service time
-                            double sampled = this->class_samplers[i]->sample();
+                            double sampled = ser_time_samplers[i]->sample();
                             jobs_inservice[i][*job_id] = sampled + simtime;
                             // rawWaitingTime[i].push_back(simtime-arrTime[*job_id]);
                             // arrTime.erase(*job_id); //update waitingTime
@@ -793,7 +828,7 @@ private:
                 }
 
                 if (fel[i + nclasses] <= simtime) { // only update arrival that is executed at the time
-                    fel[i + nclasses] = sample_exp(l[i]) + simtime;
+                    fel[i + nclasses] = arr_time_samplers[i]->sample() + simtime;
                 }
 
                 // std::cout << ongoing_jobs[i].size() << std::endl;
@@ -803,7 +838,7 @@ private:
                         sampled = holdTime[job_id];
                         policy->insert_completion(this->sizes[i], sampled + simtime);
                     } else {
-                        sampled = this->class_samplers[i]->sample();
+                        sampled = ser_time_samplers[i]->sample();
                     }
                     jobs_inservice[i][job_id] = sampled + simtime;
                     // rawWaitingTime[i].push_back();
@@ -964,7 +999,7 @@ private:
             }
         } else {
             for (int i = 0; i < nclasses; i++) {
-                fel[i + nclasses] = sample_exp(l[i]) + simtime;
+                fel[i + nclasses] = arr_time_samplers[i]->sample() + simtime;
                 if (policy->get_state_ser()[i] > 0) {
                     fel[i] = sample_exp((1 / u[i]) * policy->get_state_ser()[i]) + simtime;
                     // fel[i] = sample_st((1/u[i])*policy->get_state_ser()[i]) + simtime;
