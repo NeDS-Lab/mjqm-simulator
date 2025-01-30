@@ -35,8 +35,16 @@ target_link_libraries(simulator_smash math policies stats)
 add_executable(toml_loader_test toml_loader_test.cpp)
 target_link_libraries(toml_loader_test toml_loader)
 
-add_custom_target(test_all)
+foreach (target main_allPols simulator_toc simulator_smash toml_loader_test)
+    add_custom_command(
+            TARGET ${target} POST_BUILD
+            BYPRODUCTS ${CMAKE_CURRENT_SOURCE_DIR}/${target}
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_CURRENT_BINARY_DIR}/${target}
+            ${CMAKE_CURRENT_SOURCE_DIR}/${target})
+endforeach ()
 
+add_custom_target(test_all)
 
 function(add_custom_test_ff)
     cmake_parse_arguments(
@@ -59,9 +67,7 @@ function(add_custom_test_ff)
     add_dependencies(test_${T_TARGET} test_${T_TARGET}_${T_NAME})
 endfunction(add_custom_test_ff)
 
-
 foreach (target main_allPols simulator_toc simulator_smash)
-    target_compile_features(${target} PUBLIC cxx_std_20)
     add_custom_target(test_${target})
     add_dependencies(test_all test_${target})
 

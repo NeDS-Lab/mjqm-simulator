@@ -21,7 +21,7 @@ We need two types of input files, both to be placed in the [Inputs](./Inputs) fo
    ```shell
    ./configure
    ```
-   This will create an executable named `<file>` for each `<file>.cpp` in the build directory.
+   This will create an executable named `<file>` for each `<file>.cpp` in the root directory.
 2. Run the produced executable with parameters. e.g. `./simulator_smash oneOrAll_N32_0.6 32 1 exp 100000 10`
    ```shell
    ./<file> [experiment name] [server cores] [scheduling policy] [service time distributions -> exp/par/det/uni/bpar/fre] [Number of events] [Number of repetitions])
