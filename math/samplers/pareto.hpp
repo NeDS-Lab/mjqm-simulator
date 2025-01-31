@@ -36,6 +36,10 @@ public:
         return std::make_unique<pareto>(std::move(generator), alpha, (alpha - 1) / alpha * mean);
     }
 
+    std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64> generator) const override {
+        return std::make_unique<pareto>(std::move(generator), alpha, xm);
+    }
+
     explicit operator std::string() const override {
         return "pareto (alpha=" + std::to_string(alpha) + " ; x_m=" + std::to_string(xm) +
             " => mean=" + std::to_string(mean) + " ; variance=" + std::to_string(variance) + ")";

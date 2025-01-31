@@ -30,7 +30,7 @@ add_executable(simulator_toc simulator_toc.cpp)
 target_link_libraries(simulator_toc)
 
 add_executable(simulator_smash simulator_smash.cpp)
-target_link_libraries(simulator_smash math policies stats)
+target_link_libraries(simulator_smash math policies stats toml_loader)
 
 add_executable(toml_loader_test toml_loader_test.cpp)
 target_link_libraries(toml_loader_test toml_loader)
@@ -67,7 +67,7 @@ function(add_custom_test_ff)
     add_dependencies(test_${T_TARGET} test_${T_TARGET}_${T_NAME})
 endfunction(add_custom_test_ff)
 
-foreach (target main_allPols simulator_toc simulator_smash)
+foreach (target main_allPols simulator_toc) # TODO simulator_smash with toml
     add_custom_target(test_${target})
     add_dependencies(test_all test_${target})
 

@@ -49,7 +49,7 @@ struct ExperimentConfig {
     std::string generator;
     std::string default_arrival_distribution;
     std::string default_service_distribution;
-    std::map<std::string_view, ClassConfig> classes;
+    std::map<std::string_view, ClassConfig> classes_map;
 };
 
 template <typename VAR_TYPE>

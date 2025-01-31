@@ -28,9 +28,12 @@ public:
 
     static std::unique_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean,
                                               double variance = 1.) {
-        return std::make_unique<uniform>(std::move(generator),
-                                         (1. - variance / 2.) * mean,
+        return std::make_unique<uniform>(std::move(generator), (1. - variance / 2.) * mean,
                                          (1. + variance / 2.) * mean);
+    }
+
+    std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64> generator) const override {
+        return std::make_unique<uniform>(std::move(generator), distribution.min(), distribution.max());
     }
 
     explicit operator std::string() const override {

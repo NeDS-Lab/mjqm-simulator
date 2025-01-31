@@ -30,6 +30,10 @@ public:
         return std::make_unique<exponential>(std::move(generator), mean);
     }
 
+    std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64> generator) const override {
+        return std::make_unique<exponential>(std::move(generator), mean);
+    }
+
     explicit operator std::string() const override {
         return "exponential (lambda=" + std::to_string(lambda) + " => mean=" + std::to_string(mean) +
             " ; variance=" + std::to_string(variance) + ")";

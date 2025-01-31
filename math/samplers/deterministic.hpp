@@ -14,13 +14,17 @@ public:
     explicit deterministic(const double value) : value(value) {}
 
 private:
-    double value;
-    double variance = 0;
+    const double value;
+    const double variance = 0;
 
 public:
     double sample() override { return value; }
 
     static std::unique_ptr<sampler> with_value(double value) { return std::make_unique<deterministic>(value); }
+
+    std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64>) const override {
+        return std::make_unique<deterministic>(value);
+    }
 
     explicit operator std::string() const override {
         return "deterministic (mean=" + std::to_string(value) + " => variance=0)";

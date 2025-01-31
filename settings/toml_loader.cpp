@@ -22,7 +22,7 @@
 #endif // print_error
 
 template <typename VAR_TYPE>
-bool load_into(const toml::parse_result& data, const std::string_view path, VAR_TYPE& value) {
+bool load_into(const toml::table& data, const std::string_view path, VAR_TYPE& value) {
     auto val = data.at_path(path).value<VAR_TYPE>();
     if (val.has_value()) {
         value = val.value();
@@ -33,7 +33,7 @@ bool load_into(const toml::parse_result& data, const std::string_view path, VAR_
 }
 
 template <typename VAR_TYPE>
-bool load_into(const toml::parse_result& data, const std::string_view path, VAR_TYPE& value, const VAR_TYPE& def) {
+bool load_into(const toml::table& data, const std::string_view path, VAR_TYPE& value, const VAR_TYPE& def) {
     auto val = data.at_path(path).value<VAR_TYPE>();
     value = val.value_or(def);
     return true;
@@ -50,7 +50,7 @@ const std::optional<VAR_TYPE>& either_optional(const std::optional<VAR_TYPE>& fi
     return first.has_value() ? first : second;
 }
 
-bool load_bounded_pareto(const toml::parse_result& data, std::shared_ptr<std::mt19937_64> generator,
+bool load_bounded_pareto(const toml::table& data, std::shared_ptr<std::mt19937_64> generator,
                          const std::string& key, std::unique_ptr<sampler>* distribution) {
     const auto opt_alpha = data.at_path(key + ".alpha").value<double>();
     const auto opt_mean = data.at_path(key + ".mean").value<double>();
@@ -78,7 +78,7 @@ bool load_bounded_pareto(const toml::parse_result& data, std::shared_ptr<std::mt
     return true;
 }
 
-bool load_deterministic(const toml::parse_result& data, const std::string& key,
+bool load_deterministic(const toml::table& data, const std::string& key,
                         std::unique_ptr<sampler>* distribution) {
     const auto opt_value = data.at_path(key + ".value").value<double>();
     const auto opt_mean = data.at_path(key + ".mean").value<double>();
@@ -91,7 +91,7 @@ bool load_deterministic(const toml::parse_result& data, const std::string& key,
     return true;
 }
 
-bool load_exponential(const toml::parse_result& data, std::shared_ptr<std::mt19937_64> generator,
+bool load_exponential(const toml::table& data, std::shared_ptr<std::mt19937_64> generator,
                       const std::string& key, std::unique_ptr<sampler>* distribution,
                       const std::optional<double> prob_modifier = std::nullopt) {
     const auto opt_mean = data.at_path(key + ".mean").value<double>();
@@ -113,7 +113,7 @@ bool load_exponential(const toml::parse_result& data, std::shared_ptr<std::mt199
     return true;
 }
 
-bool load_frechet(const toml::parse_result& data, std::shared_ptr<std::mt19937_64> generator, const std::string& key,
+bool load_frechet(const toml::table& data, std::shared_ptr<std::mt19937_64> generator, const std::string& key,
                   std::unique_ptr<sampler>* distribution) {
 
     const auto opt_alpha = data.at_path(key + ".alpha").value<double>();
@@ -140,7 +140,7 @@ bool load_frechet(const toml::parse_result& data, std::shared_ptr<std::mt19937_6
     return true;
 }
 
-bool load_pareto(const toml::parse_result& data, std::shared_ptr<std::mt19937_64> generator, const std::string& key,
+bool load_pareto(const toml::table& data, std::shared_ptr<std::mt19937_64> generator, const std::string& key,
                  std::unique_ptr<sampler>* distribution) {
     const auto opt_alpha = data.at_path(key + ".alpha").value<double>();
     const auto opt_mean = data.at_path(key + ".mean").value<double>();
@@ -165,7 +165,7 @@ bool load_pareto(const toml::parse_result& data, std::shared_ptr<std::mt19937_64
     return true;
 }
 
-bool load_uniform(const toml::parse_result& data, std::shared_ptr<std::mt19937_64> generator, const std::string& key,
+bool load_uniform(const toml::table& data, std::shared_ptr<std::mt19937_64> generator, const std::string& key,
                   std::unique_ptr<sampler>* distribution) {
     const auto opt_mean = data.at_path(key + ".mean").value<double>();
     const double variance = data.at_path(key + ".variance").value<double>().value_or(1.);
@@ -187,7 +187,7 @@ bool load_uniform(const toml::parse_result& data, std::shared_ptr<std::mt19937_6
     return true;
 }
 
-bool load_distribution(const toml::parse_result& data, const std::string& path,
+bool load_distribution(const toml::table& data, const std::string& path,
                        std::shared_ptr<std::mt19937_64> generator, // we do want it to be copied
                        std::unique_ptr<sampler>* sampler, const std::string& def,
                        const std::optional<double> prob_modifier) {
@@ -219,12 +219,11 @@ bool load_distribution(const toml::parse_result& data, const std::string& path,
     return false;
 }
 
-bool load_class_from_toml(const toml::parse_result& data, const std::string& key, ExperimentConfig& conf,
+bool load_class_from_toml(const toml::table& data, const std::string& key, ExperimentConfig& conf,
                           std::shared_ptr<std::mt19937_64> generator, // we do want it to be copied
                           const std::optional<double> arrival_modifier) {
     const auto full_key = "class."s + key;
-    ClassConfig& class_conf = conf.classes[key];
-    ;
+    ClassConfig& class_conf = conf.classes_map[key];
     class_conf.name = key;
     const bool cores_ok = load_into(data, full_key + ".cores", class_conf.cores);
     const bool arrival_ok = load_distribution(data, full_key + ".arrival", generator, &class_conf.arrival_sampler,
@@ -261,7 +260,7 @@ bool load_probs(const toml::impl::wrap_node<toml::table>& classes,
 }
 
 bool from_toml(const std::string_view filename, ExperimentConfig& conf) {
-    const auto data = toml::parse_file(filename);
+    const toml::table data = toml::parse_file(filename);
     bool ok = true;
     ok = ok && load_into(data, "simulation.identifier", conf.name);
     ok = ok && load_into(data, "simulation.events", conf.events);
@@ -290,10 +289,10 @@ bool from_toml(const std::string_view filename, ExperimentConfig& conf) {
     }
 
     unsigned int cores = conf.cores;
-    unsigned int n_classes = conf.classes.size();
+    unsigned int n_classes = conf.classes_map.size();
     // TODO ensure a specific order of classes from the map
     std::vector<unsigned int> sizes;
-    for (const auto& cls : std::views::values(conf.classes)) {
+    for (const auto& cls : std::views::values(conf.classes_map)) {
         sizes.push_back(cls.cores);
     }
     policies policy;

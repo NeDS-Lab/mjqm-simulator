@@ -89,7 +89,7 @@ void read_lambdas(const std::string& filename, std::vector<double>& values) {
 }
 
 void from_argv(char** argv, std::vector<double>& p, std::vector<unsigned int>& sizes, std::vector<double>& mus,
-               std::vector<double>& arr_rate, std::vector<std::string>& headers, std::string& cell, int& n, int& w,
+               std::vector<double>& arr_rate, std::string& cell, int& n, int& w,
                int& sampling_method, std::string& type, int& n_evs, int& n_runs,
                std::vector<std::string>& sampling_name, std::string& out_filename) {
     cell = std::string(argv[1]);
@@ -106,8 +106,6 @@ void from_argv(char** argv, std::vector<double>& p, std::vector<unsigned int>& s
     std::cout << "*** Processing - ID: " << argv[1] << " - N: " << std::to_string(n)
               << " - Policy: " << std::to_string(w) << " - Sampling: " << sampling_name[sampling_method] << " ***"
               << std::endl;
-
-    headers = {"Arrival Rate"};
 
     std::string classes_filename = "Inputs/" + cell + ".txt";
     std::cout << classes_filename << std::endl;

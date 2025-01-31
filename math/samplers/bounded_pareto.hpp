@@ -48,6 +48,10 @@ public:
         return std::make_unique<bounded_pareto>(std::move(generator), alpha, (12000.0 / 23999.0) * mean, 12000 * mean);
     }
 
+    std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64> generator) const override {
+        return std::make_unique<bounded_pareto>(std::move(generator), alpha, l, h);
+    }
+
     explicit operator std::string() const override {
         return "bounded pareto (alpha=" + std::to_string(alpha) + " ; l=" + std::to_string(l) +
             " ; h=" + std::to_string(h) + ")";

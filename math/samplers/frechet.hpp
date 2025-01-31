@@ -58,6 +58,10 @@ public:
         return std::make_unique<frechet>(std::move(generator), 1 / std::tgammaf(1 - 1 / alpha), alpha, rate, m);
     }
 
+    std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64> generator) const override {
+        return std::make_unique<frechet>(std::move(generator), alpha, s, m, true);
+    }
+
     explicit operator std::string() const override {
         return "frechet (alpha=" + std::to_string(alpha) + " ; s=" + std::to_string(s) + " ; m=" + std::to_string(m) +
             " => mean=" + std::to_string(mean) + " ; variance=" + std::to_string(variance) + ")";

@@ -21,8 +21,8 @@ int main()
     std::cout << "Number of repetitions: " << config.repetitions << std::endl;
     std::cout << "Number of system cores: " << config.cores << std::endl;
     std::cout << "Policy: " << config.policy_name << std::endl;
-    std::cout << "Classes: " << config.classes.size() << std::endl;
-    for (const auto& [name, cores, arrival_distribution, service_distribution] : std::views::values(config.classes))
+    std::cout << "Classes: " << config.classes_map.size() << std::endl;
+    for (const auto& [name, cores, arrival_distribution, service_distribution] : std::views::values(config.classes_map))
     {
         std::cout << "- Name: " << name << std::endl;
         std::cout << "  Cores: " << cores << std::endl;

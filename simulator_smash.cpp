@@ -26,6 +26,7 @@
 #include "policies/policies.h"
 #include "settings/experiment.hpp"
 #include "settings/loader.hpp"
+#include "settings/toml_loader.h"
 #include "stats/stats.h"
 
 class Simulator {
@@ -53,19 +54,20 @@ public:
         this->logfile_name = std::move(logfile_name);
 
         if (w == 0) {
-            this->policy = new MostServerFirst(w, servers, nclasses, sizes);
+            this->policy = std::make_unique<MostServerFirst>(w, servers, nclasses, sizes);
         } else if (w == -1) {
-            this->policy = new ServerFilling(w, servers, nclasses);
+            this->policy = std::make_unique<ServerFilling>(w, servers, nclasses);
         } else if (w == -2) {
-            this->policy = new ServerFillingMem(w, servers, nclasses);
+            this->policy = std::make_unique<ServerFillingMem>(w, servers, nclasses);
         } else if (w == -3) {
-            this->policy = new BackFilling(w, servers, nclasses, sizes);
+            this->policy = std::make_unique<BackFilling>(w, servers, nclasses, sizes);
         } else if (w == -4) {
-            this->policy = new MostServerFirstSkip(w, servers, nclasses, sizes);
+            this->policy = std::make_unique<MostServerFirstSkip>(w, servers, nclasses, sizes);
         } else if (w == -5) {
-            this->policy = new MostServerFirstSkipThreshold(w, servers, nclasses, sizes, servers - static_cast<int>(sizes[0] * (l[0] / ( 1 / u[0]))));
+            this->policy = std::make_unique<MostServerFirstSkipThreshold>(
+                w, servers, nclasses, sizes, servers - static_cast<int>(sizes[0] * (l[0] / (1 / u[0]))));
         } else {
-            this->policy = new Smash(w, servers, nclasses);
+            this->policy = std::make_unique<Smash>(w, servers, nclasses);
         }
 
         occupancy_buf.resize(sizes.size());
@@ -113,7 +115,7 @@ public:
             for (int i = 0; i < nclasses; i++) {
                 // ser_time_samplers.push_back(frechet::with_mean(generator, u[i], 2.15));
                 // frechet::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
-                ser_time_samplers.push_back(frechet::with_rate(generator, 1/u[i], 2.15));
+                ser_time_samplers.push_back(frechet::with_rate(generator, 1 / u[i], 2.15));
             }
             break;
         case 3: // uniform
@@ -159,7 +161,53 @@ public:
         }
     }
 
-    ~Simulator() { delete policy; }
+    Simulator(const ExperimentConfig& conf) : nclasses(conf.classes_map.size()) {
+        // this->l = l; // TODO still needed? YES
+        // this->u = u; // TODO still needed? YES
+        this->n = conf.cores;
+        // this->w = w; // TODO still needed? Y/N (should transform all things that need it)
+        // this->sampling_method = sampling_method; // TODO still needed?
+        this->rep_free_servers_distro = std::vector<double>(conf.cores + 1);
+        this->fel.resize(nclasses * 2);
+        this->job_fel.resize(nclasses * 2);
+        this->jobs_inservice.resize(nclasses);
+        this->jobs_preempted.resize(nclasses);
+        this->curr_job_seq.resize(nclasses);
+        this->tot_job_seq.resize(nclasses);
+        this->curr_job_seq_start.resize(nclasses);
+        this->tot_job_seq_dur.resize(nclasses);
+        this->job_seq_amount.resize(nclasses);
+        this->debugMode = false;
+        // this->logfile_name = std::move(logfile_name);
+        this->policy = conf.policy->clone();
+
+        occupancy_buf.resize(nclasses);
+        occupancy_ser.resize(nclasses);
+        completion.resize(nclasses);
+        preemption.resize(nclasses);
+        throughput.resize(nclasses);
+        waitingTime.resize(nclasses);
+        waitingTimeVar.resize(nclasses);
+        rawWaitingTime.resize(nclasses);
+        rawResponseTime.resize(nclasses);
+        responseTime.resize(nclasses);
+        responseTimeVar.resize(nclasses);
+        waste = 0;
+        viol = 0;
+        util = 0;
+        occ = 0;
+        std::uint64_t seed = 1862248485;
+        generator = std::make_shared<std::mt19937_64>(next(seed));
+
+        for (const auto& [key, value] : conf.classes_map) {
+            const auto& cls = value;
+            sizes.push_back(cls.cores);
+            ser_time_samplers.push_back(cls.service_sampler->clone(generator));
+            arr_time_samplers.push_back(cls.arrival_sampler->clone(generator));
+        }
+    }
+
+    ~Simulator() = default;
 
     void reset_simulation() {
         simtime = 0.0;
@@ -394,7 +442,8 @@ public:
         rep_preemption.clear();
 
         // double tot_lambda = std::accumulate(l.begin(), l.end(), 0.0);
-        // std::string out_filename = "Results/logfile_N" + std::to_string(n) + "_" + std::to_string(tot_lambda) + "_W" +
+        // std::string out_filename = "Results/logfile_N" + std::to_string(n) + "_" + std::to_string(tot_lambda) + "_W"
+        // +
         //     std::to_string(w) + ".csv";
         // remove(out_filename.c_str());
         // std::ofstream outputFile_rep(out_filename, std::ios::app);
@@ -626,7 +675,7 @@ public:
             stats.resp_time_var.push_back(compute_interval_class_student(rep_resp_var, i, confidence));
             stats.preemption_avg.push_back(compute_interval_class_student(rep_preemption, i, confidence));
 
-            if (1.0 - stats.throughput[stats.throughput.size() - 1].mean / l[i] > 0.05)
+            if (1.0 - stats.throughput[stats.throughput.size() - 1].mean / 0.0001 > 0.05) // TODO need to access l
                 stats.warnings.push_back(true);
             else
                 stats.warnings.push_back(false);
@@ -652,17 +701,17 @@ public:
     }
 
 private:
+    int nclasses;
     std::vector<double> l;
     std::vector<double> u;
     std::vector<std::unique_ptr<sampler>> ser_time_samplers;
     std::vector<std::unique_ptr<sampler>> arr_time_samplers;
     std::vector<unsigned int> sizes;
     int n;
-    int w;
-    int nclasses;
+    int w = 1;
     bool debugMode;
 
-    Policy* policy;
+    std::unique_ptr<Policy> policy;
 
     double simtime = 0.0;
 
@@ -753,7 +802,7 @@ private:
     std::shared_ptr<std::mt19937_64> generator;
     std::uniform_real_distribution<double> ru{0., 1.};
 
-    int sampling_method;
+    int sampling_method = 0;
 
     double sample_exp(double par) // done
     {
@@ -1047,13 +1096,24 @@ void run_simulation(Experiment e, unsigned long events, unsigned int repetitions
     sim.produce_statistics(stats);
 }
 
+void run_simulation_new(ExperimentConfig& conf,
+                    ExperimentStats& stats // out
+) {
+    Simulator sim(conf);
+    sim.reset_simulation();
+    sim.reset_statistics();
+
+    sim.simulate(conf.events, conf.repetitions);
+    sim.produce_statistics(stats);
+}
+
 int main(int argc, char* argv[]) {
 
     std::vector<double> p;
     std::vector<unsigned int> sizes;
     std::vector<double> mus;
     std::vector<double> arr_rate;
-    std::vector<std::string> headers;
+    std::vector<std::string> headers{"Arrival Rate"};
     std::vector<double> input_utils;
 
     std::string cell;
@@ -1065,30 +1125,39 @@ int main(int argc, char* argv[]) {
     int n_runs;
     std::vector<std::string> sampling_name;
     std::string out_filename;
-    from_argv(argv, p, sizes, mus, arr_rate, headers, cell, n, w, sampling_method, type, n_evs, n_runs, sampling_name,
-              out_filename);
+
+    out_filename = "Results/simulator_smash/overLambdas-nClasses" + std::to_string(2) + "-N" + std::to_string(50) + "-Win" +
+        std::to_string(1) + "-Exponential-" + std::string(argv[1]) + "-toml.csv";
+    // from_argv(argv, p, sizes, mus, arr_rate, cell, n, w, sampling_method, type, n_evs, n_runs, sampling_name,
+              // out_filename);
     std::ofstream outputFile(out_filename, std::ios::app);
-    std::vector<Experiment> ex;
-
-    for (int i = 0; i < arr_rate.size(); i++) {
-        std::vector<double> l;
-        for (auto x : p) {
-            l.push_back(x * arr_rate[i]);
-        }
-        std::string logfile_name = "Results/logfile-nClasses" + std::to_string(sizes.size()) + "-N" +
-            std::to_string(n) + "-Win" + std::to_string(w) + "-" + sampling_name[sampling_method] + "-" + cell + "-" +
-            "-lambda" + std::to_string(arr_rate[i]) + ".csv";
-        ex.push_back(Experiment{l, mus, sizes, w, n, sampling_method, logfile_name});
+    std::vector<ExperimentConfig> ex(1);
+    ExperimentConfig conf;
+    if (!from_toml("Inputs/" + std::string(argv[1]) + ".toml", conf)) {
+        std::cerr << "Error reading TOML file" << std::endl;
+        return 1;
     }
+    sizes.push_back(1);
+    sizes.push_back(50);
 
-    std::vector<ExperimentStats> experiments_stats(ex.size());
+    // for (int i = 0; i < arr_rate.size(); i++) {
+    //     std::vector<double> l;
+    //     for (auto x : p) {
+    //         l.push_back(x * arr_rate[i]);
+    //     }
+    //     std::string logfile_name = "Results/logfile-nClasses" + std::to_string(sizes.size()) + "-N" +
+    //         std::to_string(n) + "-Win" + std::to_string(w) + "-" + sampling_name[sampling_method] + "-" + cell + "-" +
+    //         "-lambda" + std::to_string(arr_rate[i]) + ".csv";
+    // }
 
-    std::vector<std::thread> threads(ex.size());
+    std::vector<ExperimentStats> experiments_stats(1);
 
-    for (int i = 0; i < ex.size(); i++) {
-        threads[i] = std::thread(run_simulation, ex[i], n_evs, n_runs, std::ref(experiments_stats[i]));
+    std::vector<std::thread> threads(1);
+
+    for (int i = 0; i < 1; i++) {
+        threads[i] = std::thread(run_simulation_new, std::ref(conf), std::ref(experiments_stats[i]));
     }
-    for (int i = 0; i < ex.size(); i++) {
+    for (int i = 0; i < 1; i++) {
         threads[i].join();
     }
 
@@ -1101,9 +1170,9 @@ int main(int argc, char* argv[]) {
         outputFile << "\n";
     }
 
-    for (int i = 0; i < ex.size(); i++) {
+    for (int i = 0; i < 1; i++) {
 
-        outputFile << arr_rate[i] << ";";
+        outputFile << 0.1 << ";";
         outputFile << experiments_stats[i] << "\n";
     }
 
