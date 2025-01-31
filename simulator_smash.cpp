@@ -101,7 +101,7 @@ public:
             break;
         case 2: // deterministic
             for (int i = 0; i < nclasses; i++) {
-                ser_time_samplers.push_back(deterministic::with_mean(u[i]));
+                ser_time_samplers.push_back(deterministic::with_value(u[i]));
             }
             break;
         case 4: // bounded pareto
@@ -137,7 +137,7 @@ public:
             break;
         case 2: // deterministic
             for (int i = 0; i < nclasses; i++) {
-                arr_time_samplers.push_back(deterministic::with_mean(l[i]));
+                arr_time_samplers.push_back(deterministic::with_value(l[i]));
             }
             break;
         case 4: // bounded pareto

@@ -16,7 +16,7 @@ public:
 
 private:
     std::uniform_real_distribution<> random_uniform{0, 1};
-    std::shared_ptr<std::mt19937_64> generator;
+    const std::shared_ptr<std::mt19937_64> generator;
     double mean;
     double lambda;
     double variance = pow(mean, 2);

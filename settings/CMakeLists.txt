@@ -11,4 +11,5 @@ add_library(toml_loader
         toml_loader.cpp
         toml_loader.h
 )
-target_link_libraries(toml_loader tomlplusplus::tomlplusplus)
+target_link_libraries(toml_loader tomlplusplus::tomlplusplus math)
+target_include_directories(toml_loader PUBLIC ${CMAKE_SOURCE_DIR}/math)

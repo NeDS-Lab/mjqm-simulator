@@ -5,6 +5,7 @@
 #ifndef BOUNDED_PARETO_H
 #define BOUNDED_PARETO_H
 
+#include <assert.h>
 #include <memory>
 #include <random>
 #include "../sampler.h"
@@ -17,11 +18,15 @@
 class bounded_pareto : public sampler {
 public:
     explicit bounded_pareto(std::shared_ptr<std::mt19937_64> generator, double alpha, double l, double h) :
-        generator(std::move(generator)), l(l), h(h), alpha(alpha) {}
+        generator(std::move(generator)), l(l), h(h), alpha(alpha) {
+        assert(l>0.);
+        assert(h>l);
+        assert(alpha>0.);
+    }
 
 private:
     std::uniform_real_distribution<> random_uniform{0, 1};
-    std::shared_ptr<std::mt19937_64> generator;
+    const std::shared_ptr<std::mt19937_64> generator;
     double l;
     double h;
     double alpha;
@@ -35,12 +40,11 @@ public:
         return pow(-frac, -1 / alpha);
     }
 
-    static std::unique_ptr<sampler> with_rate(std::shared_ptr<std::mt19937_64> generator, const double rate,
-                                              double alpha) {
+    static std::unique_ptr<sampler> with_rate(std::shared_ptr<std::mt19937_64> generator, double rate, double alpha) {
         return std::make_unique<bounded_pareto>(std::move(generator), alpha, (12000.0 / 23999.0) / rate, 12000 / rate);
     }
-    static std::unique_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, const double mean,
-                                              double alpha) {
+
+    static std::unique_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean, double alpha) {
         return std::make_unique<bounded_pareto>(std::move(generator), alpha, (12000.0 / 23999.0) * mean, 12000 * mean);
     }
 

@@ -11,19 +11,19 @@
 
 class deterministic : public sampler {
 public:
-    explicit deterministic(const double mean) : mean(mean) {}
+    explicit deterministic(const double value) : value(value) {}
 
 private:
-    double mean;
+    double value;
     double variance = 0;
 
 public:
-    double sample() override { return mean; }
+    double sample() override { return value; }
 
-    static std::unique_ptr<sampler> with_mean(double mean) { return std::make_unique<deterministic>(mean); }
+    static std::unique_ptr<sampler> with_value(double value) { return std::make_unique<deterministic>(value); }
 
     explicit operator std::string() const override {
-        return "deterministic (mean=" + std::to_string(mean) + " => variance=0)";
+        return "deterministic (mean=" + std::to_string(value) + " => variance=0)";
     }
 };
 
