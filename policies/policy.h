@@ -8,6 +8,7 @@
 #include <list>
 #include <unordered_map>
 #include <vector>
+#include <memory>
 
 class Policy {
 public:
@@ -27,6 +28,7 @@ public:
     virtual bool prio_big() = 0;
     virtual int get_state_ser_small() = 0;
     virtual ~Policy() = 0;
+    virtual std::unique_ptr<Policy> clone() const = 0;
 };
 
 inline Policy::~Policy() = default;

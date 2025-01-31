@@ -9,12 +9,11 @@
 
 class MostServerFirstSkipThreshold : public Policy {
 public:
-    MostServerFirstSkipThreshold(int w, int servers, int classes, const std::vector<int>& sizes, double arr_s,
-                                 double srv_s) :
+    MostServerFirstSkipThreshold(int w, int servers, int classes, const std::vector<unsigned int>& sizes, double threshold) :
         servers(servers), w(w), state_buf(classes), state_ser(classes), stopped_jobs(classes), ongoing_jobs(classes),
-        sizes(sizes), freeservers(servers), violations_counter(0), drops_below(false), big_priority(false) {
-        this->threshold = servers - static_cast<int>(sizes[0] * (arr_s / srv_s));
-    }
+        sizes(sizes), freeservers(servers), violations_counter(0), threshold(threshold), drops_below(false),
+        big_priority(false) {}
+
     void arrival(int c, int size, long int id) override;
     void departure(int c, int size, long int id) override;
     const std::vector<int>& get_state_ser() override { return state_ser; }
@@ -30,6 +29,9 @@ public:
     int get_state_ser_small() override;
     void reset_completion(double simtime) override {}
     ~MostServerFirstSkipThreshold() override = default;
+    std::unique_ptr<Policy> clone() const override {
+        return std::make_unique<MostServerFirstSkipThreshold>(w, servers, state_buf.size(), sizes, threshold);
+    }
 
 private:
     int servers;
@@ -38,7 +40,7 @@ private:
     std::vector<int> state_ser;
     std::vector<std::list<long int>> stopped_jobs; // vector of list of ids
     std::vector<std::list<long int>> ongoing_jobs; // vector of list of ids
-    std::vector<int> sizes;
+    const std::vector<unsigned int> sizes;
     int freeservers;
     int violations_counter;
     int threshold;

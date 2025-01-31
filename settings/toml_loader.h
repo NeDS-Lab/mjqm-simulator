@@ -24,11 +24,9 @@
 #define BOLDMAGENTA "\033[1m\033[35m" // Bold Magenta
 #define BOLDCYAN "\033[1m\033[36m" // Bold Cyan
 #define BOLDWHITE "\033[1m\033[37m" // Bold White
-#define XOR(a, b) (!(a) != !(b))
-
-#include <unordered_map>
 
 #include "samplers.h"
+#include "policy.h"
 #include "toml++/toml.hpp"
 
 using namespace std::string_literals;
@@ -46,11 +44,12 @@ struct ExperimentConfig {
     unsigned int events;
     unsigned int repetitions;
     unsigned int cores;
-    std::string policy;
+    std::string policy_name;
+    std::unique_ptr<Policy> policy;
     std::string generator;
     std::string default_arrival_distribution;
     std::string default_service_distribution;
-    std::unordered_map<std::string_view, ClassConfig> classes;
+    std::map<std::string_view, ClassConfig> classes;
 };
 
 template <typename VAR_TYPE>

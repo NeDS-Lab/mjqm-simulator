@@ -27,6 +27,9 @@ public:
     int get_state_ser_small() override { return -1; }
     void reset_completion(double simtime) override {}
     ~ServerFilling() override = default;
+    std::unique_ptr<Policy> clone() const override {
+        return std::make_unique<ServerFilling>(w, servers, state_buf.size());
+    }
 
 private:
     std::list<std::tuple<int, int, long int>> buffer;

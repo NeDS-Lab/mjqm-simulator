@@ -63,7 +63,7 @@ public:
         } else if (w == -4) {
             this->policy = new MostServerFirstSkip(w, servers, nclasses, sizes);
         } else if (w == -5) {
-            this->policy = new MostServerFirstSkipThreshold(w, servers, nclasses, sizes, l[0], 1 / u[0]);
+            this->policy = new MostServerFirstSkipThreshold(w, servers, nclasses, sizes, servers - static_cast<int>(sizes[0] * (l[0] / ( 1 / u[0]))));
         } else {
             this->policy = new Smash(w, servers, nclasses);
         }

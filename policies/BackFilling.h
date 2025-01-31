@@ -6,11 +6,12 @@
 #define BACKFILLING_H
 
 #include <map>
+
 #include "policy.h"
 
 class BackFilling final : public Policy {
 public:
-    BackFilling(const int w, const int servers, const int classes, const std::vector<int>& sizes) :
+    BackFilling(const int w, const int servers, const int classes, const std::vector<unsigned int>& sizes) :
         state_buf(classes), state_ser(classes), stopped_jobs(classes), ongoing_jobs(classes), freeservers(servers),
         servers(servers), w(w), sizes(sizes), violations_counter(0) {}
     void arrival(int c, int size, long int id) override;
@@ -28,6 +29,9 @@ public:
     bool prio_big() override { return false; }
     int get_state_ser_small() override { return -1; }
     ~BackFilling() override = default;
+    std::unique_ptr<Policy> clone() const override {
+        return std::make_unique<BackFilling>(w, servers, state_buf.size(), sizes);
+    }
 
 private:
     std::list<std::tuple<int, int, long int>> buffer;
@@ -39,7 +43,7 @@ private:
     int freeservers;
     int servers;
     int w;
-    std::vector<int> sizes;
+    const std::vector<unsigned int> sizes;
     std::map<double, int> completion_time;
     int violations_counter;
 

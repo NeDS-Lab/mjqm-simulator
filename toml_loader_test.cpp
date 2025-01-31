@@ -20,7 +20,7 @@ int main()
     std::cout << "Number of events: " << config.events << std::endl;
     std::cout << "Number of repetitions: " << config.repetitions << std::endl;
     std::cout << "Number of system cores: " << config.cores << std::endl;
-    std::cout << "Policy: " << config.policy << std::endl;
+    std::cout << "Policy: " << config.policy_name << std::endl;
     std::cout << "Classes: " << config.classes.size() << std::endl;
     for (const auto& [name, cores, arrival_distribution, service_distribution] : std::views::values(config.classes))
     {
