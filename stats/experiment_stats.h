@@ -39,7 +39,7 @@ struct ExperimentStats {
     Confidence_inter window_size{};
 
     friend std::ostream& operator<<(std::ostream& os, ExperimentStats const& m);
-    void add_headers(std::vector<std::string>& headers, std::vector<int>& sizes) const;
+    void add_headers(std::vector<std::string>& headers, std::vector<unsigned int>& sizes) const;
 };
 
 #endif // EXPERIMENT_STATS_H

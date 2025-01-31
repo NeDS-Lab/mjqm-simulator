@@ -24,10 +24,10 @@ add_subdirectory(stats)
 add_subdirectory(settings)
 
 add_executable(main_allPols main_allPols.cpp)
-target_link_libraries(main_allPols math policies stats)
+target_link_libraries(main_allPols)
 
 add_executable(simulator_toc simulator_toc.cpp)
-target_link_libraries(simulator_toc math policies stats)
+target_link_libraries(simulator_toc)
 
 add_executable(simulator_smash simulator_smash.cpp)
 target_link_libraries(simulator_smash math policies stats)

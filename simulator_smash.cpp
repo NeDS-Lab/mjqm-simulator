@@ -30,7 +30,7 @@
 
 class Simulator {
 public:
-    Simulator(const std::vector<double>& l, const std::vector<double>& u, const std::vector<int>& sizes, int w,
+    Simulator(const std::vector<double>& l, const std::vector<double>& u, const std::vector<unsigned int>& sizes, int w,
               int servers, int sampling_method, std::string logfile_name) {
         this->l = l;
         this->u = u;
@@ -656,7 +656,7 @@ private:
     std::vector<double> u;
     std::vector<std::unique_ptr<sampler>> ser_time_samplers;
     std::vector<std::unique_ptr<sampler>> arr_time_samplers;
-    std::vector<int> sizes;
+    std::vector<unsigned int> sizes;
     int n;
     int w;
     int nclasses;
@@ -1050,7 +1050,7 @@ void run_simulation(Experiment e, unsigned long events, unsigned int repetitions
 int main(int argc, char* argv[]) {
 
     std::vector<double> p;
-    std::vector<int> sizes;
+    std::vector<unsigned int> sizes;
     std::vector<double> mus;
     std::vector<double> arr_rate;
     std::vector<std::string> headers;

@@ -11,7 +11,7 @@
 struct Experiment {
     std::vector<double> l;
     std::vector<double> u;
-    std::vector<int> s;
+    std::vector<unsigned int> s;
     int w;
     int n;
     int sm;

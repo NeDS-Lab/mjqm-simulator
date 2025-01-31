@@ -5,7 +5,10 @@ repetitions = 40
 cores = 32
 policy = "smash"
 smash.window = 1
-default = { "arrival.distribution" = "exponential", "service.distribution" = "exponential" }
+
+[simulation.default]
+arrival.distribution = "exponential"
+service.distribution = "exponential"
 
 [class.1]
 cores = 1

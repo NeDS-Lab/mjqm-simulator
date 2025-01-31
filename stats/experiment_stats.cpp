@@ -40,8 +40,8 @@ std::ostream& operator<<(std::ostream& os, ExperimentStats const& m) {
     return os;
 }
 
-void ExperimentStats::add_headers(std::vector<std::string>& headers, std::vector<int>& sizes) const {
-    for (int ts : sizes) {
+void ExperimentStats::add_headers(std::vector<std::string>& headers, std::vector<unsigned int>& sizes) const {
+    for (unsigned int ts : sizes) {
         headers.insert(headers.end(),
                        {
                            "T" + std::to_string(ts) + " Queue",

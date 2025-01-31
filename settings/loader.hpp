@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-void read_classes(std::string& filename, std::vector<double>& p, std::vector<int>& sizes, std::vector<double>& mus) {
+void read_classes(std::string& filename, std::vector<double>& p, std::vector<unsigned int>& sizes, std::vector<double>& mus) {
     std::vector<std::vector<std::string>> content;
     std::vector<std::string> row;
     std::string line, word;
@@ -88,7 +88,7 @@ void read_lambdas(const std::string& filename, std::vector<double>& values) {
     }
 }
 
-void from_argv(char** argv, std::vector<double>& p, std::vector<int>& sizes, std::vector<double>& mus,
+void from_argv(char** argv, std::vector<double>& p, std::vector<unsigned int>& sizes, std::vector<double>& mus,
                std::vector<double>& arr_rate, std::vector<std::string>& headers, std::string& cell, int& n, int& w,
                int& sampling_method, std::string& type, int& n_evs, int& n_runs,
                std::vector<std::string>& sampling_name, std::string& out_filename) {
