@@ -4,7 +4,6 @@ cmake_minimum_required(VERSION 3.28)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_STANDARD 20)
-add_compile_options(-m64)
 add_link_options($<$<CONFIG:RELEASE>:-s>)
 add_compile_options($<$<CONFIG:RELEASE>:-Ofast>)
 add_compile_options($<$<CONFIG:RELEASE>:-march=native>)
@@ -30,7 +29,10 @@ add_executable(simulator_toc simulator_toc.cpp)
 target_link_libraries(simulator_toc)
 
 add_executable(simulator_smash simulator_smash.cpp)
-target_link_libraries(simulator_smash math policies stats toml_loader)
+target_link_libraries(simulator_smash math policies stats)
+
+add_executable(simulator_toml simulator_toml.cpp)
+target_link_libraries(simulator_toml math policies stats toml_loader)
 
 add_executable(toml_loader_test toml_loader_test.cpp)
 target_link_libraries(toml_loader_test toml_loader)
@@ -67,7 +69,7 @@ function(add_custom_test_ff)
     add_dependencies(test_${T_TARGET} test_${T_TARGET}_${T_NAME})
 endfunction(add_custom_test_ff)
 
-foreach (target main_allPols simulator_toc) # TODO simulator_smash with toml
+foreach (target main_allPols simulator_toc simulator_smash)
     add_custom_target(test_${target})
     add_dependencies(test_all test_${target})
 
