@@ -30,10 +30,16 @@ private:
     const double l;
     const double h;
     const double alpha;
+    const double mean = alpha == 1 ? h * l / (h - l) * log(h / l)
+                                   : (pow(l, alpha) / (1 - pow(l / h, alpha)) * alpha / (alpha - 1) *
+                                      (1 / pow(l, alpha - 1) - 1 / pow(h, alpha - 1)));
+    const double variance = alpha == 2 ? 2 * pow(h, 2) * pow(l, 2) / (pow(h, 2) - pow(l, 2)) * log(h / l)
+                                       : (pow(l, alpha) / (1 - pow(l / h, alpha)) * alpha / (alpha - 2) *
+                                          (1 / pow(l, alpha - 2) - 1 / pow(h, alpha - 2)));
 
 public:
-    double d_mean() const override { return 0.0; } // TODO
-    double d_variance() const override { return 0.0; } // TODO
+    double d_mean() const override { return mean; }
+    double d_variance() const override { return variance; }
     double sample() override {
         double u = random_uniform(*generator);
         double num = u * pow(h, alpha) - u * pow(l, alpha) - pow(h, alpha);
