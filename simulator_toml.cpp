@@ -7,16 +7,15 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
-#include <random>
+#include <mjqm-settings/toml_loader.h>
+#include <mjqm-simulator/simulator.h>
+#include <mjqm-simulator/stats.h>
 #include <string>
 #include <thread>
 #include <vector>
-#include "settings/toml_loader.h"
-#include "simulator/simulator.h"
-#include "stats/stats.h"
 
 void run_simulation(const ExperimentConfig& conf,
-                        ExperimentStats& stats // out
+                    ExperimentStats& stats // out
 ) {
     Simulator sim(conf);
     sim.reset_simulation();
@@ -40,11 +39,12 @@ int main(int argc, char* argv[]) {
     }
     std::cout << conf;
     if (conf.name != input_name) {
-        std::cerr << "Warning: Experiment name (" << conf.name << ") does not match the TOML file name (" << input_name << "). The first will be used." << std::endl;
+        std::cerr << "Warning: Experiment name (" << conf.name << ") does not match the TOML file name (" << input_name
+                  << "). The first will be used." << std::endl;
     }
     unsigned int classes = conf.get_sizes(sizes);
-    out_filename = "Results/simulator_smash/overLambdas-nClasses" + std::to_string(classes) + "-N" + std::to_string(conf.cores) +
-        "-Win" + std::to_string(1) + "-Exponential-" + conf.name + "-toml.csv";
+    out_filename = "Results/simulator_smash/overLambdas-nClasses" + std::to_string(classes) + "-N" +
+        std::to_string(conf.cores) + "-Win" + std::to_string(1) + "-Exponential-" + conf.name + "-toml.csv";
     std::ofstream outputFile(out_filename, std::ios::app);
 
     // for (int i = 0; i < arr_rate.size(); i++) {

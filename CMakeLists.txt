@@ -17,10 +17,15 @@ project(mjqm-simulator
         LANGUAGES CXX
 )
 
-add_subdirectory(math)
-add_subdirectory(policies)
-add_subdirectory(stats)
-add_subdirectory(settings)
+include_directories(
+        libs/math/include
+        libs/policy/include
+        libs/simulator/include
+)
+
+add_subdirectory(libs/math)
+add_subdirectory(libs/policy)
+add_subdirectory(libs/simulator)
 
 add_executable(main_allPols main_allPols.cpp)
 target_link_libraries(main_allPols)
