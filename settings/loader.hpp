@@ -10,6 +10,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include "../simulator/simulator.h"
+#include "../policies/policies.h"
 
 void read_classes(std::string& filename, std::vector<double>& p, std::vector<unsigned int>& sizes, std::vector<double>& mus) {
     std::vector<std::vector<std::string>> content;
@@ -116,6 +118,136 @@ void from_argv(char** argv, std::vector<double>& p, std::vector<unsigned int>& s
 
     out_filename = "Results/simulator_smash/overLambdas-nClasses" + std::to_string(sizes.size()) + "-N" + std::to_string(n) + "-Win" +
         std::to_string(w) + "-" + sampling_name[sampling_method] + "-" + cell + ".csv";
+}
+
+Simulator::Simulator(const std::vector<double>& l, const std::vector<double>& u, const std::vector<unsigned int>& sizes,
+                     int w, int servers, int sampling_method, std::string logfile_name) {
+    this->l = l;
+    this->u = u;
+    this->n = servers;
+    this->sizes = sizes;
+    this->w = w;
+    this->sampling_method = sampling_method;
+    this->rep_free_servers_distro = std::vector<double>(servers + 1);
+    this->nclasses = static_cast<int>(sizes.size());
+    this->fel.resize(sizes.size() * 2);
+    this->job_fel.resize(sizes.size() * 2);
+    this->jobs_inservice.resize(sizes.size());
+    this->jobs_preempted.resize(sizes.size());
+    this->curr_job_seq.resize(sizes.size());
+    this->tot_job_seq.resize(sizes.size());
+    this->curr_job_seq_start.resize(sizes.size());
+    this->tot_job_seq_dur.resize(sizes.size());
+    this->job_seq_amount.resize(sizes.size());
+    this->debugMode = false;
+    this->logfile_name = std::move(logfile_name);
+
+    if (w == 0) {
+        this->policy = std::make_unique<MostServerFirst>(w, servers, nclasses, sizes);
+    } else if (w == -1) {
+        this->policy = std::make_unique<ServerFilling>(w, servers, nclasses);
+    } else if (w == -2) {
+        this->policy = std::make_unique<ServerFillingMem>(w, servers, nclasses);
+    } else if (w == -3) {
+        this->policy = std::make_unique<BackFilling>(w, servers, nclasses, sizes);
+    } else if (w == -4) {
+        this->policy = std::make_unique<MostServerFirstSkip>(w, servers, nclasses, sizes);
+    } else if (w == -5) {
+        this->policy = std::make_unique<MostServerFirstSkipThreshold>(
+            w, servers, nclasses, sizes, servers - static_cast<int>(sizes[0] * (l[0] / (1 / u[0]))));
+    } else {
+        this->policy = std::make_unique<Smash>(w, servers, nclasses);
+    }
+
+    occupancy_buf.resize(sizes.size());
+    occupancy_ser.resize(sizes.size());
+    completion.resize(sizes.size());
+    preemption.resize(sizes.size());
+    throughput.resize(sizes.size());
+    waitingTime.resize(sizes.size());
+    waitingTimeVar.resize(sizes.size());
+    rawWaitingTime.resize(sizes.size());
+    rawResponseTime.resize(sizes.size());
+    responseTime.resize(sizes.size());
+    responseTimeVar.resize(sizes.size());
+    waste = 0;
+    viol = 0;
+    util = 0;
+    occ = 0;
+    std::uint64_t seed = 1862248485;
+    generator = std::make_shared<std::mt19937_64>(next(seed));
+
+    switch (sampling_method) {
+    case 0: // exponential
+        for (int i = 0; i < nclasses; i++) {
+            ser_time_samplers.push_back(exponential::with_mean(generator, u[i]));
+            // exponential::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
+            // ser_time_samplers.push_back(exponential::with_rate(generator, 1/u[i]));
+        }
+        break;
+    case 1: // pareto
+        for (int i = 0; i < nclasses; i++) {
+            ser_time_samplers.push_back(pareto::with_mean(generator, u[i], 2));
+        }
+        break;
+    case 2: // deterministic
+        for (int i = 0; i < nclasses; i++) {
+            ser_time_samplers.push_back(deterministic::with_value(u[i]));
+        }
+        break;
+    case 4: // bounded pareto
+        for (int i = 0; i < nclasses; i++) {
+            ser_time_samplers.push_back(bounded_pareto::with_mean(generator, u[i], 2));
+        }
+        break;
+    case 5: // frechet
+        for (int i = 0; i < nclasses; i++) {
+            // ser_time_samplers.push_back(frechet::with_mean(generator, u[i], 2.15));
+            // frechet::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
+            ser_time_samplers.push_back(frechet::with_rate(generator, 1 / u[i], 2.15));
+        }
+        break;
+    case 3: // uniform
+    default:
+        for (int i = 0; i < nclasses; i++) {
+            ser_time_samplers.push_back(uniform::with_mean(generator, u[i]));
+        }
+        break;
+    }
+
+    switch (0) {
+    case 0: // exponential
+        for (int i = 0; i < nclasses; i++) {
+            arr_time_samplers.push_back(exponential::with_rate(generator, l[i]));
+        }
+        break;
+    case 1: // pareto
+        for (int i = 0; i < nclasses; i++) {
+            arr_time_samplers.push_back(pareto::with_rate(generator, l[i], 2));
+        }
+        break;
+    case 2: // deterministic
+        for (int i = 0; i < nclasses; i++) {
+            arr_time_samplers.push_back(deterministic::with_value(l[i]));
+        }
+        break;
+    case 4: // bounded pareto
+        for (int i = 0; i < nclasses; i++) {
+            arr_time_samplers.push_back(bounded_pareto::with_rate(generator, l[i], 2));
+        }
+        break;
+    case 5: // frechet
+        for (int i = 0; i < nclasses; i++) {
+            arr_time_samplers.push_back(frechet::with_rate(generator, l[i], 2.15));
+        }
+        break;
+    case 3: // uniform
+    default:
+        for (int i = 0; i < nclasses; i++) {
+            arr_time_samplers.push_back(uniform::with_mean(generator, l[i]));
+        }
+        break;
+    }
 }
 
 #endif // LOADER_H

@@ -6,6 +6,7 @@
 #define SAMPLER_H
 
 #include <random>
+#include <memory>
 
 class sampler {
 public:

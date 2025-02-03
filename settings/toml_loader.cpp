@@ -6,8 +6,9 @@
 #include <ranges>
 #include <unordered_map>
 
-#include "policies.h"
+#include "../policies/policies.h"
 #include "toml_loader.h"
+#include "../simulator/simulator.h"
 
 #ifndef XOR
 #define XOR(a, b) (!(a) != !(b))
@@ -334,4 +335,50 @@ bool from_toml(const std::string_view filename, ExperimentConfig& conf) {
     }
 
     return ok;
+}
+
+Simulator::Simulator(const ExperimentConfig& conf) : nclasses(conf.classes_map.size()) {
+    // this->l = l; // TODO still needed? YES
+    // this->u = u; // TODO still needed? YES
+    this->n = conf.cores;
+    // this->w = w; // TODO still needed? Y/N (should transform all things that need it)
+    // this->sampling_method = sampling_method; // TODO still needed?
+    this->rep_free_servers_distro = std::vector<double>(conf.cores + 1);
+    this->fel.resize(nclasses * 2);
+    this->job_fel.resize(nclasses * 2);
+    this->jobs_inservice.resize(nclasses);
+    this->jobs_preempted.resize(nclasses);
+    this->curr_job_seq.resize(nclasses);
+    this->tot_job_seq.resize(nclasses);
+    this->curr_job_seq_start.resize(nclasses);
+    this->tot_job_seq_dur.resize(nclasses);
+    this->job_seq_amount.resize(nclasses);
+    this->debugMode = false;
+    // this->logfile_name = std::move(logfile_name);
+    this->policy = conf.policy->clone();
+
+    occupancy_buf.resize(nclasses);
+    occupancy_ser.resize(nclasses);
+    completion.resize(nclasses);
+    preemption.resize(nclasses);
+    throughput.resize(nclasses);
+    waitingTime.resize(nclasses);
+    waitingTimeVar.resize(nclasses);
+    rawWaitingTime.resize(nclasses);
+    rawResponseTime.resize(nclasses);
+    responseTime.resize(nclasses);
+    responseTimeVar.resize(nclasses);
+    waste = 0;
+    viol = 0;
+    util = 0;
+    occ = 0;
+    std::uint64_t seed = 1862248485;
+    generator = std::make_shared<std::mt19937_64>(next(seed));
+
+    for (const auto& [key, value] : conf.classes_map) {
+        const auto& cls = value;
+        sizes.push_back(cls.cores);
+        ser_time_samplers.push_back(cls.service_sampler->clone(generator));
+        arr_time_samplers.push_back(cls.arrival_sampler->clone(generator));
+    }
 }
