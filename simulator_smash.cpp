@@ -4,25 +4,10 @@
 //  Created by Andrea Marin on 13/10/23.
 //
 
-#include <algorithm>
-#include <chrono>
-#include <cmath>
-#include <cstdio>
-#include <ctime>
-#include <fstream>
-#include <iostream>
-#include <limits>
-#include <list>
-#include <map>
-#include <pthread.h>
-#include <random>
 #include <string>
 #include <thread>
-#include <unordered_map>
-#include <utility>
 #include <vector>
-#include "math/samplers.h"
-#include "settings/experiment.hpp"
+#include "settings/experiment.h"
 #include "settings/loader.hpp"
 #include "simulator/simulator.h"
 #include "stats/stats.h"

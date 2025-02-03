@@ -22,13 +22,13 @@
 #define print_error(a) std::cerr << error_highlight("Error: ") << a << RESET << std::endl
 #endif // print_error
 
-int ExperimentConfig::get_sizes(std::vector<unsigned int>& sizes) const {
-    sizes.resize(classes_map.size());
+unsigned int ExperimentConfig::get_sizes(std::vector<unsigned int>& sizes) const {
+    sizes.reserve(classes.size());
     sizes.clear();
-    for (const auto& class_config : classes_map | std::views::values) {
+    for (const auto& class_config : classes) {
         sizes.push_back(class_config.cores);
     }
-    return classes_map.size();
+    return classes.size();
 }
 
 template <typename VAR_TYPE>
@@ -55,29 +55,51 @@ VAR_TYPE either(const std::optional<VAR_TYPE>& first, const std::optional<VAR_TY
 }
 
 template <typename VAR_TYPE>
-VAR_TYPE either(const toml::node_view<const toml::node>& first, const toml::node_view<const toml::node>& second) {
-    return either(first.value<VAR_TYPE>(), second.value<VAR_TYPE>());
-}
-
-template <typename VAR_TYPE>
-const std::optional<VAR_TYPE>& either_optional(const std::optional<VAR_TYPE>& first,
-                                               const std::optional<VAR_TYPE>& second) {
+const std::optional<VAR_TYPE> either_optional(const std::optional<VAR_TYPE>& first,
+                                              const std::optional<VAR_TYPE>& second) {
     return first.has_value() ? first : second;
 }
 
-bool load_bounded_pareto(const toml::table& data, std::shared_ptr<std::mt19937_64> generator, const std::string& key,
-                         std::unique_ptr<sampler>* distribution) {
-    const auto opt_alpha = data.at_path(key + ".alpha").value<double>();
-    const auto opt_mean = data.at_path(key + ".mean").value<double>();
-    const auto opt_rate = data.at_path(key + ".rate").value<double>();
-    const auto opt_l =
-        either_optional(data.at_path(key + ".l").value<double>(), data.at_path(key + ".L").value<double>());
-    const auto opt_h =
-        either_optional(data.at_path(key + ".h").value<double>(), data.at_path(key + ".H").value<double>());
+template <typename VAR_TYPE>
+const std::optional<VAR_TYPE> either_optional(const toml::node_view<const toml::node>& first,
+                                              const toml::node_view<const toml::node>& second) {
+    return either_optional(first.value<VAR_TYPE>(), second.value<VAR_TYPE>());
+}
+
+template <typename VAR_TYPE>
+std::optional<VAR_TYPE> distribution_parameter(const toml::table& data, const std::string_view& cls,
+                                               const distribution_use use, const std::string_view& type,
+                                               const std::string_view& param) {
+    return either_optional<VAR_TYPE>(
+        data.at_path(cls).at_path(distribution_use_to_key.at(use)).at_path(param),
+        data.at_path("simulation.default").at_path(distribution_use_to_key.at(use)).at_path(type).at_path(param));
+}
+template <typename VAR_TYPE>
+std::optional<VAR_TYPE> distribution_parameter(const toml::table& data, const std::string_view& cls,
+                                               const distribution_use use, const std::string_view& param) {
+    return either_optional<VAR_TYPE>(
+        data.at_path(cls).at_path(distribution_use_to_key.at(use)).at_path(param),
+        data.at_path("simulation.default").at_path(distribution_use_to_key.at(use)).at_path(param));
+}
+
+bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, const distribution_use& use,
+                         std::shared_ptr<std::mt19937_64> generator,
+                         std::unique_ptr<sampler>* distribution // out
+) {
+    auto opt_alpha = distribution_parameter<double>(data, cls, use, "bounded_pareto", "alpha");
+    auto opt_mean = distribution_parameter<double>(data, cls, use, "bounded_pareto", "mean");
+    auto opt_rate = distribution_parameter<double>(data, cls, use, "bounded_pareto", "rate");
+    auto opt_l = distribution_parameter<double>(data, cls, use, "bounded_pareto", "l");
+    auto opt_L = distribution_parameter<double>(data, cls, use, "bounded_pareto", "L");
+    opt_l = either_optional(opt_l, opt_L);
+    auto opt_h = distribution_parameter<double>(data, cls, use, "bounded_pareto", "h");
+    auto opt_H = distribution_parameter<double>(data, cls, use, "bounded_pareto", "H");
+    opt_h = either_optional(opt_h, opt_H);
     if (!(opt_alpha.has_value() &&
           XOR(XOR(opt_mean.has_value(), opt_rate.has_value()), opt_l.has_value() && opt_h.has_value()))) {
         print_error("Bounded pareto distribution at path "
-                    << error_highlight(key) << " must have alpha defined, and either mean, rate or the l/h pair");
+                    << error_highlight(cls << "." << use)
+                    << " must have alpha defined, and either mean, rate or the l/h pair");
         return false;
     }
     const double alpha = opt_alpha.value();
@@ -93,11 +115,14 @@ bool load_bounded_pareto(const toml::table& data, std::shared_ptr<std::mt19937_6
     return true;
 }
 
-bool load_deterministic(const toml::table& data, const std::string& key, std::unique_ptr<sampler>* distribution) {
-    const auto opt_value = data.at_path(key + ".value").value<double>();
-    const auto opt_mean = data.at_path(key + ".mean").value<double>();
+bool load_deterministic(const toml::table& data, const std::string_view& cls, const distribution_use& use,
+                        std::shared_ptr<std::mt19937_64>,
+                        std::unique_ptr<sampler>* distribution // out
+) {
+    const auto opt_value = distribution_parameter<double>(data, cls, use, "exponential", "value");
+    const auto opt_mean = distribution_parameter<double>(data, cls, use, "exponential", "mean");
     if (!XOR(opt_value.has_value(), opt_mean.has_value())) {
-        print_error("Deterministic distribution at path " << error_highlight(key)
+        print_error("Deterministic distribution at path " << error_highlight(cls << "." << use)
                                                           << " must have exactly one of value or mean defined");
         return false;
     }
@@ -105,39 +130,38 @@ bool load_deterministic(const toml::table& data, const std::string& key, std::un
     return true;
 }
 
-bool load_exponential(const toml::table& data, std::shared_ptr<std::mt19937_64> generator, const std::string& key,
-                      std::unique_ptr<sampler>* distribution,
-                      const std::optional<double> prob_modifier = std::nullopt) {
-    const auto opt_mean = data.at_path(key + ".mean").value<double>();
-    const auto opt_lambda = data.at_path(key + ".lambda").value<double>();
-    const auto opt_rate = data.at_path(key + ".rate").value<double>();
+bool load_exponential(const toml::table& data, const std::string_view& cls, const distribution_use& use,
+                      std::shared_ptr<std::mt19937_64> generator,
+                      std::unique_ptr<sampler>* distribution // out
+) {
+    const auto opt_mean = distribution_parameter<double>(data, cls, use, "exponential", "mean");
+    const auto opt_lambda = distribution_parameter<double>(data, cls, use, "exponential", "lambda");
+    const auto opt_rate = distribution_parameter<double>(data, cls, use, "exponential", "rate");
     if (!XOR(opt_mean.has_value(), XOR(opt_lambda.has_value(), opt_rate.has_value()))) {
-        print_error("Exponential distribution at path " << error_highlight(key)
+        print_error("Exponential distribution at path " << error_highlight(cls << "." << use)
                                                         << " must have exactly one of mean or lambda/rate defined");
         return false;
     }
     if (opt_mean.has_value()) {
-        double mean = prob_modifier.has_value() ? opt_mean.value() * prob_modifier.value() : opt_mean.value();
-        *distribution = exponential::with_mean(generator, mean);
+        *distribution = exponential::with_mean(generator, opt_mean.value());
         return true;
     }
-    double lambda = either(opt_lambda, opt_rate);
-    lambda = prob_modifier.has_value() ? lambda * prob_modifier.value() : lambda;
-    *distribution = exponential::with_rate(generator, lambda);
+    *distribution = exponential::with_rate(generator, either(opt_lambda, opt_rate));
     return true;
 }
 
-bool load_frechet(const toml::table& data, std::shared_ptr<std::mt19937_64> generator, const std::string& key,
-                  std::unique_ptr<sampler>* distribution) {
-
-    const auto opt_alpha = data.at_path(key + ".alpha").value<double>();
-    const auto opt_mean = data.at_path(key + ".mean").value<double>();
-    const auto opt_rate = data.at_path(key + ".rate").value<double>();
-    const auto opt_s = data.at_path(key + ".s").value<double>();
-    const double m = data.at_path(key + ".m").value<double>().value_or(0.);
+bool load_frechet(const toml::table& data, const std::string_view& cls, const distribution_use& use,
+                  std::shared_ptr<std::mt19937_64> generator,
+                  std::unique_ptr<sampler>* distribution // out
+) {
+    auto opt_alpha = distribution_parameter<double>(data, cls, use, "frechet", "alpha");
+    auto opt_mean = distribution_parameter<double>(data, cls, use, "frechet", "mean");
+    auto opt_rate = distribution_parameter<double>(data, cls, use, "frechet", "rate");
+    auto opt_s = distribution_parameter<double>(data, cls, use, "frechet", "s");
+    auto m = distribution_parameter<double>(data, cls, use, "frechet", "m").value_or(0.);
     if (!(opt_alpha.has_value() && XOR(XOR(opt_mean.has_value(), opt_s.has_value()), opt_rate.has_value()))) {
         print_error("Frechet distribution at path "
-                    << error_highlight(key)
+                    << error_highlight(cls << "." << use)
                     << " must have alpha defined, and either mean, rate or s, while m has default value 0");
         return false;
     }
@@ -154,101 +178,77 @@ bool load_frechet(const toml::table& data, std::shared_ptr<std::mt19937_64> gene
     return true;
 }
 
-bool load_pareto(const toml::table& data, std::shared_ptr<std::mt19937_64> generator, const std::string& key,
-                 std::unique_ptr<sampler>* distribution) {
-    const auto opt_alpha = data.at_path(key + ".alpha").value<double>();
-    const auto opt_mean = data.at_path(key + ".mean").value<double>();
-    const auto opt_rate = data.at_path(key + ".rate").value<double>();
-    const auto opt_xm =
-        either_optional(data.at_path(key + ".xm").value<double>(), data.at_path(key + ".Xm").value<double>());
-    if (!(opt_alpha.has_value() && XOR(XOR(opt_mean.has_value(), opt_rate.has_value()), opt_xm.has_value()))) {
-        print_error("Pareto distribution at path " << error_highlight(key)
-                                                   << " must have alpha defined, and either mean, rate or xm");
-        return false;
-    }
-    const double alpha = opt_alpha.value();
-    if (opt_mean.has_value()) {
-        *distribution = pareto::with_mean(generator, opt_mean.value(), alpha);
-        return true;
-    }
-    if (opt_rate.has_value()) {
-        *distribution = pareto::with_rate(generator, opt_rate.value(), alpha);
-        return true;
-    }
-    *distribution = std::make_unique<pareto>(generator, alpha, opt_xm.value());
-    return true;
-}
-
-bool load_uniform(const toml::table& data, std::shared_ptr<std::mt19937_64> generator, const std::string& key,
-                  std::unique_ptr<sampler>* distribution) {
-    const auto opt_mean = data.at_path(key + ".mean").value<double>();
-    const double variance = data.at_path(key + ".variance").value<double>().value_or(1.);
-    const auto opt_min =
-        either_optional(data.at_path(key + ".a").value<double>(), data.at_path(key + ".min").value<double>());
-    const auto opt_max =
-        either_optional(data.at_path(key + ".b").value<double>(), data.at_path(key + ".max").value<double>());
-    if (!XOR(opt_mean.has_value(), opt_min.has_value() && opt_max.has_value())) {
-        print_error("Uniform distribution at path " << error_highlight(key)
+bool load_uniform(const toml::table& data, const std::string_view& cls, const distribution_use& use,
+                  std::shared_ptr<std::mt19937_64> generator,
+                  std::unique_ptr<sampler>* distribution // out
+) {
+    auto opt_mean = distribution_parameter<double>(data, cls, use, "uniform", "mean");
+    auto opt_variance = distribution_parameter<double>(data, cls, use, "uniform", "variance");
+    auto opt_a = distribution_parameter<double>(data, cls, use, "uniform", "a");
+    auto opt_min = distribution_parameter<double>(data, cls, use, "uniform", "min");
+    opt_min = either_optional(opt_min, opt_a);
+    auto opt_b = distribution_parameter<double>(data, cls, use, "uniform", "b");
+    auto opt_max = distribution_parameter<double>(data, cls, use, "uniform", "max");
+    opt_max = either_optional(opt_max, opt_b);
+    if (!XOR(opt_mean.has_value(), opt_min.has_value() && opt_max.has_value() && !opt_variance.has_value())) {
+        print_error("Uniform distribution at path " << error_highlight(cls << "." << use)
                                                     << " must have either the pair of a/min and b/max defined, or mean "
                                                        "defined with optional variance (default 1)");
         return false;
     }
     if (opt_mean.has_value()) {
-        *distribution = uniform::with_mean(generator, opt_mean.value(), variance);
+        *distribution = uniform::with_mean(generator, opt_mean.value(), opt_variance.value_or(1.));
         return true;
     }
     *distribution = std::make_unique<uniform>(generator, opt_min.value(), opt_max.value());
     return true;
 }
 
-bool load_distribution(const toml::table& data, const std::string& cls, const std::string& type,
-                       std::shared_ptr<std::mt19937_64> generator, // we do want it to be copied
-                       std::unique_ptr<sampler>* sampler, const std::optional<double> prob_modifier) {
+std::unordered_map<std::string_view, distribution_loader> distribution_loaders = {
+    {"exponential", load_exponential},
+    {"deterministic", load_deterministic},
+    {"bounded pareto", load_bounded_pareto},
+    {"frechet", load_frechet},
+    {"uniform", load_uniform},
+};
 
-    const auto name = either<std::string>(data.at_path(cls).at_path(type).at_path("distribution"s),
-                                          data.at_path("simulation.default").at_path(type).at_path("distribution"s));
-    if (name == "exponential"s) {
-        return load_exponential(data, generator, cls, sampler, prob_modifier);
-    }
-    if (prob_modifier.has_value()) {
-        print_error("prob has been defined at path " << error_highlight(cls) << " but " << error_highlight(name)
-                                                     << " distribution doesn't support it");
+bool load_distribution(const toml::table& data, const std::string& cls, const distribution_use& use,
+                       std::shared_ptr<std::mt19937_64> generator, // we do want it to be copied
+                       std::unique_ptr<sampler>* sampler // out
+) {
+    auto opt_type = distribution_parameter<std::string>(data, cls, use, "distribution"s);
+    if (!opt_type.has_value()) {
+        print_error("Distribution type missing at path " << error_highlight(cls << "." << use));
         return false;
     }
-    if (name == "deterministic"s) {
-        return load_deterministic(data, cls, sampler);
+    const auto type = opt_type.value();
+    if (!distribution_loaders.contains(type)) {
+        print_error("Unsupported distribution " << error_highlight(type) << " at path "
+                                                << error_highlight(cls << "." << use));
+        return false;
     }
-    if (name == "bounded pareto"s) {
-        return load_bounded_pareto(data, generator, cls, sampler);
+    return distribution_loaders.at(type)(data, cls, use, generator, sampler);
+}
+
+bool load_class_from_toml(const toml::table& data, const std::string& class_name, ExperimentConfig& conf,
+                          std::shared_ptr<std::mt19937_64> generator // we do want it to be copied
+) {
+    const auto full_key = "class."s + class_name;
+    unsigned int cores;
+    const bool cores_ok = load_into(data, full_key + ".cores"s, cores);
+    std::unique_ptr<sampler> arrival_sampler;
+    std::unique_ptr<sampler> service_sampler;
+    const bool arrival_ok = load_distribution(data, full_key, ARRIVAL, generator, &arrival_sampler);
+    const bool service_ok = load_distribution(data, full_key, SERVICE, generator, &service_sampler);
+    if (cores_ok && arrival_ok && service_ok) {
+        conf.classes.emplace_back(class_name, cores, std::move(arrival_sampler), std::move(service_sampler));
+        return true;
     }
-    if (name == "frechet"s) {
-        return load_frechet(data, generator, cls, sampler);
-    }
-    if (name == "pareto"s) {
-        return load_pareto(data, generator, cls, sampler);
-    }
-    if (name == "uniform"s) {
-        return load_uniform(data, generator, cls, sampler);
-    }
-    print_error("Unsupported distribution " << error_highlight(name) << " at path " << error_highlight(cls));
     return false;
 }
 
-bool load_class_from_toml(const toml::table& data, const std::string& key, ExperimentConfig& conf,
-                          std::shared_ptr<std::mt19937_64> generator, // we do want it to be copied
-                          const std::optional<double> arrival_modifier) {
-    const auto full_key = "class."s + key;
-    ClassConfig& class_conf = conf.classes_map[key];
-    class_conf.name = key;
-    const bool cores_ok = load_into(data, full_key + ".cores", class_conf.cores);
-    const bool arrival_ok =
-        load_distribution(data, full_key, "arrival", generator, &class_conf.arrival_sampler, arrival_modifier);
-    const bool service_ok = load_distribution(data, full_key, "service", generator, &class_conf.service_sampler);
-    return cores_ok && arrival_ok && service_ok;
-}
-
-bool load_probs(const toml::impl::wrap_node<toml::table>& classes,
-                std::unordered_map<std::string, double>& arrival_probs) {
+bool normalise_probs(const toml::impl::wrap_node<toml::table>& classes) {
+    std::unordered_map<std::string, double> arrival_probs;
     const size_t n_classes = classes.size();
     for (const auto& [key, value] : classes) {
         const auto arrival_prob = value.at_path("arrival.prob").value<double>();
@@ -262,8 +262,10 @@ bool load_probs(const toml::impl::wrap_node<toml::table>& classes,
             for (const auto p : std::views::values(arrival_probs)) {
                 sum += p;
             }
-            for (auto& p : std::views::values(arrival_probs)) {
+            for (auto& [key, p] : arrival_probs) {
                 p /= sum;
+                // fix values in-place so they can be correctly read by distribution builder
+                classes.at_path(key).at_path("arrival.prob").value<double>().emplace(p);
             }
         } else {
             print_error("Not all classes have the prob property defined. Define it for none or for all.");
@@ -272,6 +274,59 @@ bool load_probs(const toml::impl::wrap_node<toml::table>& classes,
     }
     return true;
 }
+
+typedef std::unique_ptr<Policy> (*policy_builder)(const toml::table& data, const ExperimentConfig& conf);
+
+std::unique_ptr<Policy> smash_builder(const toml::table& data, const ExperimentConfig& conf) {
+    const auto window = data.at_path("simulation.smash.window").value<unsigned int>().value_or(1);
+    return std::make_unique<Smash>(window, conf.cores, conf.classes.size());
+}
+
+std::unique_ptr<Policy> server_filling_builder(const toml::table&, const ExperimentConfig& conf) {
+    return std::make_unique<ServerFilling>(-1, conf.cores, conf.classes.size());
+}
+
+std::unique_ptr<Policy> server_filling_mem_builder(const toml::table&, const ExperimentConfig& conf) {
+    return std::make_unique<ServerFillingMem>(-2, conf.cores, conf.classes.size());
+}
+
+std::unique_ptr<Policy> back_filling_builder(const toml::table&, const ExperimentConfig& conf) {
+    std::vector<unsigned int> sizes;
+    unsigned int n_classes = conf.get_sizes(sizes);
+    return std::make_unique<BackFilling>(-3, conf.cores, n_classes, sizes);
+}
+
+std::unique_ptr<Policy> most_server_first_builder(const toml::table&, const ExperimentConfig& conf) {
+    std::vector<unsigned int> sizes;
+    unsigned int n_classes = conf.get_sizes(sizes);
+    return std::make_unique<MostServerFirst>(0, conf.cores, n_classes, sizes);
+}
+
+std::unique_ptr<Policy> most_server_first_skip_builder(const toml::table&, const ExperimentConfig& conf) {
+    std::vector<unsigned int> sizes;
+    unsigned int n_classes = conf.get_sizes(sizes);
+    return std::make_unique<MostServerFirstSkip>(-4, conf.cores, n_classes, sizes);
+}
+
+std::unique_ptr<Policy> most_server_first_skip_threshold_builder(const toml::table& data,
+                                                                 const ExperimentConfig& conf) {
+    std::vector<unsigned int> sizes;
+    unsigned int n_classes = conf.get_sizes(sizes);
+    int default_threshold = static_cast<int>(
+        conf.cores - sizes[0] * conf.classes[0].service_sampler->d_mean() / conf.classes[0].arrival_sampler->d_mean());
+    int threshold = data.at_path("simulation.msf.threshold").value<int>().value_or(default_threshold);
+    return std::make_unique<MostServerFirstSkipThreshold>(-5, conf.cores, n_classes, sizes, threshold);
+}
+
+static std::unordered_map<std::string_view, policy_builder> policy_builders = {
+    {"smash", smash_builder},
+    {"server filling", server_filling_builder},
+    {"server filling memoryful", server_filling_mem_builder},
+    {"back filling", back_filling_builder},
+    {"most server first", most_server_first_builder},
+    {"most server first skip", most_server_first_skip_builder},
+    {"most server first skip threshold", most_server_first_skip_threshold_builder},
+};
 
 bool from_toml(const std::string_view filename, ExperimentConfig& conf) {
     const toml::table data = toml::parse_file(filename);
@@ -289,65 +344,30 @@ bool from_toml(const std::string_view filename, ExperimentConfig& conf) {
 
     if (ok) {
         const auto classes = *class_c.as_table();
-        std::unordered_map<std::string, double> arrival_probs;
-        ok = load_probs(classes, arrival_probs) && ok;
+        ok = normalise_probs(classes) && ok;
         for (const auto& [key, value] : classes) {
-            const auto arrival_modifier =
-                arrival_probs.contains(key.data()) ? std::optional(arrival_probs[key.data()]) : std::nullopt;
-            ok = load_class_from_toml(data, key.data(), conf, generator, arrival_modifier) && ok;
+            ok = load_class_from_toml(data, key.data(), conf, generator) && ok;
             // keep going if one soft fails to show all errors
         }
+        // sort classes by cores, or alphabetically by name if cores are equal
+        std::ranges::sort(conf.classes, [](const ClassConfig& a, const ClassConfig& b) {
+            if (a.cores == b.cores) {
+                return a.name < b.name;
+            }
+            return a.cores < b.cores;
+        });
     }
 
-    unsigned int cores = conf.cores;
-    unsigned int n_classes = conf.classes_map.size();
-    // TODO ensure a specific order of classes from the map
-    std::vector<unsigned int> sizes;
-    for (const auto& cls : std::views::values(conf.classes_map)) {
-        sizes.push_back(cls.cores);
+    if (!policy_builders.contains(conf.policy_name)) {
+        print_error("Unsupported policy " << error_highlight(conf.policy_name));
+        return false;
     }
-    policies policy;
-    if (policies_map.contains(conf.policy_name)) {
-        policy = policies_map.at(conf.policy_name);
-    } else {
-        policy = smash;
-    }
-    switch (policy) {
-    case server_filling:
-        conf.policy = std::make_unique<ServerFilling>(-1, cores, n_classes);
-        break;
-    case server_filling_mem:
-        conf.policy = std::make_unique<ServerFillingMem>(-2, cores, n_classes);
-        break;
-    case back_filling:
-        conf.policy = std::make_unique<BackFilling>(-3, cores, n_classes, sizes);
-        break;
-    case most_server_first:
-        conf.policy = std::make_unique<MostServerFirst>(0, cores, n_classes, sizes);
-        break;
-    case most_server_first_skip:
-        conf.policy = std::make_unique<MostServerFirstSkip>(-4, cores, n_classes, sizes);
-        break;
-    case most_server_first_skip_threshold:
-        {
-            double threshold;
-            load_into(data, "simulation.msf.threshold", threshold);
-            conf.policy = std::make_unique<MostServerFirstSkipThreshold>(-5, cores, n_classes, sizes, threshold);
-            break;
-        }
-    case smash:
-    default:
-        {
-            unsigned int window = data.at_path("simulation.smash.window").value<unsigned int>().value_or(1);
-            conf.policy = std::make_unique<Smash>(window, cores, n_classes);
-            break;
-        }
-    }
+    conf.policy = policy_builders.at(conf.policy_name)(data, conf);
 
     return ok;
 }
 
-Simulator::Simulator(const ExperimentConfig& conf) : nclasses(conf.classes_map.size()) {
+Simulator::Simulator(const ExperimentConfig& conf) : nclasses(conf.classes.size()) {
     // this->l = l; // TODO still needed? YES
     // this->u = u; // TODO still needed? YES
     this->n = conf.cores;
@@ -385,8 +405,7 @@ Simulator::Simulator(const ExperimentConfig& conf) : nclasses(conf.classes_map.s
     std::uint64_t seed = 1862248485;
     generator = std::make_shared<std::mt19937_64>(next(seed));
 
-    for (const auto& [key, value] : conf.classes_map) {
-        const auto& cls = value;
+    for (const auto& cls : conf.classes) {
         sizes.push_back(cls.cores);
         ser_time_samplers.push_back(cls.service_sampler->clone(generator));
         arr_time_samplers.push_back(cls.arrival_sampler->clone(generator));

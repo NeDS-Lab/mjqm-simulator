@@ -215,38 +215,8 @@ Simulator::Simulator(const std::vector<double>& l, const std::vector<double>& u,
         break;
     }
 
-    switch (0) {
-    case 0: // exponential
-        for (int i = 0; i < nclasses; i++) {
-            arr_time_samplers.push_back(exponential::with_rate(generator, l[i]));
-        }
-        break;
-    case 1: // pareto
-        for (int i = 0; i < nclasses; i++) {
-            arr_time_samplers.push_back(pareto::with_rate(generator, l[i], 2));
-        }
-        break;
-    case 2: // deterministic
-        for (int i = 0; i < nclasses; i++) {
-            arr_time_samplers.push_back(deterministic::with_value(l[i]));
-        }
-        break;
-    case 4: // bounded pareto
-        for (int i = 0; i < nclasses; i++) {
-            arr_time_samplers.push_back(bounded_pareto::with_rate(generator, l[i], 2));
-        }
-        break;
-    case 5: // frechet
-        for (int i = 0; i < nclasses; i++) {
-            arr_time_samplers.push_back(frechet::with_rate(generator, l[i], 2.15));
-        }
-        break;
-    case 3: // uniform
-    default:
-        for (int i = 0; i < nclasses; i++) {
-            arr_time_samplers.push_back(uniform::with_mean(generator, l[i]));
-        }
-        break;
+    for (int i = 0; i < nclasses; i++) {
+        arr_time_samplers.push_back(exponential::with_rate(generator, l[i]));
     }
 }
 

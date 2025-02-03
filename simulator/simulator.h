@@ -5,8 +5,18 @@
 #ifndef SIMULATOR_H
 #define SIMULATOR_H
 
+#include <algorithm>
 #include <chrono>
+#include <cmath>
+#include <ctime>
+#include <iostream>
+#include <limits>
 #include <list>
+#include <random>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #include "../stats/experiment_stats.h"
 #include "../settings/toml_loader.h"
 
@@ -452,8 +462,8 @@ public:
         }
 
         /*    std::ofstream outFree("freeserversDistro-nClasses" + std::to_string(this->nclasses) + "-N" +
-           std::to_string(this->n) + "-Win" + std::to_string(this->w) + ".csv", std::ios::app); lambda =
-           std::accumulate(this->l.begin(), this->l.end(), 0.0);
+           std::to_string(this->n) + "-Win" + std::to_string(this->w) + ".csv", std::ios::app);
+           double lambda = std::accumulate(this->l.begin(), this->l.end(), 0.0);
 
             if (outFree.tellp() == 0) {
                 // Write the headers to the CSV file
@@ -581,7 +591,6 @@ private:
     std::vector<double> responseTime;
     std::vector<double> responseTimeVar;
 
-    double lambda;
     double waste = 0.0;
     double viol = 0.0;
     double util = 0.0;
@@ -597,7 +606,7 @@ private:
     double phase_three_duration = 0;
     double phase_two_start = 0;
     double phase_three_start = 0;
-    int curr_phase;
+    int curr_phase = 1;
     bool add_phase_two = false;
 
     std::vector<double> fel;

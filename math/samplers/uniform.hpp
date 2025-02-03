@@ -5,7 +5,7 @@
 #ifndef UNIFORM_H
 #define UNIFORM_H
 
-#include <assert.h>
+#include <cassert>
 #include <memory>
 #include <random>
 #include "../sampler.h"
@@ -20,10 +20,12 @@ public:
 private:
     std::uniform_real_distribution<> distribution;
     const std::shared_ptr<std::mt19937_64> generator;
-    double mean = (distribution.min() + distribution.max()) / 2.;
-    double variance = (mean - distribution.min()) * 2.;
+    const double mean = (distribution.min() + distribution.max()) / 2.;
+    const double variance = (mean - distribution.min()) * 2.;
 
 public:
+    double d_mean() const override { return mean; }
+    double d_variance() const override { return variance; }
     double sample() override { return distribution(*generator); }
 
     static std::unique_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean,

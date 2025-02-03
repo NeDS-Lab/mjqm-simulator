@@ -1,14 +1,17 @@
 [simulation]
-identifier = "oneOrAll-test1-toml"
+identifier = "oneOrAll-test1"
 events = 100000
 repetitions = 10
 cores = 50
 policy = "smash"
 smash.window = 1
 
-[simulation.default]
-arrival.distribution = "exponential"
-service.distribution = "exponential"
+[simulation.default.arrival]
+distribution = "exponential"
+
+[simulation.default.service]
+distribution = "exponential"
+exponential.mean = 0.25
 
 [class.1]
 cores = 1

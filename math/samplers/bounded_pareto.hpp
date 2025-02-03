@@ -5,7 +5,7 @@
 #ifndef BOUNDED_PARETO_H
 #define BOUNDED_PARETO_H
 
-#include <assert.h>
+#include <cassert>
 #include <memory>
 #include <random>
 #include "../sampler.h"
@@ -27,11 +27,13 @@ public:
 private:
     std::uniform_real_distribution<> random_uniform{0, 1};
     const std::shared_ptr<std::mt19937_64> generator;
-    double l;
-    double h;
-    double alpha;
+    const double l;
+    const double h;
+    const double alpha;
 
 public:
+    double d_mean() const override { return 0.0; } // TODO
+    double d_variance() const override { return 0.0; } // TODO
     double sample() override {
         double u = random_uniform(*generator);
         double num = u * pow(h, alpha) - u * pow(l, alpha) - pow(h, alpha);

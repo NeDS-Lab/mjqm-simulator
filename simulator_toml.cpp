@@ -4,42 +4,18 @@
 //  Created by Andrea Marin on 13/10/23.
 //
 
-#include <algorithm>
 #include <chrono>
-#include <cmath>
-#include <cstdio>
-#include <ctime>
 #include <fstream>
 #include <iostream>
-#include <limits>
-#include <list>
-#include <map>
-#include <pthread.h>
 #include <random>
 #include <string>
 #include <thread>
-#include <unordered_map>
-#include <utility>
 #include <vector>
-#include "math/samplers.h"
-#include "settings/experiment.hpp"
-#include "settings/loader.hpp"
 #include "settings/toml_loader.h"
 #include "simulator/simulator.h"
 #include "stats/stats.h"
 
-void run_simulation(Experiment e, unsigned long events, unsigned int repetitions,
-                    ExperimentStats& stats // out
-) {
-    Simulator sim(e.l, e.u, e.s, e.w, e.n, e.sm, e.logf);
-    sim.reset_simulation();
-    sim.reset_statistics();
-
-    sim.simulate(events, repetitions);
-    sim.produce_statistics(stats);
-}
-
-void run_simulation_new(ExperimentConfig& conf,
+void run_simulation(const ExperimentConfig& conf,
                         ExperimentStats& stats // out
 ) {
     Simulator sim(conf);
@@ -51,26 +27,22 @@ void run_simulation_new(ExperimentConfig& conf,
 }
 
 int main(int argc, char* argv[]) {
-
-    std::vector<double> p;
     std::vector<unsigned int> sizes;
-    std::vector<double> mus;
     std::vector<double> arr_rate;
     std::vector<std::string> headers{"Arrival Rate"};
-    std::vector<double> input_utils;
-
-    std::string cell;
-    std::string type;
-    std::vector<std::string> sampling_name;
     std::string out_filename;
-
     std::vector<ExperimentConfig> ex(1);
     ExperimentConfig conf;
-    if (!from_toml("Inputs/" + std::string(argv[1]) + ".toml", conf)) {
+    std::string input_name(argv[1]);
+    if (!from_toml("Inputs/" + input_name + ".toml", conf)) {
         std::cerr << "Error reading TOML file" << std::endl;
         return 1;
     }
-    int classes = conf.get_sizes(sizes);
+    std::cout << conf;
+    if (conf.name != input_name) {
+        std::cerr << "Warning: Experiment name (" << conf.name << ") does not match the TOML file name (" << input_name << "). The first will be used." << std::endl;
+    }
+    unsigned int classes = conf.get_sizes(sizes);
     out_filename = "Results/simulator_smash/overLambdas-nClasses" + std::to_string(classes) + "-N" + std::to_string(conf.cores) +
         "-Win" + std::to_string(1) + "-Exponential-" + conf.name + "-toml.csv";
     std::ofstream outputFile(out_filename, std::ios::app);
@@ -91,7 +63,7 @@ int main(int argc, char* argv[]) {
     std::vector<std::thread> threads(1);
 
     for (int i = 0; i < 1; i++) {
-        threads[i] = std::thread(run_simulation_new, std::ref(conf), std::ref(experiments_stats[i]));
+        threads[i] = std::thread(run_simulation, std::ref(conf), std::ref(experiments_stats[i]));
     }
     for (int i = 0; i < 1; i++) {
         threads[i].join();

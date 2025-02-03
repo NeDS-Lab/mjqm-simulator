@@ -5,7 +5,7 @@
 #ifndef PARETO_H
 #define PARETO_H
 
-#include <assert.h>
+#include <cassert>
 #include <memory>
 #include <random>
 #include "exponential.hpp"
@@ -18,13 +18,15 @@ public:
     }
 
 private:
-    double alpha;
-    double xm;
-    double mean = xm * alpha / (alpha - 1);
-    double variance = alpha > 2 ? std::pow(xm, 2) * alpha / (std::pow(alpha - 1, 2) * (alpha - 2))
+    const double alpha;
+    const double xm;
+    const double mean = xm * alpha / (alpha - 1);
+    const double variance = alpha > 2 ? std::pow(xm, 2) * alpha / (std::pow(alpha - 1, 2) * (alpha - 2))
                                 : std::numeric_limits<double>::infinity();
 
 public:
+    double d_mean() const override { return mean; }
+    double d_variance() const override { return variance; }
     double sample() override { return xm * exp(exponential::sample()); }
 
     static std::unique_ptr<sampler> with_rate(std::shared_ptr<std::mt19937_64> generator, double rate,

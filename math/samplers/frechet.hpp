@@ -45,6 +45,8 @@ private:
     const double exponent = -1 / alpha;
 
 public:
+    double d_mean() const override { return mean; }
+    double d_variance() const override { return variance; }
     double sample() override { return s * pow(-log(random_uniform(*generator)), exponent); }
 
     static std::unique_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean,

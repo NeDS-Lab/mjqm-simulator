@@ -37,7 +37,7 @@ target_link_libraries(simulator_toml math policies stats toml_loader)
 add_executable(toml_loader_test toml_loader_test.cpp)
 target_link_libraries(toml_loader_test toml_loader)
 
-foreach (target main_allPols simulator_toc simulator_smash toml_loader_test)
+foreach (target main_allPols simulator_toc simulator_smash simulator_toml toml_loader_test)
     add_custom_command(
             TARGET ${target} POST_BUILD
             BYPRODUCTS ${CMAKE_CURRENT_SOURCE_DIR}/${target}

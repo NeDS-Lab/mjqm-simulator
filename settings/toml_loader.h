@@ -27,16 +27,37 @@
 
 #include "../math/samplers.h"
 #include "../policies/policy.h"
-#include "toml++/toml.hpp"
+#include "toml++/toml.h"
 
 using namespace std::string_literals;
+
+enum distribution_use { ARRIVAL, SERVICE };
+static const std::map<std::string_view, distribution_use> distribution_use_from_key = {{"arrival", ARRIVAL},
+                                                                                       {"service", SERVICE}};
+static const std::map<distribution_use, std::string_view> distribution_use_to_key = {{ARRIVAL, "arrival"},
+                                                                                     {SERVICE, "service"}};
+inline std::ostream& operator<<(std::ostream& os, const distribution_use& use) {
+    return os << distribution_use_to_key.at(use);
+}
+
+typedef bool (*distribution_loader)(const toml::table& data, const std::string_view& cls, const distribution_use& use,
+                                    std::shared_ptr<std::mt19937_64> generator,
+                                    std::unique_ptr<sampler>* distribution // out
+);
 
 struct ClassConfig {
     std::string name;
     unsigned int cores;
     std::unique_ptr<sampler> arrival_sampler;
     std::unique_ptr<sampler> service_sampler;
-    ~ClassConfig() = default;
+
+    friend std::ostream& operator<<(std::ostream& os, const ClassConfig& cls) {
+        os << "Class: " << cls.name << std::endl;
+        os << "\tCores: " << cls.cores << std::endl;
+        os << "\tArrival: " << std::string(*cls.arrival_sampler) << std::endl;
+        os << "\tService: " << std::string(*cls.service_sampler) << std::endl;
+        return os;
+    }
 };
 
 struct ExperimentConfig {
@@ -47,25 +68,23 @@ struct ExperimentConfig {
     std::string policy_name;
     std::unique_ptr<Policy> policy;
     std::string generator;
-    std::map<std::string_view, ClassConfig> classes_map;
-    ~ExperimentConfig() = default;
-    int get_sizes(std::vector<unsigned int>&) const;
+    std::vector<ClassConfig> classes;
+    unsigned int get_sizes(std::vector<unsigned int>&) const;
+
+    friend std::ostream& operator<<(std::ostream& os, const ExperimentConfig& conf) {
+        os << "Experiment: " << conf.name << std::endl;
+        os << "Events: " << conf.events << std::endl;
+        os << "Repetitions: " << conf.repetitions << std::endl;
+        os << "Cores: " << conf.cores << std::endl;
+        os << "Policy: " << conf.policy_name << std::endl;
+        os << "Generator: " << conf.generator << std::endl;
+        os << "Classes: " << conf.classes.size() << std::endl;
+        for (const auto& cls : conf.classes) {
+            os << cls;
+        }
+        return os;
+    }
 };
-
-template <typename VAR_TYPE>
-bool load_into(const toml::parse_result& data, std::string_view path, VAR_TYPE& value);
-
-template <typename VAR_TYPE>
-bool load_into(const toml::parse_result& data, std::string_view path, VAR_TYPE& value, const VAR_TYPE& def);
-
-bool load_distribution(const toml::parse_result& data, const std::string& cls, const std::string& type,
-                       std::shared_ptr<std::mt19937_64> generator, // we do want it to be copied
-                       std::unique_ptr<sampler>* sampler,
-                       std::optional<double> prob_modifier=std::nullopt);
-
-bool load_class_from_toml(const toml::parse_result& data, const std::string& key, ExperimentConfig& conf,
-                          std::shared_ptr<std::mt19937_64> generator, // we do want it to be copied
-                          std::optional<double> arrival_modifier);
 
 bool from_toml(std::string_view filename, ExperimentConfig& conf);
 

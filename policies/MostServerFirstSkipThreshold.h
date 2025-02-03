@@ -9,7 +9,7 @@
 
 class MostServerFirstSkipThreshold : public Policy {
 public:
-    MostServerFirstSkipThreshold(int w, int servers, int classes, const std::vector<unsigned int>& sizes, double threshold) :
+    MostServerFirstSkipThreshold(int w, int servers, int classes, const std::vector<unsigned int>& sizes, int threshold) :
         servers(servers), w(w), state_buf(classes), state_ser(classes), stopped_jobs(classes), ongoing_jobs(classes),
         sizes(sizes), freeservers(servers), violations_counter(0), threshold(threshold), drops_below(false),
         big_priority(false) {}

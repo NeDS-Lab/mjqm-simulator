@@ -17,11 +17,13 @@ public:
 private:
     std::uniform_real_distribution<> random_uniform{0, 1};
     const std::shared_ptr<std::mt19937_64> generator;
-    double mean;
-    double lambda;
-    double variance = pow(mean, 2);
+    const double mean;
+    const double lambda;
+    const double variance = pow(mean, 2);
 
 public:
+    double d_mean() const override { return mean; }
+    double d_variance() const override { return variance; }
     double sample() override { return -log(random_uniform(*generator)) * mean; }
     static std::unique_ptr<sampler> with_rate(std::shared_ptr<std::mt19937_64> generator, const double rate) {
         return std::make_unique<exponential>(std::move(generator), 1 / rate);
