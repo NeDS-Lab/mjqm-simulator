@@ -50,6 +50,8 @@ struct ExperimentConfig {
     std::string default_arrival_distribution;
     std::string default_service_distribution;
     std::map<std::string_view, ClassConfig> classes_map;
+    ~ExperimentConfig() = default;
+    int get_sizes(std::vector<unsigned int>&) const;
 };
 
 template <typename VAR_TYPE>

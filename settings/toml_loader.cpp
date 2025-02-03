@@ -7,8 +7,8 @@
 #include <unordered_map>
 
 #include "../policies/policies.h"
-#include "toml_loader.h"
 #include "../simulator/simulator.h"
+#include "toml_loader.h"
 
 #ifndef XOR
 #define XOR(a, b) (!(a) != !(b))
@@ -21,6 +21,15 @@
 #ifndef print_error
 #define print_error(a) std::cerr << error_highlight("Error: ") << a << RESET << std::endl
 #endif // print_error
+
+int ExperimentConfig::get_sizes(std::vector<unsigned int>& sizes) const {
+    sizes.resize(classes_map.size());
+    sizes.clear();
+    for (const auto& class_config : classes_map | std::views::values) {
+        sizes.push_back(class_config.cores);
+    }
+    return classes_map.size();
+}
 
 template <typename VAR_TYPE>
 bool load_into(const toml::table& data, const std::string_view path, VAR_TYPE& value) {
@@ -51,8 +60,8 @@ const std::optional<VAR_TYPE>& either_optional(const std::optional<VAR_TYPE>& fi
     return first.has_value() ? first : second;
 }
 
-bool load_bounded_pareto(const toml::table& data, std::shared_ptr<std::mt19937_64> generator,
-                         const std::string& key, std::unique_ptr<sampler>* distribution) {
+bool load_bounded_pareto(const toml::table& data, std::shared_ptr<std::mt19937_64> generator, const std::string& key,
+                         std::unique_ptr<sampler>* distribution) {
     const auto opt_alpha = data.at_path(key + ".alpha").value<double>();
     const auto opt_mean = data.at_path(key + ".mean").value<double>();
     const auto opt_rate = data.at_path(key + ".rate").value<double>();
@@ -79,8 +88,7 @@ bool load_bounded_pareto(const toml::table& data, std::shared_ptr<std::mt19937_6
     return true;
 }
 
-bool load_deterministic(const toml::table& data, const std::string& key,
-                        std::unique_ptr<sampler>* distribution) {
+bool load_deterministic(const toml::table& data, const std::string& key, std::unique_ptr<sampler>* distribution) {
     const auto opt_value = data.at_path(key + ".value").value<double>();
     const auto opt_mean = data.at_path(key + ".mean").value<double>();
     if (!XOR(opt_value.has_value(), opt_mean.has_value())) {
@@ -92,8 +100,8 @@ bool load_deterministic(const toml::table& data, const std::string& key,
     return true;
 }
 
-bool load_exponential(const toml::table& data, std::shared_ptr<std::mt19937_64> generator,
-                      const std::string& key, std::unique_ptr<sampler>* distribution,
+bool load_exponential(const toml::table& data, std::shared_ptr<std::mt19937_64> generator, const std::string& key,
+                      std::unique_ptr<sampler>* distribution,
                       const std::optional<double> prob_modifier = std::nullopt) {
     const auto opt_mean = data.at_path(key + ".mean").value<double>();
     const auto opt_lambda = data.at_path(key + ".lambda").value<double>();

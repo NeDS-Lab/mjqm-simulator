@@ -60,28 +60,20 @@ int main(int argc, char* argv[]) {
     std::vector<double> input_utils;
 
     std::string cell;
-    int n;
-    int w;
-    int sampling_method;
     std::string type;
-    int n_evs;
-    int n_runs;
     std::vector<std::string> sampling_name;
     std::string out_filename;
 
-    out_filename = "Results/simulator_smash/overLambdas-nClasses" + std::to_string(2) + "-N" + std::to_string(50) +
-        "-Win" + std::to_string(1) + "-Exponential-" + std::string(argv[1]) + "-toml.csv";
-    // from_argv(argv, p, sizes, mus, arr_rate, cell, n, w, sampling_method, type, n_evs, n_runs, sampling_name,
-    // out_filename);
-    std::ofstream outputFile(out_filename, std::ios::app);
     std::vector<ExperimentConfig> ex(1);
     ExperimentConfig conf;
     if (!from_toml("Inputs/" + std::string(argv[1]) + ".toml", conf)) {
         std::cerr << "Error reading TOML file" << std::endl;
         return 1;
     }
-    sizes.push_back(1);
-    sizes.push_back(50);
+    int classes = conf.get_sizes(sizes);
+    out_filename = "Results/simulator_smash/overLambdas-nClasses" + std::to_string(classes) + "-N" + std::to_string(conf.cores) +
+        "-Win" + std::to_string(1) + "-Exponential-" + conf.name + "-toml.csv";
+    std::ofstream outputFile(out_filename, std::ios::app);
 
     // for (int i = 0; i < arr_rate.size(); i++) {
     //     std::vector<double> l;
