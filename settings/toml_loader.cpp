@@ -55,6 +55,11 @@ VAR_TYPE either(const std::optional<VAR_TYPE>& first, const std::optional<VAR_TY
 }
 
 template <typename VAR_TYPE>
+VAR_TYPE either(const toml::node_view<const toml::node>& first, const toml::node_view<const toml::node>& second) {
+    return either(first.value<VAR_TYPE>(), second.value<VAR_TYPE>());
+}
+
+template <typename VAR_TYPE>
 const std::optional<VAR_TYPE>& either_optional(const std::optional<VAR_TYPE>& first,
                                                const std::optional<VAR_TYPE>& second) {
     return first.has_value() ? first : second;
@@ -196,35 +201,36 @@ bool load_uniform(const toml::table& data, std::shared_ptr<std::mt19937_64> gene
     return true;
 }
 
-bool load_distribution(const toml::table& data, const std::string& path,
+bool load_distribution(const toml::table& data, const std::string& cls, const std::string& type,
                        std::shared_ptr<std::mt19937_64> generator, // we do want it to be copied
-                       std::unique_ptr<sampler>* sampler, const std::string& def,
-                       const std::optional<double> prob_modifier) {
-    const auto type = data.at_path(path + ".distribution"s).value_or(def);
-    if (type == "exponential"s) {
-        return load_exponential(data, generator, path, sampler, prob_modifier);
+                       std::unique_ptr<sampler>* sampler, const std::optional<double> prob_modifier) {
+
+    const auto name = either<std::string>(data.at_path(cls).at_path(type).at_path("distribution"s),
+                                          data.at_path("simulation.default").at_path(type).at_path("distribution"s));
+    if (name == "exponential"s) {
+        return load_exponential(data, generator, cls, sampler, prob_modifier);
     }
     if (prob_modifier.has_value()) {
-        print_error("prob has been defined at path " << error_highlight(path) << " but " << error_highlight(type)
+        print_error("prob has been defined at path " << error_highlight(cls) << " but " << error_highlight(name)
                                                      << " distribution doesn't support it");
         return false;
     }
-    if (type == "deterministic"s) {
-        return load_deterministic(data, path, sampler);
+    if (name == "deterministic"s) {
+        return load_deterministic(data, cls, sampler);
     }
-    if (type == "bounded pareto"s) {
-        return load_bounded_pareto(data, generator, path, sampler);
+    if (name == "bounded pareto"s) {
+        return load_bounded_pareto(data, generator, cls, sampler);
     }
-    if (type == "frechet"s) {
-        return load_frechet(data, generator, path, sampler);
+    if (name == "frechet"s) {
+        return load_frechet(data, generator, cls, sampler);
     }
-    if (type == "pareto"s) {
-        return load_pareto(data, generator, path, sampler);
+    if (name == "pareto"s) {
+        return load_pareto(data, generator, cls, sampler);
     }
-    if (type == "uniform"s) {
-        return load_uniform(data, generator, path, sampler);
+    if (name == "uniform"s) {
+        return load_uniform(data, generator, cls, sampler);
     }
-    print_error("Unsupported distribution " << error_highlight(type) << " at path " << error_highlight(path));
+    print_error("Unsupported distribution " << error_highlight(name) << " at path " << error_highlight(cls));
     return false;
 }
 
@@ -235,10 +241,9 @@ bool load_class_from_toml(const toml::table& data, const std::string& key, Exper
     ClassConfig& class_conf = conf.classes_map[key];
     class_conf.name = key;
     const bool cores_ok = load_into(data, full_key + ".cores", class_conf.cores);
-    const bool arrival_ok = load_distribution(data, full_key + ".arrival", generator, &class_conf.arrival_sampler,
-                                              conf.default_arrival_distribution, arrival_modifier);
-    const bool service_ok = load_distribution(data, full_key + ".service", generator, &class_conf.service_sampler,
-                                              conf.default_service_distribution);
+    const bool arrival_ok =
+        load_distribution(data, full_key, "arrival", generator, &class_conf.arrival_sampler, arrival_modifier);
+    const bool service_ok = load_distribution(data, full_key, "service", generator, &class_conf.service_sampler);
     return cores_ok && arrival_ok && service_ok;
 }
 
@@ -277,9 +282,6 @@ bool from_toml(const std::string_view filename, ExperimentConfig& conf) {
     ok = ok && load_into(data, "simulation.cores", conf.cores);
     ok = ok && load_into(data, "simulation.policy", conf.policy_name, "smash"s);
     ok = ok && load_into(data, "simulation.generator", conf.generator, "mersenne"s);
-
-    load_into(data, "simulation.arrival.distribution", conf.default_arrival_distribution, "exponential"s);
-    load_into(data, "simulation.service.distribution", conf.default_service_distribution, "exponential"s);
 
     const auto class_c = data["class"];
     ok = ok && class_c.is_table();

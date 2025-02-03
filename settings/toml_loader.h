@@ -47,8 +47,6 @@ struct ExperimentConfig {
     std::string policy_name;
     std::unique_ptr<Policy> policy;
     std::string generator;
-    std::string default_arrival_distribution;
-    std::string default_service_distribution;
     std::map<std::string_view, ClassConfig> classes_map;
     ~ExperimentConfig() = default;
     int get_sizes(std::vector<unsigned int>&) const;
@@ -60,9 +58,9 @@ bool load_into(const toml::parse_result& data, std::string_view path, VAR_TYPE& 
 template <typename VAR_TYPE>
 bool load_into(const toml::parse_result& data, std::string_view path, VAR_TYPE& value, const VAR_TYPE& def);
 
-bool load_distribution(const toml::parse_result& data, const std::string& path,
+bool load_distribution(const toml::parse_result& data, const std::string& cls, const std::string& type,
                        std::shared_ptr<std::mt19937_64> generator, // we do want it to be copied
-                       std::unique_ptr<sampler>* sampler, const std::string& def,
+                       std::unique_ptr<sampler>* sampler,
                        std::optional<double> prob_modifier=std::nullopt);
 
 bool load_class_from_toml(const toml::parse_result& data, const std::string& key, ExperimentConfig& conf,
