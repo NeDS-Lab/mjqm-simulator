@@ -62,7 +62,7 @@ public:
 
     explicit operator std::string() const override {
         return "bounded pareto (alpha=" + std::to_string(alpha) + " ; l=" + std::to_string(l) +
-            " ; h=" + std::to_string(h) + ")";
+            " ; h=" + std::to_string(h) + " => mean=" + std::to_string(mean) + " ; variance=" + std::to_string(variance) + ")";
     }
 };
 
