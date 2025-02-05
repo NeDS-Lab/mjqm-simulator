@@ -16,6 +16,17 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "YES",
         "CMAKE_CXX_COMPILER": "g++"
       }
+    },
+    {
+      "name": "debug",
+      "hidden": false,
+      "description": "Debug configuration",
+      "binaryDir": "${sourceDir}/build-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "YES",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
     }
   ],
   "buildPresets": [
@@ -25,10 +36,17 @@
       "jobs": 8
     },
     {
+      "name": "debug",
+      "configurePreset": "debug",
+      "jobs": 8
+    },
+    {
       "name": "test",
       "configurePreset": "default",
       "jobs": 1,
-      "targets": ["test_simulator_smash"]
+      "targets": [
+        "test_simulator_smash"
+      ]
     }
   ]
 }
