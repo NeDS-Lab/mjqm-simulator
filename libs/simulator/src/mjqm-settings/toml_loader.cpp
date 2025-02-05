@@ -180,7 +180,7 @@ Simulator::Simulator(const ExperimentConfig& conf) : nclasses(conf.classes.size(
         sizes.push_back(cls.cores);
         arr_time_samplers.push_back(cls.arrival_sampler->clone(generator));
         ser_time_samplers.push_back(cls.service_sampler->clone(generator));
-        l.push_back(cls.arrival_sampler->d_mean());
+        l.push_back(1./cls.arrival_sampler->d_mean());
         u.push_back(cls.service_sampler->d_mean());
     }
 }
