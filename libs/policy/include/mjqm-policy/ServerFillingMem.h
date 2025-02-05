@@ -30,6 +30,10 @@ public:
     std::unique_ptr<Policy> clone() const override {
         return std::make_unique<ServerFillingMem>(w, servers, state_buf.size());
     }
+    explicit operator std::string() const override {
+        return std::string("ServerFillingMem(servers=") + std::to_string(servers) +
+            ", classes=" + std::to_string(state_buf.size()) + ")";
+    }
 
 private:
     std::list<std::tuple<int, int, long int>> buffer;

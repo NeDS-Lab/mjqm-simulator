@@ -7,11 +7,13 @@
 #include <unordered_map>
 
 #include <mjqm-policy/policies.h>
-#include <mjqm-settings/toml_loader.h>
 #include <mjqm-settings/toml_distributions_loaders.h>
+#include <mjqm-settings/toml_loader.h>
 #include <mjqm-settings/toml_policies_loaders.h>
 #include <mjqm-settings/toml_utils.h>
 #include <mjqm-simulator/simulator.h>
+
+constexpr auto CLASS_ROOT = "class";
 
 unsigned int ExperimentConfig::get_sizes(std::vector<unsigned int>& sizes) const {
     sizes.reserve(classes.size());
@@ -25,13 +27,13 @@ unsigned int ExperimentConfig::get_sizes(std::vector<unsigned int>& sizes) const
 bool load_class_from_toml(const toml::table& data, const std::string& class_name, ExperimentConfig& conf,
                           std::shared_ptr<std::mt19937_64> generator // we do want it to be copied
 ) {
-    const auto full_key = "class."s + class_name;
+    auto full_key = toml::path(CLASS_ROOT).append(class_name);
     unsigned int cores;
-    const bool cores_ok = load_into(data, full_key + ".cores"s, cores);
+    const bool cores_ok = load_into(data, full_key.append("cores").str(), cores);
     std::unique_ptr<sampler> arrival_sampler;
     std::unique_ptr<sampler> service_sampler;
-    const bool arrival_ok = load_distribution(data, full_key, ARRIVAL, generator, &arrival_sampler);
-    const bool service_ok = load_distribution(data, full_key, SERVICE, generator, &service_sampler);
+    const bool arrival_ok = load_distribution(data, full_key.str(), ARRIVAL, generator, &arrival_sampler);
+    const bool service_ok = load_distribution(data, full_key.str(), SERVICE, generator, &service_sampler);
     if (cores_ok && arrival_ok && service_ok) {
         conf.classes.emplace_back(class_name, cores, std::move(arrival_sampler), std::move(service_sampler));
         return true;
@@ -39,13 +41,13 @@ bool load_class_from_toml(const toml::table& data, const std::string& class_name
     return false;
 }
 
-bool normalise_probs(const toml::impl::wrap_node<toml::table>& classes) {
-    std::unordered_map<std::string, double> arrival_probs;
-    const size_t n_classes = classes.size();
-    for (const auto& [key, value] : classes) {
+bool normalise_probs(toml::table& data) {
+    std::unordered_map<std::string_view, double> arrival_probs;
+    const size_t n_classes = data[CLASS_ROOT].as_table()->size();
+    for (const auto& [key, value] : *data.at_path(CLASS_ROOT).as_table()) {
         const auto arrival_prob = value.at_path("arrival.prob").value<double>();
         if (arrival_prob.has_value()) {
-            arrival_probs[key.data()] = arrival_prob.value();
+            arrival_probs[key.str()] = arrival_prob.value();
         }
     }
     if (!arrival_probs.empty()) {
@@ -57,7 +59,8 @@ bool normalise_probs(const toml::impl::wrap_node<toml::table>& classes) {
             for (auto& [key, p] : arrival_probs) {
                 p /= sum;
                 // fix values in-place so they can be correctly read by distribution builder
-                classes.at_path(key).at_path("arrival.prob").value<double>().emplace(p);
+                auto path = toml::path(key).append("arrival.prob").prepend(CLASS_ROOT);
+                overwrite_value(data, path, p);
             }
         } else {
             print_error("Not all classes have the prob property defined. Define it for none or for all.");
@@ -68,7 +71,11 @@ bool normalise_probs(const toml::impl::wrap_node<toml::table>& classes) {
 }
 
 bool from_toml(const std::string_view filename, ExperimentConfig& conf) {
-    const toml::table data = toml::parse_file(filename);
+    toml::table data = toml::parse_file(filename);
+    return from_toml(data, conf);
+}
+
+bool from_toml(toml::table& data, ExperimentConfig& conf) {
     bool ok = true;
     ok = ok && load_into(data, "simulation.identifier", conf.name);
     ok = ok && load_into(data, "simulation.events", conf.events);
@@ -77,13 +84,13 @@ bool from_toml(const std::string_view filename, ExperimentConfig& conf) {
     ok = ok && load_into(data, "simulation.policy", conf.policy_name, "smash"s);
     ok = ok && load_into(data, "simulation.generator", conf.generator, "mersenne"s);
 
-    const auto class_c = data["class"];
+    auto class_c = data["class"];
     ok = ok && class_c.is_table();
     auto generator = std::make_shared<std::mt19937_64>();
 
     if (ok) {
-        const auto classes = *class_c.as_table();
-        ok = normalise_probs(classes) && ok;
+        auto classes = *class_c.as_table();
+        ok = normalise_probs(data) && ok;
         for (const auto& [key, value] : classes) {
             ok = load_class_from_toml(data, key.data(), conf, generator) && ok;
             // keep going if one soft fails to show all errors
@@ -106,12 +113,33 @@ bool from_toml(const std::string_view filename, ExperimentConfig& conf) {
     return ok;
 }
 
+std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
+from_toml(const std::string_view filename, const std::map<std::string, std::vector<std::string>>& overrides) {
+    toml::table data = toml::parse_file(filename);
+    return from_toml(data, overrides);
+}
+
+std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
+from_toml(const toml::table& data, const std::map<std::string, std::vector<std::string>>& overrides) {
+    std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>> experiments =
+        std::make_unique<std::vector<std::pair<bool, ExperimentConfig>>>();
+    for (auto& override : overrides) {
+        for (const auto& value : override.second) {
+            toml::table overridden_data(data);
+            toml::path key(override.first);
+            overwrite_value(overridden_data, key, value);
+            auto& [success, config] = experiments->emplace_back();
+            success = from_toml(overridden_data, config);
+            std::cout << overridden_data << std::endl;
+        }
+    }
+    return experiments;
+}
+
 Simulator::Simulator(const ExperimentConfig& conf) : nclasses(conf.classes.size()) {
-    // this->l = l; // TODO still needed? YES
-    // this->u = u; // TODO still needed? YES
     this->n = conf.cores;
     // this->w = w; // TODO still needed? Y/N (should transform all things that need it)
-    // this->sampling_method = sampling_method; // TODO still needed?
+    // this->sampling_method = sampling_method; // TODO still needed? Y/N (should transform all things that need it)
     this->rep_free_servers_distro = std::vector<double>(conf.cores + 1);
     this->fel.resize(nclasses * 2);
     this->job_fel.resize(nclasses * 2);
@@ -146,7 +174,9 @@ Simulator::Simulator(const ExperimentConfig& conf) : nclasses(conf.classes.size(
 
     for (const auto& cls : conf.classes) {
         sizes.push_back(cls.cores);
-        ser_time_samplers.push_back(cls.service_sampler->clone(generator));
         arr_time_samplers.push_back(cls.arrival_sampler->clone(generator));
+        ser_time_samplers.push_back(cls.service_sampler->clone(generator));
+        l.push_back(cls.arrival_sampler->d_mean());
+        u.push_back(cls.service_sampler->d_mean());
     }
 }

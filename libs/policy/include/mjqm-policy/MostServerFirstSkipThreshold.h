@@ -6,6 +6,7 @@
 #define MOSTSERVERFIRSTSKIPTHRESHOLD_H
 
 #include <mjqm-policy/policy.h>
+#include <mjqm-utils/string.hpp>
 
 class MostServerFirstSkipThreshold : public Policy {
 public:
@@ -31,6 +32,11 @@ public:
     ~MostServerFirstSkipThreshold() override = default;
     std::unique_ptr<Policy> clone() const override {
         return std::make_unique<MostServerFirstSkipThreshold>(w, servers, state_buf.size(), sizes, threshold);
+    }
+    explicit operator std::string() const override {
+        return std::string("MostServerFirstSkip(servers=") + std::to_string(servers) +
+            ", classes=" + std::to_string(state_buf.size()) + ", sizes=(" + join(sizes.begin(), sizes.end()) +
+            "), threshold=" + std::to_string(threshold) + ")";
     }
 
 private:

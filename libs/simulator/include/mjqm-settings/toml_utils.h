@@ -10,8 +10,9 @@
 #include "toml++/toml.h"
 #endif
 
-#include <optional>
 #include <iostream>
+#include <optional>
+#include <string>
 
 #define RESET "\033[0m"
 #define BLACK "\033[30m" // Black
@@ -74,4 +75,9 @@ const std::optional<VAR_TYPE> either_optional(const toml::node_view<const toml::
     return either_optional(first.value<VAR_TYPE>(), second.value<VAR_TYPE>());
 }
 
-#endif //TOML_UTILS_H
+template <typename VAR_TYPE>
+void overwrite_value(toml::table& data, std::string_view& key, const VAR_TYPE& value);
+template <typename VAR_TYPE>
+void overwrite_value(toml::table& data, const toml::path& path, const VAR_TYPE& value);
+
+#endif // TOML_UTILS_H

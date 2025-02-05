@@ -27,8 +27,10 @@ public:
     int get_state_ser_small() override { return -1; }
     void reset_completion(double simtime) override {}
     ~Smash() override = default;
-    std::unique_ptr<Policy> clone() const override {
-        return std::make_unique<Smash>(w, servers, state_buf.size());
+    std::unique_ptr<Policy> clone() const override { return std::make_unique<Smash>(w, servers, state_buf.size()); }
+    explicit operator std::string() const override {
+        return std::string("Smash(window=") + std::to_string(w) + ", servers=" + std::to_string(servers) +
+            ", classes=" + std::to_string(state_buf.size()) + ")";
     }
 
 private:

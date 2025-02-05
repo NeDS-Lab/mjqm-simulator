@@ -132,7 +132,7 @@ bool load_uniform(const toml::table& data, const std::string_view& cls, const di
     return true;
 }
 
-bool load_distribution(const toml::table& data, const std::string& cls, const distribution_use& use,
+bool load_distribution(const toml::table& data, const std::string_view& cls, const distribution_use& use,
                        std::shared_ptr<std::mt19937_64> generator, // we do want it to be copied
                        std::unique_ptr<sampler>* sampler // out
 ) {

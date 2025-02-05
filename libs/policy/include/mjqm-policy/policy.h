@@ -29,6 +29,7 @@ public:
     virtual int get_state_ser_small() = 0;
     virtual ~Policy() = 0;
     virtual std::unique_ptr<Policy> clone() const = 0;
+    explicit virtual operator std::string() const = 0;
 };
 
 inline Policy::~Policy() = default;

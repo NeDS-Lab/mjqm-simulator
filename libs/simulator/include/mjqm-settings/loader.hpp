@@ -7,13 +7,15 @@
 
 #include <fstream>
 #include <iostream>
+#include <mjqm-math/samplers.h>
+#include <mjqm-policy/policies.h>
+#include <mjqm-simulator/simulator.h>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <mjqm-simulator/simulator.h>
-#include <mjqm-policy/policies.h>
 
-void read_classes(std::string& filename, std::vector<double>& p, std::vector<unsigned int>& sizes, std::vector<double>& mus) {
+void read_classes(std::string& filename, std::vector<double>& p, std::vector<unsigned int>& sizes,
+                  std::vector<double>& mus) {
     std::vector<std::vector<std::string>> content;
     std::vector<std::string> row;
     std::string line, word;
@@ -91,9 +93,9 @@ void read_lambdas(const std::string& filename, std::vector<double>& values) {
 }
 
 void from_argv(char** argv, std::vector<double>& p, std::vector<unsigned int>& sizes, std::vector<double>& mus,
-               std::vector<double>& arr_rate, std::string& cell, int& n, int& w,
-               int& sampling_method, std::string& type, int& n_evs, int& n_runs,
-               std::vector<std::string>& sampling_name, std::string& out_filename) {
+               std::vector<double>& arr_rate, std::string& cell, int& n, int& w, int& sampling_method,
+               std::string& type, int& n_evs, int& n_runs, std::vector<std::string>& sampling_name,
+               std::string& out_filename) {
     cell = std::string(argv[1]);
     n = std::stoi(argv[2]);
     w = std::stoi(argv[3]);
@@ -116,8 +118,8 @@ void from_argv(char** argv, std::vector<double>& p, std::vector<unsigned int>& s
     std::cout << lambdas_filename << std::endl;
     read_lambdas(lambdas_filename, arr_rate);
 
-    out_filename = "Results/simulator_smash/overLambdas-nClasses" + std::to_string(sizes.size()) + "-N" + std::to_string(n) + "-Win" +
-        std::to_string(w) + "-" + sampling_name[sampling_method] + "-" + cell + ".csv";
+    out_filename = "Results/simulator_smash/overLambdas-nClasses" + std::to_string(sizes.size()) + "-N" +
+        std::to_string(n) + "-Win" + std::to_string(w) + "-" + sampling_name[sampling_method] + "-" + cell + ".csv";
 }
 
 Simulator::Simulator(const std::vector<double>& l, const std::vector<double>& u, const std::vector<unsigned int>& sizes,

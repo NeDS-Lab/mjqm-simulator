@@ -6,6 +6,7 @@
 #define MOSTSERVERFIRST_H
 
 #include <mjqm-policy/policy.h>
+#include <mjqm-utils/string.hpp>
 
 class MostServerFirst : public Policy {
 public:
@@ -29,6 +30,11 @@ public:
     ~MostServerFirst() override = default;
     std::unique_ptr<Policy> clone() const override {
         return std::make_unique<MostServerFirst>(w, servers, state_buf.size(), sizes);
+    }
+    explicit operator std::string() const override {
+        return std::string("MostServerFirst(servers=") + std::to_string(servers) +
+            ", classes=" + std::to_string(state_buf.size()) + ", sizes=(" + join(sizes.begin(), sizes.end()) +
+            "))";
     }
 
 private:

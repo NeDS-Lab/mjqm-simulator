@@ -12,13 +12,16 @@
 #include <iostream>
 #include <limits>
 #include <list>
+#include <mjqm-math/sampler.h>
+#include <mjqm-policy/policy.h>
+#include <mjqm-settings/toml_loader.h>
+#include <mjqm-settings/toml_utils.h>
+#include <mjqm-simulator/experiment_stats.h>
 #include <random>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <mjqm-simulator/experiment_stats.h>
-#include <mjqm-settings/toml_loader.h>
 
 class Simulator {
 public:
@@ -904,4 +907,4 @@ private:
     }
 };
 
-#endif //SIMULATOR_H
+#endif // SIMULATOR_H

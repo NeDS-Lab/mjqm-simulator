@@ -5,9 +5,13 @@
 #ifndef TOML_LOADER_H
 #define TOML_LOADER_H
 
+#include <iostream>
+#include <map>
+#include <memory>
 #include <mjqm-math/sampler.h>
 #include <mjqm-policy/policy.h>
 #include <mjqm-settings/toml_utils.h>
+#include <string>
 
 using namespace std::string_literals;
 
@@ -42,7 +46,7 @@ struct ExperimentConfig {
         os << "Events: " << conf.events << std::endl;
         os << "Repetitions: " << conf.repetitions << std::endl;
         os << "Cores: " << conf.cores << std::endl;
-        os << "Policy: " << conf.policy_name << std::endl;
+        os << "Policy (" << conf.policy_name << "): " << std::string(*conf.policy) << std::endl;
         os << "Generator: " << conf.generator << std::endl;
         os << "Classes: " << conf.classes.size() << std::endl;
         for (const auto& cls : conf.classes) {
@@ -52,6 +56,11 @@ struct ExperimentConfig {
     }
 };
 
+bool from_toml(toml::table& data, ExperimentConfig& conf);
 bool from_toml(std::string_view filename, ExperimentConfig& conf);
+std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
+from_toml(const toml::table& data, const std::map<std::string, std::vector<std::string>>& overrides = {});
+std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
+from_toml(std::string_view filename, const std::map<std::string, std::vector<std::string>>& overrides = {});
 
 #endif // TOML_LOADER_H

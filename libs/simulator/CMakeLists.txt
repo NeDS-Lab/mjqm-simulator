@@ -12,6 +12,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(tomlplusplus)
 
 add_library(toml_loader
+        src/mjqm-settings/toml_utils.cpp
         src/mjqm-settings/toml_loader.cpp
         src/mjqm-settings/toml_policies_loaders.cpp
         src/mjqm-settings/toml_distributions_loaders.cpp

@@ -77,7 +77,7 @@ inline static std::unordered_map<std::string_view, distribution_loader> distribu
     {"uniform", load_uniform},
 };
 
-bool load_distribution(const toml::table& data, const std::string& cls, const distribution_use& use,
+bool load_distribution(const toml::table& data, const std::string_view& cls, const distribution_use& use,
                        std::shared_ptr<std::mt19937_64> generator, // we do want it to be copied
                        std::unique_ptr<sampler>* sampler // out
 );

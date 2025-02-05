@@ -21,6 +21,7 @@ include_directories(
         libs/math/include
         libs/policy/include
         libs/simulator/include
+        libs/utils/include
 )
 
 add_subdirectory(libs/math)
