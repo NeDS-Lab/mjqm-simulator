@@ -30,18 +30,10 @@ typedef bool (*distribution_loader)(const toml::table& data, const std::string_v
 
 template <typename VAR_TYPE>
 std::optional<VAR_TYPE> distribution_parameter(const toml::table& data, const std::string_view& cls,
-                                               const distribution_use use, const std::string_view& type,
-                                               const std::string_view& param) {
-    return either_optional<VAR_TYPE>(
-        data.at_path(cls).at_path(distribution_use_to_key.at(use)).at_path(param),
-        data.at_path("simulation.default").at_path(distribution_use_to_key.at(use)).at_path(type).at_path(param));
-}
-template <typename VAR_TYPE>
-std::optional<VAR_TYPE> distribution_parameter(const toml::table& data, const std::string_view& cls,
                                                const distribution_use use, const std::string_view& param) {
     return either_optional<VAR_TYPE>(
         data.at_path(cls).at_path(distribution_use_to_key.at(use)).at_path(param),
-        data.at_path("simulation.default").at_path(distribution_use_to_key.at(use)).at_path(param));
+        data.at_path("simulation").at_path(distribution_use_to_key.at(use)).at_path(param));
 }
 
 bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, const distribution_use& use,

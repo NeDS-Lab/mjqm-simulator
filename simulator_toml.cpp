@@ -30,42 +30,28 @@ int main(int argc, char* argv[]) {
     std::vector<double> arr_rate;
     std::vector<std::string> headers{"Arrival Rate"};
     std::string out_filename;
-    std::vector<ExperimentConfig> ex(1);
-    ExperimentConfig conf;
     std::string input_name(argv[1]);
-    if (!from_toml("Inputs/" + input_name + ".toml", conf)) {
+    auto conf_result =
+        from_toml("Inputs/" + input_name + ".toml",
+                  {{"simulation.arrival.rate",
+                    {"0.1", "0.419", "0.738", "1.057", "1.376", "1.695", "2.014", "2.333", "2.652", "2.97"}}});
+    if (conf_result->empty() || !conf_result->at(0).first) {
         std::cerr << "Error reading TOML file" << std::endl;
         return 1;
     }
-    std::cout << conf;
-    if (conf.name != input_name) {
-        std::cerr << "Warning: Experiment name (" << conf.name << ") does not match the TOML file name (" << input_name
-                  << "). The first will be used." << std::endl;
-    }
-    unsigned int classes = conf.get_sizes(sizes);
-    out_filename = "Results/simulator_smash/overLambdas-nClasses" + std::to_string(classes) + "-N" +
-        std::to_string(conf.cores) + "-Win" + std::to_string(1) + "-Exponential-" + conf.name + "-toml.csv";
+    auto conf_to_run = conf_result->size();
+    unsigned int classes = conf_result->at(0).second.get_sizes(sizes);
+    out_filename = "Results/simulator_toml/overLambdas-nClasses" + std::to_string(classes) + "-N" +
+        std::to_string(conf_result->at(0).second.cores) + "-Win" + std::to_string(1) + "-Exponential-" + conf_result->at(0).second.name + ".csv";
     std::ofstream outputFile(out_filename, std::ios::app);
 
-    // for (int i = 0; i < arr_rate.size(); i++) {
-    //     std::vector<double> l;
-    //     for (auto x : p) {
-    //         l.push_back(x * arr_rate[i]);
-    //     }
-    //     std::string logfile_name = "Results/logfile-nClasses" + std::to_string(sizes.size()) + "-N" +
-    //         std::to_string(n) + "-Win" + std::to_string(w) + "-" + sampling_name[sampling_method] + "-" + cell + "-"
-    //         +
-    //         "-lambda" + std::to_string(arr_rate[i]) + ".csv";
-    // }
+    std::vector<ExperimentStats> experiments_stats(conf_to_run);
+    std::vector<std::thread> threads(conf_to_run);
 
-    std::vector<ExperimentStats> experiments_stats(1);
-
-    std::vector<std::thread> threads(1);
-
-    for (int i = 0; i < 1; i++) {
-        threads[i] = std::thread(run_simulation, std::ref(conf), std::ref(experiments_stats[i]));
+    for (int i = 0; i < conf_to_run; i++) {
+        threads[i] = std::thread(run_simulation, std::ref(conf_result->at(i).second), std::ref(experiments_stats[i]));
     }
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < conf_to_run; i++) {
         threads[i].join();
     }
 
@@ -78,9 +64,9 @@ int main(int argc, char* argv[]) {
         outputFile << "\n";
     }
 
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < conf_to_run; i++) {
 
-        outputFile << 0.1 << ";";
+        outputFile << conf_result->at(i).second.toml.at_path("simulation.arrival.rate").value<double>().value() << ";";
         outputFile << experiments_stats[i] << "\n";
     }
 

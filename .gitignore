@@ -44,7 +44,7 @@ out
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
-build/
+build*/
 _deps/
 Makefile
 .cmake/

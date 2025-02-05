@@ -68,7 +68,7 @@ def compare_results(data1, data2):
                     print(f'{columns2[0]}: {key}')
                     key_header = True
                 print(f'\t{column}:')
-                print(f'\t\tdivergence: {((curr / prev) - 1) * 100:+.2f}%')
+                print(f'\t\tdivergence: {(((curr / prev) - 1) * 100 if prev != 0 else 100):+.2f}%')
                 if "Stability Check" not in column:
                     print(f'\t\tcurr: {data1[key][column]} {data1[key][column + " ConfInt"]}')
                     print(f'\t\tprev: {data2[key][column]} {data2[key][column + " ConfInt"]}')

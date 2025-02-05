@@ -45,6 +45,7 @@
       "configurePreset": "default",
       "jobs": 1,
       "targets": [
+        "test_simulator_toml",
         "test_simulator_smash"
       ]
     }

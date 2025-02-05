@@ -69,7 +69,7 @@ function(add_custom_test_ff)
             COMMAND mkdir -p Results/${T_TARGET}
             COMMAND ${T_TARGET} ${T_ARGS} > Results/${T_TARGET}/${T_FILE}.out.txt 2>&1
             COMMAND python3 ensure_same_results.py Results/${T_TARGET}/${T_FILE} test/expected/${T_FILE} > Results/${T_TARGET}/${T_FILE}.diff.txt 2>&1
-            COMMAND grep -q "Data is the same" Results/${T_TARGET}/${T_FILE}.diff.txt && cmake -E cmake_echo_color --green "${T_TARGET} PASSED test ${T_FILE}" || cmake -E cmake_echo_color --red "${T_TARGET} PASSED test ${T_FILE}" VERBATIM
+            COMMAND grep -q "Data is the same" Results/${T_TARGET}/${T_FILE}.diff.txt && cmake -E cmake_echo_color --green "${T_TARGET} PASSED test ${T_FILE}" || cmake -E cmake_echo_color --red "${T_TARGET} FAILED test ${T_FILE}" VERBATIM
     )
     add_custom_target(test_${T_TARGET}_${T_NAME} DEPENDS Results/${T_TARGET}/${T_FILE})
     add_dependencies(test_${T_TARGET} test_${T_TARGET}_${T_NAME})
@@ -126,5 +126,17 @@ foreach (target main_allPols simulator_toc simulator_smash)
             NAME testing_4C_16_smash1_uni
             FILE overLambdas-nClasses4-N16-Win1-Uniform-testing_4C_16.csv
             ARGS testing_4C_16 16 1 uni 100000 20
+    )
+endforeach ()
+
+foreach (target simulator_toml)
+    add_custom_target(test_${target})
+    add_dependencies(test_all test_${target})
+
+    add_custom_test_ff(
+            TARGET ${target}
+            NAME oneOrAll-test1
+            FILE overLambdas-nClasses2-N50-Win1-Exponential-oneOrAll-test1.csv
+            ARGS oneOrAll-test1
     )
 endforeach ()

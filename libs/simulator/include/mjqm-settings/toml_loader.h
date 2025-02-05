@@ -39,6 +39,8 @@ struct ExperimentConfig {
     std::unique_ptr<Policy> policy;
     std::string generator;
     std::vector<ClassConfig> classes;
+    toml::table toml;
+
     unsigned int get_sizes(std::vector<unsigned int>&) const;
 
     friend std::ostream& operator<<(std::ostream& os, const ExperimentConfig& conf) {

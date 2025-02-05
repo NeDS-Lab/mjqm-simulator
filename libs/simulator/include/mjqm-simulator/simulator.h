@@ -498,7 +498,7 @@ public:
             stats.resp_time_var.push_back(compute_interval_class_student(rep_resp_var, i, confidence));
             stats.preemption_avg.push_back(compute_interval_class_student(rep_preemption, i, confidence));
 
-            if (1.0 - stats.throughput[stats.throughput.size() - 1].mean / 0.0001 > 0.05) // TODO need to access l
+            if (1.0 - stats.throughput[stats.throughput.size() - 1].mean / l[i] > 0.05)
                 stats.warnings.push_back(true);
             else
                 stats.warnings.push_back(false);

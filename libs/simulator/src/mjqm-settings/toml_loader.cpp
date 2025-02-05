@@ -27,9 +27,9 @@ unsigned int ExperimentConfig::get_sizes(std::vector<unsigned int>& sizes) const
 bool load_class_from_toml(const toml::table& data, const std::string& class_name, ExperimentConfig& conf,
                           std::shared_ptr<std::mt19937_64> generator // we do want it to be copied
 ) {
-    auto full_key = toml::path(CLASS_ROOT).append(class_name);
+    const auto full_key = toml::path(CLASS_ROOT).append(class_name);
     unsigned int cores;
-    const bool cores_ok = load_into(data, full_key.append("cores").str(), cores);
+    const bool cores_ok = load_into(data, toml::path(full_key).append("cores").str(), cores);
     std::unique_ptr<sampler> arrival_sampler;
     std::unique_ptr<sampler> service_sampler;
     const bool arrival_ok = load_distribution(data, full_key.str(), ARRIVAL, generator, &arrival_sampler);
@@ -56,6 +56,9 @@ bool normalise_probs(toml::table& data) {
             for (const auto p : std::views::values(arrival_probs)) {
                 sum += p;
             }
+            if (sum == 1.) {
+                return true;
+            }
             for (auto& [key, p] : arrival_probs) {
                 p /= sum;
                 // fix values in-place so they can be correctly read by distribution builder
@@ -77,6 +80,7 @@ bool from_toml(const std::string_view filename, ExperimentConfig& conf) {
 
 bool from_toml(toml::table& data, ExperimentConfig& conf) {
     bool ok = true;
+    conf.toml = data;
     ok = ok && load_into(data, "simulation.identifier", conf.name);
     ok = ok && load_into(data, "simulation.events", conf.events);
     ok = ok && load_into(data, "simulation.repetitions", conf.repetitions);
