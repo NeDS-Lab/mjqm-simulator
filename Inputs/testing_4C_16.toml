@@ -1,7 +1,7 @@
-identifier = "oneOrAll-test1"
+identifier = "testing_4C_16"
 events = 100000
-repetitions = 10
-cores = 50
+repetitions = 20
+cores = 16
 policy = "smash"
 smash.window = 1
 

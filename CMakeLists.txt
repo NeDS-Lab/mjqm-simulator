@@ -137,6 +137,28 @@ foreach (target simulator_toml)
             TARGET ${target}
             NAME oneOrAll-test1
             FILE overLambdas-nClasses2-N50-Win1-Exponential-oneOrAll-test1.csv
-            ARGS oneOrAll-test1
+            ARGS oneOrAll-test1 --arrival.rate 0.1 0.419 0.738 1.057 1.376 1.695 2.014 2.333 2.652 2.97
+    )
+
+    add_custom_test_ff(
+            TARGET ${target}
+            NAME testing_4C_16_MostServerFirst_exp
+            FILE overLambdas-nClasses4-N16-Win0-Exponential-testing_4C_16.csv
+            ARGS testing_4C_16 --policy "most server first" \\
+                    --arrival.rate 0.1 0.4157894736842105 0.731578947368421 1.0473684210526315 1.3631578947368421 1.6789473684210527 1.9947368421052631 2.3105263157894735 2.626315789473684 2.942105263157895 3.2578947368421054 3.5736842105263156 3.889473684210526 4.205263157894736 4.5210526315789465 4.836842105263157 5.152631578947368 5.468421052631578 5.784210526315789 6.1
+    )
+    add_custom_test_ff(
+            TARGET ${target}
+            NAME testing_4C_16_smash1_exp
+            FILE overLambdas-nClasses4-N16-Win1-Exponential-testing_4C_16.csv
+            ARGS testing_4C_16 --policy smash --smash.window 1 \\
+                    --arrival.rate 0.1 0.4157894736842105 0.731578947368421 1.0473684210526315 1.3631578947368421 1.6789473684210527 1.9947368421052631 2.3105263157894735 2.626315789473684 2.942105263157895 3.2578947368421054 3.5736842105263156 3.889473684210526 4.205263157894736 4.5210526315789465 4.836842105263157 5.152631578947368 5.468421052631578 5.784210526315789 6.1
+    )
+    add_custom_test_ff(
+            TARGET ${target}
+            NAME testing_4C_16_smash4_exp
+            FILE overLambdas-nClasses4-N16-Win4-Exponential-testing_4C_16.csv
+            ARGS testing_4C_16 --policy smash --smash.window 4 \\
+                    --arrival.rate 0.1 0.4157894736842105 0.731578947368421 1.0473684210526315 1.3631578947368421 1.6789473684210527 1.9947368421052631 2.3105263157894735 2.626315789473684 2.942105263157895 3.2578947368421054 3.5736842105263156 3.889473684210526 4.205263157894736 4.5210526315789465 4.836842105263157 5.152631578947368 5.468421052631578 5.784210526315789 6.1
     )
 endforeach ()

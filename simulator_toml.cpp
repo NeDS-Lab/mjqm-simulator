@@ -27,14 +27,11 @@ void run_simulation(const ExperimentConfig& conf,
 
 int main(int argc, char* argv[]) {
     std::vector<unsigned int> sizes;
-    std::vector<double> arr_rate;
     std::vector<std::string> headers{"Arrival Rate"};
     std::string out_filename;
     std::string input_name(argv[1]);
-    auto conf_result =
-        from_toml("Inputs/" + input_name + ".toml",
-                  {{"arrival.rate",
-                    {"0.1", "0.419", "0.738", "1.057", "1.376", "1.695", "2.014", "2.333", "2.652", "2.97"}}});
+    auto overrides = parse_overrides_from_args(argc, argv);
+    auto conf_result = from_toml("Inputs/" + input_name + ".toml", overrides);
     if (conf_result->empty() || !conf_result->at(0).first) {
         std::cerr << "Error reading TOML file" << std::endl;
         return 1;
@@ -42,7 +39,11 @@ int main(int argc, char* argv[]) {
     auto conf_to_run = conf_result->size();
     unsigned int classes = conf_result->at(0).second.get_sizes(sizes);
     out_filename = "Results/simulator_toml/overLambdas-nClasses" + std::to_string(classes) + "-N" +
-        std::to_string(conf_result->at(0).second.cores) + "-Win" + std::to_string(1) + "-Exponential-" + conf_result->at(0).second.name + ".csv";
+        std::to_string(conf_result->at(0).second.cores) + "-Win" + std::to_string(0) + "-Exponential-" +
+        conf_result->at(0).second.name + ".csv";
+    for (const auto& conf: *conf_result) {
+        std::cout << conf.second.toml << std::endl << std::endl;
+    }
     std::ofstream outputFile(out_filename, std::ios::app);
 
     std::vector<ExperimentStats> experiments_stats(conf_to_run);

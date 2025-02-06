@@ -14,6 +14,8 @@
 #include <mjqm-settings/toml_utils.h>
 #include <mjqm-simulator/simulator.h>
 
+using namespace std::string_literals;
+
 constexpr auto CLASS_ROOT = "class";
 
 unsigned int ExperimentConfig::get_sizes(std::vector<unsigned int>& sizes) const {
@@ -129,7 +131,7 @@ from_toml(const toml::table& data, const std::map<std::string, std::vector<std::
     auto experiments = std::make_unique<std::vector<std::pair<bool, ExperimentConfig>>>();
     toml_overrides toml_overrides(overrides);
 
-    for (const auto& override : toml_overrides) {
+    for (const auto override : toml_overrides) {
         toml::table overridden_data(data);
         for (const auto& [key, value] : override) {
             overwrite_value(overridden_data, key, value);

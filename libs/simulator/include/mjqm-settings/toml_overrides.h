@@ -10,8 +10,10 @@
 #include <string_view>
 #include <vector>
 
+std::map<std::string, std::vector<std::string>> parse_overrides_from_args(int argc, char* argv[], int start_from=2);
+
 class toml_overrides {
-    std::vector<std::vector<std::pair<std::string_view, std::string_view>>> overrides;
+    std::vector<std::vector<std::pair<std::string, std::string>>> overrides;
 
 public:
     explicit toml_overrides(const std::map<std::string, std::vector<std::string>>& overrides);
@@ -22,17 +24,14 @@ public:
         using self_type = iterator;
         using iterator_category = std::forward_iterator_tag;
         using difference_type = std::size_t;
-        using value_type = std::vector<std::pair<std::string_view, std::string_view>>;
+        using value_type = std::vector<std::pair<std::string, std::string>>;
 
-    public:
-        const size_t pairs;
-
-    private:
         std::vector<size_t> state;
-        const std::vector<std::vector<std::pair<std::string_view, std::string_view>>>& data;
+        const std::vector<std::vector<std::pair<std::string, std::string>>> data;
 
     public:
-        explicit iterator(const toml_overrides& data);
+        explicit iterator(const toml_overrides& data) :
+            state(data.overrides.size() + 1, 0), data(data.overrides) {}
 
         value_type operator*() const;
 

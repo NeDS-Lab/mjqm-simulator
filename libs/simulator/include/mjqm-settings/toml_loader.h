@@ -11,9 +11,8 @@
 #include <mjqm-math/sampler.h>
 #include <mjqm-policy/policy.h>
 #include <mjqm-settings/toml_utils.h>
+#include <mjqm-settings/toml_overrides.h>
 #include <string>
-
-using namespace std::string_literals;
 
 struct ClassConfig {
     std::string name;
