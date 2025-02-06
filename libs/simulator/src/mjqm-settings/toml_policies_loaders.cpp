@@ -9,7 +9,7 @@
 #include <ranges>
 
 std::unique_ptr<Policy> smash_builder(const toml::table& data, const ExperimentConfig& conf) {
-    const auto window = data.at_path("simulation.smash.window").value<unsigned int>().value_or(1);
+    const auto window = data.at_path("smash.window").value<unsigned int>().value_or(1);
     return std::make_unique<Smash>(window, conf.cores, conf.classes.size());
 }
 
@@ -45,6 +45,6 @@ std::unique_ptr<Policy> most_server_first_skip_threshold_builder(const toml::tab
     unsigned int n_classes = conf.get_sizes(sizes);
     int default_threshold = static_cast<int>(
         conf.cores - sizes[0] * conf.classes[0].service_sampler->d_mean() / conf.classes[0].arrival_sampler->d_mean());
-    int threshold = data.at_path("simulation.msf.threshold").value<int>().value_or(default_threshold);
+    int threshold = data.at_path("msf.threshold").value<int>().value_or(default_threshold);
     return std::make_unique<MostServerFirstSkipThreshold>(-5, conf.cores, n_classes, sizes, threshold);
 }

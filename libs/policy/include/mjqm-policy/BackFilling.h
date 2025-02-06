@@ -23,6 +23,7 @@ public:
     const std::vector<std::list<long int>>& get_ongoing_jobs() override { return ongoing_jobs; }
     int get_free_ser() override { return freeservers; }
     int get_window_size() override { return 0; }
+    int get_w() const override  { return w; }
     int get_violations_counter() override { return violations_counter; }
     void insert_completion(int size, double completion) override;
     void reset_completion(double simtime) override;
@@ -47,7 +48,7 @@ private:
     std::vector<std::list<long int>> ongoing_jobs; // vector of list of ids
     int freeservers;
     int servers;
-    int w;
+    const int w;
     const std::vector<unsigned int> sizes;
     std::map<double, int> completion_time;
     int violations_counter;

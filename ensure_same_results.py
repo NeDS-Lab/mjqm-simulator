@@ -47,7 +47,7 @@ def compare_results(data1, data2):
         key_header = False
         duration_diff = ""
         for column in columns2[1:]:
-            if not column or column not in data1[key] or column.endswith('ConfInt') or not data2[key][column]:
+            if not column or column not in data1[key] or column.endswith('ConfInt') or not data2[key][column] or not data1[key][column]:
                 continue
             curr_s = data1[key][column]
             prev_s = data2[key][column]

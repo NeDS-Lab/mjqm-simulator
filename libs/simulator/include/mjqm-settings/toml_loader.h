@@ -42,6 +42,11 @@ struct ExperimentConfig {
 
     unsigned int get_sizes(std::vector<unsigned int>&) const;
 
+    std::string output_filename() const {
+        return "Results/simulator_toml/overLambdas-nClasses" + std::to_string(classes.size()) + "-N" +
+               std::to_string(cores) + "-Win" + std::to_string(policy->get_w()) + "-Exponential-" + name + ".csv";
+    }
+
     friend std::ostream& operator<<(std::ostream& os, const ExperimentConfig& conf) {
         os << "Experiment: " << conf.name << std::endl;
         os << "Events: " << conf.events << std::endl;
