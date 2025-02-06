@@ -76,7 +76,7 @@ const std::optional<VAR_TYPE> either_optional(const toml::node_view<const toml::
 }
 
 template <typename VAR_TYPE>
-void overwrite_value(toml::table& data, std::string_view& key, const VAR_TYPE& value);
+void overwrite_value(toml::table& data, const std::string_view& key, const VAR_TYPE& value);
 template <typename VAR_TYPE>
 void overwrite_value(toml::table& data, const toml::path& path, const VAR_TYPE& value);
 

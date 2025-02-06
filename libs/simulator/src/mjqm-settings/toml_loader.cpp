@@ -9,6 +9,7 @@
 #include <mjqm-policy/policies.h>
 #include <mjqm-settings/toml_distributions_loaders.h>
 #include <mjqm-settings/toml_loader.h>
+#include <mjqm-settings/toml_overrides.h>
 #include <mjqm-settings/toml_policies_loaders.h>
 #include <mjqm-settings/toml_utils.h>
 #include <mjqm-simulator/simulator.h>
@@ -81,12 +82,12 @@ bool from_toml(const std::string_view filename, ExperimentConfig& conf) {
 bool from_toml(toml::table& data, ExperimentConfig& conf) {
     bool ok = true;
     conf.toml = data;
-    ok = ok && load_into(data, "simulation.identifier", conf.name);
-    ok = ok && load_into(data, "simulation.events", conf.events);
-    ok = ok && load_into(data, "simulation.repetitions", conf.repetitions);
-    ok = ok && load_into(data, "simulation.cores", conf.cores);
-    ok = ok && load_into(data, "simulation.policy", conf.policy_name, "smash"s);
-    ok = ok && load_into(data, "simulation.generator", conf.generator, "mersenne"s);
+    ok = ok && load_into(data, "identifier", conf.name);
+    ok = ok && load_into(data, "events", conf.events);
+    ok = ok && load_into(data, "repetitions", conf.repetitions);
+    ok = ok && load_into(data, "cores", conf.cores);
+    ok = ok && load_into(data, "policy", conf.policy_name, "smash"s);
+    ok = ok && load_into(data, "generator", conf.generator, "mersenne"s);
 
     auto class_c = data["class"];
     ok = ok && class_c.is_table();
@@ -125,18 +126,18 @@ from_toml(const std::string_view filename, const std::map<std::string, std::vect
 
 std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
 from_toml(const toml::table& data, const std::map<std::string, std::vector<std::string>>& overrides) {
-    std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>> experiments =
-        std::make_unique<std::vector<std::pair<bool, ExperimentConfig>>>();
-    for (auto& override : overrides) {
-        for (const auto& value : override.second) {
-            toml::table overridden_data(data);
-            toml::path key(override.first);
+    auto experiments = std::make_unique<std::vector<std::pair<bool, ExperimentConfig>>>();
+    toml_overrides toml_overrides(overrides);
+
+    for (const auto& override : toml_overrides) {
+        toml::table overridden_data(data);
+        for (const auto& [key, value] : override) {
             overwrite_value(overridden_data, key, value);
-            auto& [success, config] = experiments->emplace_back();
-            success = from_toml(overridden_data, config);
-            std::cout << overridden_data << std::endl;
         }
+        auto& [success, config] = experiments->emplace_back();
+        success = from_toml(overridden_data, config);
     }
+
     return experiments;
 }
 
@@ -180,7 +181,7 @@ Simulator::Simulator(const ExperimentConfig& conf) : nclasses(conf.classes.size(
         sizes.push_back(cls.cores);
         arr_time_samplers.push_back(cls.arrival_sampler->clone(generator));
         ser_time_samplers.push_back(cls.service_sampler->clone(generator));
-        l.push_back(1./cls.arrival_sampler->d_mean());
+        l.push_back(1. / cls.arrival_sampler->d_mean());
         u.push_back(cls.service_sampler->d_mean());
     }
 }

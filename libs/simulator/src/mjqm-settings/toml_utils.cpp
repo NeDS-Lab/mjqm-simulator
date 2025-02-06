@@ -33,11 +33,15 @@ void overwrite_value<std::string>(toml::table& data, const toml::path& path, con
 }
 
 template <typename VALUE_TYPE>
-void overwrite_value(toml::table& data, std::string_view& key, const VALUE_TYPE& value) {
+void overwrite_value(toml::table& data, const std::string_view& key, const VALUE_TYPE& value) {
     toml::path path(key);
     overwrite_value<VALUE_TYPE>(data, path, value);
 }
-template void overwrite_value(toml::table&, std::string_view&, const std::string&);
-template void overwrite_value(toml::table&, std::string_view&, const double&);
-template void overwrite_value(toml::table&, std::string_view&, const long&);
-template void overwrite_value(toml::table&, std::string_view&, const bool&);
+template void overwrite_value(toml::table&, const std::string_view&, const std::string&);
+template void overwrite_value(toml::table&, const std::string_view&, const double&);
+template void overwrite_value(toml::table&, const std::string_view&, const long&);
+template void overwrite_value(toml::table&, const std::string_view&, const bool&);
+template <>
+void overwrite_value(toml::table& data, const std::string_view& key, const std::string_view& value) {
+    overwrite_value(data, key, std::string(value));
+}

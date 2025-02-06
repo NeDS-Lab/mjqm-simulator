@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
     std::string input_name(argv[1]);
     auto conf_result =
         from_toml("Inputs/" + input_name + ".toml",
-                  {{"simulation.arrival.rate",
+                  {{"arrival.rate",
                     {"0.1", "0.419", "0.738", "1.057", "1.376", "1.695", "2.014", "2.333", "2.652", "2.97"}}});
     if (conf_result->empty() || !conf_result->at(0).first) {
         std::cerr << "Error reading TOML file" << std::endl;
@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
 
     for (int i = 0; i < conf_to_run; i++) {
 
-        outputFile << conf_result->at(i).second.toml.at_path("simulation.arrival.rate").value<double>().value() << ";";
+        outputFile << conf_result->at(i).second.toml.at_path("arrival.rate").value<double>().value() << ";";
         outputFile << experiments_stats[i] << "\n";
     }
 
