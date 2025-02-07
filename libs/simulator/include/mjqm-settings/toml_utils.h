@@ -5,10 +5,9 @@
 #ifndef TOML_UTILS_H
 #define TOML_UTILS_H
 
-#ifndef TOML_ENABLE_UNRELEASED_FEATURES
 #define TOML_ENABLE_UNRELEASED_FEATURES 1
+#define TOML_HEADER_ONLY 0
 #include "toml++/toml.h"
-#endif
 
 #include <iostream>
 #include <optional>
@@ -47,7 +46,7 @@ bool load_into(const toml::table& data, const std::string_view path, VAR_TYPE& v
         value = val.value();
         return true;
     }
-    print_error("Value missing in TOML file " << path);
+    print_error("Value missing in TOML file " << error_highlight(path));
     return false;
 }
 

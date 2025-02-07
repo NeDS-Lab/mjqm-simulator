@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <ranges>
+#include <string>
 #include <unordered_map>
 
 #include <mjqm-policy/policies.h>
@@ -27,30 +28,33 @@ unsigned int ExperimentConfig::get_sizes(std::vector<unsigned int>& sizes) const
     return classes.size();
 }
 
-bool load_class_from_toml(const toml::table& data, const std::string& class_name, ExperimentConfig& conf,
-                          std::shared_ptr<std::mt19937_64> generator // we do want it to be copied
-) {
-    const auto full_key = toml::path(CLASS_ROOT).append(class_name);
+bool load_class_from_toml(const toml::table& data, const std::string& index, ExperimentConfig& conf,
+                          std::shared_ptr<std::mt19937_64>& generator) {
+    const auto full_key = toml::path(CLASS_ROOT).append(index);
     unsigned int cores;
     const bool cores_ok = load_into(data, toml::path(full_key).append("cores").str(), cores);
+    const std::string name =
+        data.at_path(full_key).at_path("name").value<std::string>().value_or(std::to_string(cores));
     std::unique_ptr<sampler> arrival_sampler;
     std::unique_ptr<sampler> service_sampler;
     const bool arrival_ok = load_distribution(data, full_key.str(), ARRIVAL, generator, &arrival_sampler);
     const bool service_ok = load_distribution(data, full_key.str(), SERVICE, generator, &service_sampler);
     if (cores_ok && arrival_ok && service_ok) {
-        conf.classes.emplace_back(class_name, cores, std::move(arrival_sampler), std::move(service_sampler));
+        conf.classes.emplace_back(name, cores, std::move(arrival_sampler), std::move(service_sampler));
         return true;
     }
     return false;
 }
 
 bool normalise_probs(toml::table& data) {
-    std::unordered_map<std::string_view, double> arrival_probs;
-    const size_t n_classes = data[CLASS_ROOT].as_table()->size();
-    for (const auto& [key, value] : *data.at_path(CLASS_ROOT).as_table()) {
-        const auto arrival_prob = value.at_path("arrival.prob").value<double>();
+    std::unordered_map<std::string, double> arrival_probs;
+    const size_t n_classes = data[CLASS_ROOT].as_array()->size();
+    for (size_t index = 0; index < n_classes; ++index) {
+        const auto key = "[" + std::to_string(index) + "]";
+        const auto arrival_prob =
+            data.at_path(CLASS_ROOT).at_path(key).at_path("arrival.prob").value<double>();
         if (arrival_prob.has_value()) {
-            arrival_probs[key.str()] = arrival_prob.value();
+            arrival_probs[key] = arrival_prob.value();
         }
     }
     if (!arrival_probs.empty()) {
@@ -65,7 +69,7 @@ bool normalise_probs(toml::table& data) {
             for (auto& [key, p] : arrival_probs) {
                 p /= sum;
                 // fix values in-place so they can be correctly read by distribution builder
-                auto path = toml::path(key).append("arrival.prob").prepend(CLASS_ROOT);
+                auto path = toml::path(CLASS_ROOT).append(key).append("arrival.prob");
                 overwrite_value(data, path, p);
             }
         } else {
@@ -91,15 +95,11 @@ bool from_toml(toml::table& data, ExperimentConfig& conf) {
     ok = ok && load_into(data, "policy", conf.policy_name, "smash"s);
     ok = ok && load_into(data, "generator", conf.generator, "mersenne"s);
 
-    auto class_c = data["class"];
-    ok = ok && class_c.is_table();
-    auto generator = std::make_shared<std::mt19937_64>();
-
-    if (ok) {
-        auto classes = *class_c.as_table();
+    if (toml::array* classes = data.at_path(CLASS_ROOT).as_array()) {
         ok = normalise_probs(data) && ok;
-        for (const auto& [key, value] : classes) {
-            ok = load_class_from_toml(data, key.data(), conf, generator) && ok;
+        auto generator = std::make_shared<std::mt19937_64>();
+        for (size_t index = 0; index < classes->size(); ++index) {
+            ok = load_class_from_toml(data, "[" + std::to_string(index) + "]", conf, generator) && ok;
             // keep going if one soft fails to show all errors
         }
         // sort classes by cores, or alphabetically by name if cores are equal

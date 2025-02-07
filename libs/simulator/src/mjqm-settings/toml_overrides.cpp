@@ -4,6 +4,7 @@
 
 #include <map>
 #include <mjqm-settings/toml_overrides.h>
+#include <mjqm-settings/toml_utils.h>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -33,6 +34,64 @@ std::map<std::string, std::vector<std::string>> parse_overrides_from_args(int ar
             i++;
         }
     }
+    // print them out
+    for (const auto& [key, values] : overrides) {
+        std::cout << key << ": ";
+        for (const auto& val : values) {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+    }
+    return overrides;
+}
+
+std::string as_string(const toml::node& node) {
+    if (node.is_string()) {
+        return node.value<std::string>().value();
+    } else if (node.is_integer()) {
+        return std::to_string(node.value<int64_t>().value());
+    } else if (node.is_floating_point()) {
+        return std::to_string(node.value<double>().value());
+    } else if (node.is_boolean()) {
+        return node.value<bool>().value() ? "true" : "false";
+    } else {
+        throw std::runtime_error("Unsupported value type");
+    }
+}
+
+std::map<std::string, std::vector<std::string>> parse_overrides_from_variation(const toml::table& table) {
+    // accept any type of value:
+    // [[variation]]
+    // arrival.rate = [ 0.1 0.2 0.3 ]
+    // policy = [ "most server first" "smash" ]
+    // policy = "smash" # just one value for overriding without matrix effect
+    std::map<std::string, std::vector<std::string>> overrides;
+    std::map<std::string, toml::table> tables{{"", table}};
+    do {
+        std::map<std::string, toml::table> new_tables{};
+        for (auto& [key, value] : tables) {
+            toml::path suppath;
+            if (key == "") {
+                suppath = toml::path();
+            } else {
+                suppath = toml::path(key);
+            }
+            for (const auto& [subkey, subvalue] : value) {
+                auto subpath = std::string(suppath + subkey);
+                if (subvalue.is_array()) {
+                    auto& vals = overrides[subpath];
+                    for (auto&& val : *subvalue.as_array()) {
+                        vals.emplace_back(as_string(val));
+                    }
+                } else if (subvalue.is_table()) {
+                    new_tables[subpath] = *subvalue.as_table();
+                } else {
+                    overrides[subpath] = {as_string(subvalue)};
+                }
+            }
+        }
+        tables = std::move(new_tables);
+    } while (!tables.empty());
     // print them out
     for (const auto& [key, values] : overrides) {
         std::cout << key << ": ";

@@ -4,33 +4,29 @@
 
 #include <iostream>
 #include <map>
+#include <mjqm-settings/toml_overrides.h>
 #include <mjqm-settings/toml_loader.h>
-#include <ranges>
 #include <string>
 #include <vector>
 
 int main(int argc, char* argv[])
 {
-    std::string_view filename = argc > 1 ? argv[1] : "../oneOrAll_N32_0.6.toml";
+    std::string_view filename(argv[1]);
     std::cout << "Reading TOML file: " << filename << std::endl;
 
     std::map<std::string, std::vector<std::string>> map = {
         {"simulation.smash.window", {"6", "2", "3", "4", "5"}}
     };
 
-    auto experiments = from_toml(filename, map);
-    int i = 0;
-    for (const auto& [success, config] : *experiments) {
-        std::cout << ++i << ": " << success << ": " << std::endl;
-        std::cout << config;
-        std::cout << std::endl;
+    toml::table table = toml::parse_file(filename);
+
+    std::cout << "Table: " << table << std::endl;
+    std::cout << "Variations: " << table.at_path("variation") << std::endl;
+    std::cout << "Variations: " << table.at_path("variation").is_array() << std::endl;
+    std::cout << "Variations: " << table.at_path("variation").is_array_of_tables() << std::endl;
+    if (auto vars = table.at_path("variation").as_array())
+    for (auto& var : *vars) {
+        std::cout << "Variation: " << *var.as_table() << std::endl;
+        parse_overrides_from_variation(*var.as_table());
     }
-    //
-    // ExperimentConfig config;
-    // bool success = from_toml(filename, config);
-    // std::cout << config << std::endl;
-    // if (!success) {
-    //     std::cerr << "Error reading TOML file" << std::endl;
-    //     return 1;
-    // }
 }

@@ -14,8 +14,9 @@
 #include <list>
 #include <mjqm-math/sampler.h>
 #include <mjqm-policy/policy.h>
+#if __has_include("toml++/toml.h")
 #include <mjqm-settings/toml_loader.h>
-#include <mjqm-settings/toml_utils.h>
+#endif
 #include <mjqm-simulator/experiment_stats.h>
 #include <random>
 #include <string>
@@ -28,7 +29,9 @@ public:
     Simulator(const std::vector<double>& l, const std::vector<double>& u, const std::vector<unsigned int>& sizes, int w,
               int servers, int sampling_method, std::string logfile_name);
 
+#if __has_include("toml++/toml.h")
     Simulator(const ExperimentConfig& conf);
+#endif
 
     ~Simulator() = default;
 
@@ -622,14 +625,8 @@ private:
     std::string logfile_name;
 
     std::shared_ptr<std::mt19937_64> generator;
-    std::uniform_real_distribution<double> ru{0., 1.};
 
     int sampling_method = 0;
-
-    double sample_exp(double par) // done
-    {
-        return -log(ru(*generator)) / par;
-    }
 
     void resample() {
         // add arrivals and departures
@@ -867,20 +864,6 @@ private:
 
             if (curr_phase == 3) {
                 // std::cout << policy->get_state_ser()[0] << " " << policy->get_state_buf()[1] << std::endl;
-            }
-        } else {
-            for (int i = 0; i < nclasses; i++) {
-                fel[i + nclasses] = arr_time_samplers[i]->sample() + simtime;
-                if (policy->get_state_ser()[i] > 0) {
-                    fel[i] = sample_exp((1 / u[i]) * policy->get_state_ser()[i]) + simtime;
-                    // fel[i] = sample_st((1/u[i])*policy->get_state_ser()[i]) + simtime;
-                    // this can be written in a more static format as
-                    // ___exponential::with_mean(u[i])___.sample()/policy->get_state_ser()[i] + simtime;
-                    // but it needs to be understood who is the owner of the sampler
-                    // and whether it should statically be exponential or not
-                } else {
-                    fel[i] = std::numeric_limits<double>::infinity();
-                }
             }
         }
     }

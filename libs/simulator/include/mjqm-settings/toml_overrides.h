@@ -6,11 +6,12 @@
 #define TOML_OVERRIDES_H
 
 #include <map>
+#include <mjqm-settings/toml_utils.h>
 #include <string>
-#include <string_view>
 #include <vector>
 
-std::map<std::string, std::vector<std::string>> parse_overrides_from_args(int argc, char* argv[], int start_from=2);
+std::map<std::string, std::vector<std::string>> parse_overrides_from_args(int argc, char* argv[], int start_from = 2);
+std::map<std::string, std::vector<std::string>> parse_overrides_from_variation(const toml::table& table);
 
 class toml_overrides {
     std::vector<std::vector<std::pair<std::string, std::string>>> overrides;
@@ -30,8 +31,7 @@ public:
         const std::vector<std::vector<std::pair<std::string, std::string>>> data;
 
     public:
-        explicit iterator(const toml_overrides& data) :
-            state(data.overrides.size() + 1, 0), data(data.overrides) {}
+        explicit iterator(const toml_overrides& data) : state(data.overrides.size() + 1, 0), data(data.overrides) {}
 
         value_type operator*() const;
 

@@ -4,7 +4,6 @@
 //  Created by Andrea Marin on 13/10/23.
 //
 
-#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <mjqm-settings/toml_loader.h>

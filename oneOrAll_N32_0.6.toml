@@ -8,12 +8,12 @@ smash.window = 1
 arrival.distribution = "exponential"
 service.distribution = "exponential"
 
-[class.1]
+[[class]]
 cores = 1
 arrival.mean = 0.6
 service.mean = 1
 
-[class.32]
+[[class]]
 cores = 32
 arrival.lambda = 0.4
 service.rate = 1

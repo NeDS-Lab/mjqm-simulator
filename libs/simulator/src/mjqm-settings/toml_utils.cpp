@@ -2,6 +2,7 @@
 // Created by Marco Ciotola on 05/02/25.
 //
 
+#define TOML_IMPLEMENTATION
 #include <mjqm-settings/toml_utils.h>
 
 template <typename VALUE_TYPE>

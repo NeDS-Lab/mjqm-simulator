@@ -10,12 +10,12 @@ arrival.rate = 0.1
 
 service.distribution = "exponential"
 
-[class.1]
+[[class]]
 cores = 1
 arrival.prob = 0.5
 service.mean = 0.25
 
-[class.50]
+[[class]]
 cores = 50
 arrival.prob = 0.5
 service.mean = 0.5
