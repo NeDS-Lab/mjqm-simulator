@@ -35,13 +35,13 @@ std::map<std::string, std::vector<std::string>> parse_overrides_from_args(int ar
         }
     }
     // print them out
-    for (const auto& [key, values] : overrides) {
-        std::cout << key << ": ";
-        for (const auto& val : values) {
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-    }
+    // for (const auto& [key, values] : overrides) {
+    //     std::cout << key << ": ";
+    //     for (const auto& val : values) {
+    //         std::cout << val << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
     return overrides;
 }
 
@@ -93,14 +93,28 @@ std::map<std::string, std::vector<std::string>> parse_overrides_from_variation(c
         tables = std::move(new_tables);
     } while (!tables.empty());
     // print them out
-    for (const auto& [key, values] : overrides) {
-        std::cout << key << ": ";
-        for (const auto& val : values) {
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-    }
+    // for (const auto& [key, values] : overrides) {
+    //     std::cout << key << ": ";
+    //     for (const auto& val : values) {
+    //         std::cout << val << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
     return overrides;
+}
+
+std::map<std::string, std::vector<std::string>> merge_overrides(
+    const std::map<std::string, std::vector<std::string>>& base,
+    const std::map<std::string, std::vector<std::string>>& higher_priority
+) {
+    std::map<std::string, std::vector<std::string>> merged(base);
+    for (const auto& [key, values] : higher_priority) {
+        if (merged.contains(key)) {
+            merged.erase(key);
+        }
+        merged.emplace(key, values);
+    }
+    return merged;
 }
 
 toml_overrides::toml_overrides(const std::map<std::string, std::vector<std::string>>& overrides) : overrides(0) {

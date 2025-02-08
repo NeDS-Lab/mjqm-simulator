@@ -51,8 +51,7 @@ bool normalise_probs(toml::table& data) {
     const size_t n_classes = data[CLASS_ROOT].as_array()->size();
     for (size_t index = 0; index < n_classes; ++index) {
         const auto key = "[" + std::to_string(index) + "]";
-        const auto arrival_prob =
-            data.at_path(CLASS_ROOT).at_path(key).at_path("arrival.prob").value<double>();
+        const auto arrival_prob = data.at_path(CLASS_ROOT).at_path(key).at_path("arrival.prob").value<double>();
         if (arrival_prob.has_value()) {
             arrival_probs[key] = arrival_prob.value();
         }
@@ -126,12 +125,10 @@ from_toml(const std::string_view filename, const std::map<std::string, std::vect
     return from_toml(data, overrides);
 }
 
-std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
-from_toml(const toml::table& data, const std::map<std::string, std::vector<std::string>>& overrides) {
-    auto experiments = std::make_unique<std::vector<std::pair<bool, ExperimentConfig>>>();
-    toml_overrides toml_overrides(overrides);
-
-    for (const auto override : toml_overrides) {
+void from_toml(const std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>& experiments,
+               const toml::table& data, const std::map<std::string, std::vector<std::string>>& overrides) {
+    toml_overrides arguments_overrides(overrides);
+    for (const auto override : arguments_overrides) {
         toml::table overridden_data(data);
         for (const auto& [key, value] : override) {
             overwrite_value(overridden_data, key, value);
@@ -139,7 +136,20 @@ from_toml(const toml::table& data, const std::map<std::string, std::vector<std::
         auto& [success, config] = experiments->emplace_back();
         success = from_toml(overridden_data, config);
     }
+}
 
+std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
+from_toml(const toml::table& data, const std::map<std::string, std::vector<std::string>>& arguments_overrides) {
+    auto experiments = std::make_unique<std::vector<std::pair<bool, ExperimentConfig>>>();
+    if (auto vars = data.at_path("variation").as_array()) {
+        for (auto& var : *vars) {
+            auto file_overrides = parse_overrides_from_variation(*var.as_table());
+            from_toml(experiments, data, merge_overrides(file_overrides, arguments_overrides));
+        }
+    }
+    if (experiments->empty()) { // catch both no variation and empty variation list
+        from_toml(experiments, data, arguments_overrides);
+    }
     return experiments;
 }
 
