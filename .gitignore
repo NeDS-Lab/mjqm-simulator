@@ -49,7 +49,7 @@ _deps/
 Makefile
 .cmake/
 CMakeUserPresets.json
-.cache/
+*cache/
 
 # Qt specific files
 moc_*.cpp

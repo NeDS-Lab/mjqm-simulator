@@ -30,7 +30,7 @@ public:
               int servers, int sampling_method, std::string logfile_name);
 
 #if __has_include("toml++/toml.h")
-    Simulator(const ExperimentConfig& conf);
+    explicit Simulator(const ExperimentConfig& conf);
 #endif
 
     ~Simulator() = default;
@@ -40,7 +40,7 @@ public:
         resample();
     }
 
-    std::uint64_t next(std::uint64_t u) {
+    static constexpr std::uint64_t next(const std::uint64_t u) {
         std::uint64_t v = u * 3935559000370003845 + 2691343689449507681;
 
         v ^= v >> 21;

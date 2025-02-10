@@ -69,7 +69,6 @@ def compare_results(data1, data2):
             close = curr_s == prev_s
             close = close or math.isclose(curr, prev, rel_tol=1e-3)
             if not close:
-                different = True
                 change = divergence(curr, prev)
                 if column == "Run Duration":
                     if change < 0:
@@ -77,6 +76,7 @@ def compare_results(data1, data2):
                     else:
                         duration_diff = f"Slowdown: {-change:+.2f}%"
                     continue
+                different = True
                 if not key_header:
                     print(f"{columns2[0]}: {key}")
                     key_header = True

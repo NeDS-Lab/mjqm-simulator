@@ -176,7 +176,7 @@ Simulator::Simulator(const std::vector<double>& l, const std::vector<double>& u,
     viol = 0;
     util = 0;
     occ = 0;
-    std::uint64_t seed = 1862248485;
+    constexpr std::uint64_t seed = 1862248485;
     generator = std::make_shared<std::mt19937_64>(next(seed));
 
     switch (sampling_method) {

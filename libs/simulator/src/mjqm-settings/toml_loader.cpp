@@ -14,6 +14,7 @@
 #include <mjqm-settings/toml_policies_loaders.h>
 #include <mjqm-settings/toml_utils.h>
 #include <mjqm-simulator/simulator.h>
+#include "mjqm-math/random_mersenne.h"
 
 using namespace std::string_literals;
 
@@ -29,7 +30,7 @@ unsigned int ExperimentConfig::get_sizes(std::vector<unsigned int>& sizes) const
 }
 
 bool load_class_from_toml(const toml::table& data, const std::string& index, ExperimentConfig& conf,
-                          std::shared_ptr<std::mt19937_64>& generator) {
+                          random_source_factory<random_mersenne>& generator) {
     const auto full_key = toml::path(CLASS_ROOT).append(index);
     unsigned int cores;
     const bool cores_ok = load_into(data, toml::path(full_key).append("cores").str(), cores);
@@ -93,12 +94,11 @@ bool from_toml(toml::table& data, ExperimentConfig& conf) {
     ok = ok && load_into(data, "cores", conf.cores);
     ok = ok && load_into(data, "policy", conf.policy_name, "smash"s);
     ok = ok && load_into(data, "generator", conf.generator, "mersenne"s);
-
+    random_mersenne_factory_shared factory{};
     if (toml::array* classes = data.at_path(CLASS_ROOT).as_array()) {
         ok = normalise_probs(data) && ok;
-        auto generator = std::make_shared<std::mt19937_64>();
         for (size_t index = 0; index < classes->size(); ++index) {
-            ok = load_class_from_toml(data, "[" + std::to_string(index) + "]", conf, generator) && ok;
+            ok = load_class_from_toml(data, "[" + std::to_string(index) + "]", conf, factory) && ok;
             // keep going if one soft fails to show all errors
         }
         // sort classes by cores, or alphabetically by name if cores are equal
