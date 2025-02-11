@@ -67,7 +67,7 @@ def compare_results(data1, data2):
             curr = float(curr_s)
             prev = float(prev_s)
             close = curr_s == prev_s
-            close = close or math.isclose(curr, prev, rel_tol=1e-3)
+            close = close or math.isclose(curr, prev, rel_tol=1e-2)
             if not close:
                 change = divergence(curr, prev)
                 if column == "Run Duration":

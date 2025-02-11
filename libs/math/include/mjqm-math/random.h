@@ -7,16 +7,15 @@
 
 class random_source {
 public:
-    virtual ~random_source() = default;
+    typedef double result_type;
     const std::string name;
 
     explicit random_source(std::string name) : name(std::move(name)) {}
 
-    virtual double RandU01() = 0;
-    long RandInt(const long low, const long high) {
-        // the + 1L is needed to give the higher value the same probability as any other value
-        return low + (high - low + 1L) * static_cast<long>(RandU01());
-    }
+    virtual inline double RandU01() = 0;
+    constexpr inline double min() const { return 0.0; }
+    constexpr inline double max() const { return 1.0; }
+    inline double operator()() { return RandU01(); }
 };
 
 class random_source_factory {

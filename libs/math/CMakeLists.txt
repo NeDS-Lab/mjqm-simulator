@@ -1,7 +1,5 @@
 add_library(math
         src/mjqm-math/confidence_intervals.cpp
-        src/mjqm-math/random_ecuyer.cpp
-        src/mjqm-math/random_mersenne.cpp
 )
 
 # Include the Boost library

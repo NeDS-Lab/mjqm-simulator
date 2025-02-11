@@ -33,8 +33,8 @@ private:
 
 public:
     explicit random_mersenne(const std::string& name, const std::uint64_t seed = MJQM_RANDOM_MERSENNE_SEED) :
-        random_source(name), generator(next(seed)) {}
-    double RandU01() override;
+        random_source(name), generator(seed) {}
+    inline double RandU01() override { return uniform(generator); }
 };
 
 class random_mersenne_factory_shared final : public random_source_factory {

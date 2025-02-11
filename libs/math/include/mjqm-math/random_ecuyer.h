@@ -15,7 +15,7 @@ private:
 
 public:
     explicit random_ecuyer(const std::string& name) : random_source(name), generator(name.data()) {}
-    double RandU01() override;
+    inline double RandU01() override { return generator.RandU01(); }
 };
 
 class random_ecuyer_factory final : public random_source_factory {

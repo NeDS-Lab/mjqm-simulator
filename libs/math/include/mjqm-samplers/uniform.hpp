@@ -13,12 +13,13 @@
 class uniform_rng : public rng_sampler {
 public:
     explicit uniform_rng(std::shared_ptr<random_source>&& generator, const double min, const double max) :
-        rng_sampler(std::move(generator)), min(min), max(max) {
+        rng_sampler(std::move(generator)), min(min), max(max), distribution(min, max) {
         assert(min > 0);
         assert(max > min);
     }
 
 private:
+    std::uniform_real_distribution<> distribution;
     const double min;
     const double max;
     const double values_range = max - min;
@@ -28,7 +29,7 @@ private:
 public:
     double d_mean() const override { return mean; }
     double d_variance() const override { return variance; }
-    double sample() override { return this->rand_u01() * values_range + min; }
+    double sample() override { return distribution(*this->generator); }
 
     static std::shared_ptr<sampler> with_mean(std::shared_ptr<random_source>&& generator, double mean,
                                               double variance = 1.) {
