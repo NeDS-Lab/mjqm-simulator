@@ -66,7 +66,6 @@ function(add_custom_test)
         OUTPUT ${CSV_FILES}
         BYPRODUCTS Results/${T_TARGET}/${T_NAME}.out.txt
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMAND mkdir -p Results/${T_TARGET}
         COMMAND ${T_TARGET} ${T_ARGS} > Results/${T_TARGET}/${T_NAME}.out.txt 2>&1
     )
     add_custom_target(test_${T_TARGET}_${T_NAME} DEPENDS ${CSV_FILES})
@@ -176,5 +175,14 @@ foreach (target simulator_toml)
         NAME testing_4C_16_smash_uni
         FILES overLambdas-nClasses4-N16-Win1-Uniform-testing_4C_16.csv
         ARGS testing_4C_16 --service.distribution uniform
+    )
+endforeach ()
+
+foreach (target main_allPols simulator_smash simulator_toml)
+    add_custom_command(
+        TARGET ${target} POST_BUILD
+        BYPRODUCTS ${CMAKE_CURRENT_SOURCE_DIR}/Results/${target}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND mkdir -p Results/${target}
     )
 endforeach ()
