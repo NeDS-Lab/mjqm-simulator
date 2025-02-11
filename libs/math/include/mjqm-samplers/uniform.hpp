@@ -21,9 +21,9 @@ public:
 private:
     const double min;
     const double max;
-    const double values_range = max - min + 1.;
+    const double values_range = max - min;
     const double mean = (min + max) / 2.;
-    const double variance = (mean - min) * 2. + 1.;
+    const double variance = (mean - min) * 2.;
 
 public:
     double d_mean() const override { return mean; }
@@ -32,8 +32,7 @@ public:
 
     static std::shared_ptr<sampler> with_mean(std::shared_ptr<random_source>&& generator, double mean,
                                               double variance = 1.) {
-        return std::make_shared<uniform_rng>(std::move(generator), (1. - variance / 2.) * mean,
-                                             (1. + variance / 2.) * mean);
+        return std::make_shared<uniform_rng>(std::move(generator), mean - variance / 2., mean + variance / 2.);
     }
 
     explicit operator std::string() const override {
@@ -62,8 +61,7 @@ public:
 
     static std::shared_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean,
                                               double variance = 1.) {
-        return std::make_shared<uniform>(std::move(generator), (1. - variance / 2.) * mean,
-                                         (1. + variance / 2.) * mean);
+        return std::make_shared<uniform>(std::move(generator), mean - variance / 2., mean + variance / 2.);
     }
 
     explicit operator std::string() const override {

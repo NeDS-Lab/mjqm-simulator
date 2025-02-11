@@ -6,7 +6,6 @@ policy = "smash"
 smash.window = 1
 
 arrival.distribution = "exponential"
-arrival.rate = 0.1
 
 service.distribution = "exponential"
 service.mean = 1

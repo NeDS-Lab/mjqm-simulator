@@ -147,7 +147,7 @@ foreach (target simulator_toml)
         TARGET ${target}
         NAME oneOrAll-test1
         FILES overLambdas-nClasses2-N50-Win1-Exponential-oneOrAll-test1.csv
-        ARGS oneOrAll-test1 --arrival.rate 0.1 0.419 0.738 1.057 1.376 1.695 2.014 2.333 2.652 2.97
+        ARGS oneOrAll-test1
     )
 
     add_custom_test(
@@ -176,7 +176,6 @@ foreach (target simulator_toml)
         TARGET ${target}
         NAME testing_4C_16_smash_uni
         FILES overLambdas-nClasses4-N16-Win1-Uniform-testing_4C_16.csv
-        ARGS testing_4C_16 --policy smash --smash.window 1 --arrival.mean 10 \\
-                --arrival.distribution uniform
+        ARGS testing_4C_16 --policy smash --smash.window 1 --arrival.distribution uniform
     )
 endforeach ()

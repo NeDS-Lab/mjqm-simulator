@@ -6,9 +6,9 @@ policy = "smash"
 smash.window = 1
 
 arrival.distribution = "exponential"
-arrival.rate = 0.1
 
 service.distribution = "exponential"
+
 
 [[class]]
 cores = 1
@@ -19,3 +19,18 @@ service.mean = 0.25
 cores = 50
 arrival.prob = 0.5
 service.mean = 0.5
+
+
+[[variation]]
+arrival.rate = [
+    0.1,
+    0.419,
+    0.738,
+    1.057,
+    1.376,
+    1.695,
+    2.014,
+    2.333,
+    2.652,
+    2.97,
+]
