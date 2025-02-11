@@ -13,12 +13,12 @@
 class random_mersenne final : public random_source {
 private:
     const std::shared_ptr<std::mt19937_64> generator;
+    std::uniform_real_distribution<double> uniform{0.0, 1.0};
 
 public:
     explicit random_mersenne(std::shared_ptr<std::mt19937_64> generator, const std::string& name) :
         random_source(name), generator(std::move(generator)) {}
     double RandU01() override;
-    long RandInt(long low, long high) override;
 };
 
 static constexpr std::uint64_t next(const std::uint64_t u) {

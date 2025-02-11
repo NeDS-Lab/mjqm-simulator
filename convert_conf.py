@@ -24,7 +24,6 @@ if __name__ == "__main__":
     classes = Path("Inputs") / (name + ".txt")
     rates = Path("Inputs") / ("arrRate_" + name + ".txt")
     classes = classes.read_text().splitlines()
-    # rates = [r.strip() for r in rates.read_text().strip("[]").split(",")]
     rates = rates.read_text().strip()
     classes = [c.strip("()").split(",") for c in classes]
     classes = "".join([class_def(c) for c in classes])
@@ -37,7 +36,6 @@ policy = "smash"
 smash.window = 1
 
 arrival.distribution = "exponential"
-arrival.rate = 0.1
 
 service.distribution = "exponential"
 

@@ -13,8 +13,9 @@ public:
     explicit random_source(std::string name) : name(std::move(name)) {}
 
     virtual double RandU01() = 0;
-    virtual long RandInt(const long low, const long high) {
-        return low + static_cast<long>((static_cast<double>(high) - static_cast<double>(low) + 1.0) * RandU01());
+    long RandInt(const long low, const long high) {
+        // the + 1L is needed to give the higher value the same probability as any other value
+        return low + (high - low + 1L) * static_cast<long>(RandU01());
     }
 };
 

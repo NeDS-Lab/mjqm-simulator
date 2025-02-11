@@ -163,19 +163,18 @@ foreach (target simulator_toml)
         NAME testing_4C_16_smash_exp
         FILES overLambdas-nClasses4-N16-Win1-Exponential-testing_4C_16.csv \\
                 overLambdas-nClasses4-N16-Win4-Exponential-testing_4C_16.csv
-        ARGS testing_4C_16 --policy smash --smash.window 1 4
+        ARGS testing_4C_16 --smash.window 1 4
     )
     add_custom_test(
         TARGET ${target}
         NAME testing_4C_16_smash_fre
         FILES overLambdas-nClasses4-N16-Win1-Frechet-testing_4C_16.csv
-        ARGS testing_4C_16 --policy smash --smash.window 1 --arrival.alpha 2.15 \\
-                --arrival.distribution frechet
+        ARGS testing_4C_16 --service.distribution frechet --service.alpha 2.15
     )
     add_custom_test(
         TARGET ${target}
         NAME testing_4C_16_smash_uni
         FILES overLambdas-nClasses4-N16-Win1-Uniform-testing_4C_16.csv
-        ARGS testing_4C_16 --policy smash --smash.window 1 --arrival.distribution uniform
+        ARGS testing_4C_16 --service.distribution uniform
     )
 endforeach ()

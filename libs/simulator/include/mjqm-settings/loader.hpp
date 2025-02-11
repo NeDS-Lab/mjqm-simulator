@@ -159,6 +159,7 @@ Simulator::Simulator(const std::vector<double>& l, const std::vector<double>& u,
     } else {
         this->policy = std::make_unique<Smash>(w, servers, nclasses);
     }
+    std::cout << "Policy: " << std::string(*policy) << std::endl;
 
     occupancy_buf.resize(sizes.size());
     occupancy_ser.resize(sizes.size());
@@ -203,9 +204,9 @@ Simulator::Simulator(const std::vector<double>& l, const std::vector<double>& u,
         break;
     case 5: // frechet
         for (int i = 0; i < nclasses; i++) {
-            // ser_time_samplers.push_back(frechet::with_mean(generator, u[i], 2.15));
+            ser_time_samplers.push_back(frechet::with_mean(generator, u[i], 2.15));
             // frechet::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
-            ser_time_samplers.push_back(frechet::with_rate(generator, 1 / u[i], 2.15));
+            // ser_time_samplers.push_back(frechet::with_rate(generator, 1 / u[i], 2.15));
         }
         break;
     case 3: // uniform
@@ -218,6 +219,12 @@ Simulator::Simulator(const std::vector<double>& l, const std::vector<double>& u,
 
     for (int i = 0; i < nclasses; i++) {
         arr_time_samplers.push_back(exponential::with_rate(generator, l[i]));
+    }
+    for (int i = 0; i < nclasses; i++) {
+        std::cout << "Class: " << sizes[i] << std::endl;
+        std::cout << "\tCores: " << sizes[i] << std::endl;
+        std::cout << "\tArrival: " << std::string(*arr_time_samplers[i]) << std::endl;
+        std::cout << "\tService: " << std::string(*ser_time_samplers[i]) << std::endl;
     }
 }
 
