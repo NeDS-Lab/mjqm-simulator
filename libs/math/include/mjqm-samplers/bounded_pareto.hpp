@@ -19,7 +19,7 @@
 template <typename Generator>
 class bounded_pareto_rng : public rng_sampler<Generator> {
 public:
-    explicit bounded_pareto_rng(std::unique_ptr<Generator>&& generator, double alpha, double l, double h) :
+    explicit bounded_pareto_rng(std::shared_ptr<Generator>&& generator, double alpha, double l, double h) :
         rng_sampler<Generator>(std::move(generator)), l(l), h(h), alpha(alpha) {
         assert(l > 0.);
         assert(h > l);
@@ -49,20 +49,15 @@ public:
     }
 
     template <typename NewGenerator>
-    static std::unique_ptr<sampler> with_rate(std::unique_ptr<NewGenerator>&& generator, double rate, double alpha) {
-        return std::make_unique<bounded_pareto_rng<NewGenerator>>(std::move(generator), alpha, (12000.0 / 23999.0) / rate,
+    static std::shared_ptr<sampler> with_rate(std::shared_ptr<NewGenerator>&& generator, double rate, double alpha) {
+        return std::make_shared<bounded_pareto_rng<NewGenerator>>(std::move(generator), alpha, (12000.0 / 23999.0) / rate,
                                                     12000 / rate);
     }
 
     template <typename NewGenerator>
-    static std::unique_ptr<sampler> with_mean(std::unique_ptr<NewGenerator>&& generator, double mean, double alpha) {
-        return std::make_unique<bounded_pareto_rng<NewGenerator>>(std::move(generator), alpha, (12000.0 / 23999.0) * mean,
+    static std::shared_ptr<sampler> with_mean(std::shared_ptr<NewGenerator>&& generator, double mean, double alpha) {
+        return std::make_shared<bounded_pareto_rng<NewGenerator>>(std::move(generator), alpha, (12000.0 / 23999.0) * mean,
                                                     12000 * mean);
-    }
-
-    std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64> generator) const override {
-        return std::make_unique<bounded_pareto_rng<random_mersenne>>(std::make_unique<random_mersenne>(std::move(generator), rng_sampler<Generator>::generator->name),
-                                                    alpha, l, h);
     }
 
     explicit operator std::string() const override {
@@ -105,16 +100,12 @@ public:
         return pow(-frac, -1 / alpha);
     }
 
-    static std::unique_ptr<sampler> with_rate(std::shared_ptr<std::mt19937_64> generator, double rate, double alpha) {
-        return std::make_unique<bounded_pareto>(std::move(generator), alpha, (12000.0 / 23999.0) / rate, 12000 / rate);
+    static std::shared_ptr<sampler> with_rate(std::shared_ptr<std::mt19937_64> generator, double rate, double alpha) {
+        return std::make_shared<bounded_pareto>(std::move(generator), alpha, (12000.0 / 23999.0) / rate, 12000 / rate);
     }
 
-    static std::unique_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean, double alpha) {
-        return std::make_unique<bounded_pareto>(std::move(generator), alpha, (12000.0 / 23999.0) * mean, 12000 * mean);
-    }
-
-    std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64> generator) const override {
-        return std::make_unique<bounded_pareto>(std::move(generator), alpha, l, h);
+    static std::shared_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean, double alpha) {
+        return std::make_shared<bounded_pareto>(std::move(generator), alpha, (12000.0 / 23999.0) * mean, 12000 * mean);
     }
 
     explicit operator std::string() const override {

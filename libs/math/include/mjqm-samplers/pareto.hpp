@@ -29,15 +29,11 @@ public:
     double d_variance() const override { return variance; }
     double sample() override { return xm * exp(exponential::sample()); }
 
-    static std::unique_ptr<sampler> with_rate(std::shared_ptr<std::mt19937_64> generator, double rate, double alpha) {
-        return std::make_unique<pareto>(std::move(generator), alpha, (alpha - 1) / alpha / rate);
+    static std::shared_ptr<sampler> with_rate(std::shared_ptr<std::mt19937_64> generator, double rate, double alpha) {
+        return std::make_shared<pareto>(std::move(generator), alpha, (alpha - 1) / alpha / rate);
     }
-    static std::unique_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean, double alpha) {
-        return std::make_unique<pareto>(std::move(generator), alpha, (alpha - 1) / alpha * mean);
-    }
-
-    std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64> generator) const override {
-        return std::make_unique<pareto>(std::move(generator), alpha, xm);
+    static std::shared_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean, double alpha) {
+        return std::make_shared<pareto>(std::move(generator), alpha, (alpha - 1) / alpha * mean);
     }
 
     explicit operator std::string() const override {

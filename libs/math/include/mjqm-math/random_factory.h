@@ -6,27 +6,19 @@
 #include <mjqm-math/random_ecuyer.h>
 #include <mjqm-math/random_mersenne.h>
 #include <string>
-#include <variant>
-
-
-typedef std::variant<random_ecuyer, random_mersenne> a_random_source;
 
 template <typename source_t>
 class random_source_factory {
 public:
     virtual ~random_source_factory() = default;
-    virtual std::unique_ptr<source_t> create(const std::string& name) = 0;
-    virtual std::shared_ptr<source_t> create_shared(const std::string& name) = 0;
+    virtual std::shared_ptr<source_t> create(const std::string& name) = 0;
 };
 
 //
 
 class random_ecuyer_factory final : public random_source_factory<random_ecuyer> {
 public:
-    std::unique_ptr<random_ecuyer> create(const std::string& name) override {
-        return std::make_unique<random_ecuyer>(name);
-    }
-    std::shared_ptr<random_ecuyer> create_shared(const std::string& name) override {
+    std::shared_ptr<random_ecuyer> create(const std::string& name) override {
         return std::make_shared<random_ecuyer>(name);
     }
     ~random_ecuyer_factory() override = default;
@@ -56,10 +48,7 @@ class random_mersenne_factory_shared final : public random_source_factory<random
 public:
     explicit random_mersenne_factory_shared(const std::uint64_t seed = MJQM_RANDOM_MERSENNE_SEED) :
         generator(std::make_shared<std::mt19937_64>(next(seed))) {}
-    std::unique_ptr<random_mersenne> create(const std::string& name) override {
-        return std::make_unique<random_mersenne>(generator, name);
-    }
-    std::shared_ptr<random_mersenne> create_shared(const std::string& name) override {
+    std::shared_ptr<random_mersenne> create(const std::string& name) override {
         return std::make_shared<random_mersenne>(generator, name);
     }
     ~random_mersenne_factory_shared() override = default;
@@ -70,11 +59,7 @@ class random_mersenne_factory final : public random_source_factory<random_mersen
 
 public:
     explicit random_mersenne_factory(const std::uint64_t seed = MJQM_RANDOM_MERSENNE_SEED) : seed(seed) {}
-    std::unique_ptr<random_mersenne> create(const std::string& name) override {
-        seed = next(seed);
-        return std::make_unique<random_mersenne>(std::make_shared<std::mt19937_64>(seed), name);
-    }
-    std::shared_ptr<random_mersenne> create_shared(const std::string& name) override {
+    std::shared_ptr<random_mersenne> create(const std::string& name) override {
         seed = next(seed);
         return std::make_shared<random_mersenne>(std::make_shared<std::mt19937_64>(seed), name);
     }

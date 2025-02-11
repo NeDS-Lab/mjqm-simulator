@@ -2,7 +2,6 @@
 // Created by Marco Ciotola on 30/01/25.
 //
 
-#include <iostream>
 #include <ranges>
 #include <string>
 #include <unordered_map>
@@ -36,8 +35,8 @@ bool load_class_from_toml(const toml::table& data, const std::string& index, Exp
     const bool cores_ok = load_into(data, toml::path(full_key).append("cores").str(), cores);
     const std::string name =
         data.at_path(full_key).at_path("name").value<std::string>().value_or(std::to_string(cores));
-    std::unique_ptr<sampler> arrival_sampler;
-    std::unique_ptr<sampler> service_sampler;
+    std::shared_ptr<sampler> arrival_sampler;
+    std::shared_ptr<sampler> service_sampler;
     const bool arrival_ok = load_distribution(data, full_key.str(), ARRIVAL, generator, &arrival_sampler);
     const bool service_ok = load_distribution(data, full_key.str(), SERVICE, generator, &service_sampler);
     if (cores_ok && arrival_ok && service_ok) {
@@ -186,14 +185,12 @@ Simulator::Simulator(const ExperimentConfig& conf) : nclasses(conf.classes.size(
     viol = 0;
     util = 0;
     occ = 0;
-    std::uint64_t seed = 1862248485;
-    generator = std::make_shared<std::mt19937_64>(next(seed));
 
     for (const auto& cls : conf.classes) {
         sizes.push_back(cls.cores);
-        arr_time_samplers.push_back(cls.arrival_sampler->clone(generator));
-        ser_time_samplers.push_back(cls.service_sampler->clone(generator));
         l.push_back(1. / cls.arrival_sampler->d_mean());
         u.push_back(cls.service_sampler->d_mean());
+        arr_time_samplers.push_back(cls.arrival_sampler);
+        ser_time_samplers.push_back(cls.service_sampler);
     }
 }

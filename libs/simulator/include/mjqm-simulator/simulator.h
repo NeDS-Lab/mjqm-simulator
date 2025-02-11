@@ -530,8 +530,8 @@ private:
     int nclasses;
     std::vector<double> l;
     std::vector<double> u;
-    std::vector<std::unique_ptr<sampler>> ser_time_samplers;
-    std::vector<std::unique_ptr<sampler>> arr_time_samplers;
+    std::vector<std::shared_ptr<sampler>> ser_time_samplers;
+    std::vector<std::shared_ptr<sampler>> arr_time_samplers;
     std::vector<unsigned int> sizes;
     int n;
     int w = 1;

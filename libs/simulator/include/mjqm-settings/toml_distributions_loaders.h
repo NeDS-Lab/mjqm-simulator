@@ -25,7 +25,7 @@ inline std::ostream& operator<<(std::ostream& os, const distribution_use& use) {
 
 typedef bool (*distribution_loader)(const toml::table& data, const std::string_view& cls, const distribution_use& use,
                                     random_source_factory<random_mersenne>& generator,
-                                    std::unique_ptr<sampler>* distribution // out
+                                    std::shared_ptr<sampler>* distribution // out
 );
 
 template <typename VAR_TYPE>
@@ -37,27 +37,27 @@ std::optional<VAR_TYPE> distribution_parameter(const toml::table& data, const st
 
 bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, const distribution_use& use,
                          random_source_factory<random_mersenne>& generator,
-                         std::unique_ptr<sampler>* distribution // out
+                         std::shared_ptr<sampler>* distribution // out
 );
 
 bool load_deterministic(const toml::table& data, const std::string_view& cls, const distribution_use& use,
                         random_source_factory<random_mersenne>&,
-                        std::unique_ptr<sampler>* distribution // out
+                        std::shared_ptr<sampler>* distribution // out
 );
 
 bool load_exponential(const toml::table& data, const std::string_view& cls, const distribution_use& use,
                       random_source_factory<random_mersenne>& generator,
-                      std::unique_ptr<sampler>* distribution // out
+                      std::shared_ptr<sampler>* distribution // out
 );
 
 bool load_frechet(const toml::table& data, const std::string_view& cls, const distribution_use& use,
                   random_source_factory<random_mersenne>& generator,
-                  std::unique_ptr<sampler>* distribution // out
+                  std::shared_ptr<sampler>* distribution // out
 );
 
 bool load_uniform(const toml::table& data, const std::string_view& cls, const distribution_use& use,
                   random_source_factory<random_mersenne>& generator,
-                  std::unique_ptr<sampler>* distribution // out
+                  std::shared_ptr<sampler>* distribution // out
 );
 
 inline static std::unordered_map<std::string_view, distribution_loader> distribution_loaders = {
@@ -70,7 +70,7 @@ inline static std::unordered_map<std::string_view, distribution_loader> distribu
 
 bool load_distribution(const toml::table& data, const std::string_view& cls, const distribution_use& use,
                        random_source_factory<random_mersenne>& generator,
-                       std::unique_ptr<sampler>* sampler // out
+                       std::shared_ptr<sampler>* sampler // out
 );
 
 #endif // TOML_DISTRIBUTIONS_LOADERS_H

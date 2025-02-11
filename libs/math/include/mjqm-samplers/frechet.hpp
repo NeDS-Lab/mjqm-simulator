@@ -9,7 +9,6 @@
 #include <memory>
 #include <mjqm-math/sampler.h>
 #include <random>
-#include "mjqm-math/random_mersenne.h"
 
 // Parameters
 //  α ∈ ( 0 , ∞ ) shape.
@@ -24,11 +23,11 @@
 template <typename Generator>
 class frechet_rng : public rng_sampler<Generator> {
 public:
-    explicit frechet_rng(std::unique_ptr<Generator>&& generator, const double alpha, const double s = 1.,
+    explicit frechet_rng(std::shared_ptr<Generator>&& generator, const double alpha, const double s = 1.,
                      const double m = 0., bool = true) : rng_sampler<Generator>(std::move(generator)), alpha(alpha), s(s), m(m) {
         assert(alpha > 1); // alpha must be greater than 1 for the mean to be finite
     }
-    explicit frechet_rng(std::unique_ptr<Generator>&& generator, const double s_ratio, const double alpha,
+    explicit frechet_rng(std::shared_ptr<Generator>&& generator, const double s_ratio, const double alpha,
                      const double rate, const double m = 0.) :rng_sampler<Generator>(std::move(generator)),
         alpha(alpha), s(s_ratio / rate), m(m) {
         assert(alpha > 1); // alpha must be greater than 1 for the mean to be finite
@@ -50,20 +49,16 @@ public:
     double sample() override { return s * pow(-log(this->rand_u01()), exponent); }
 
     template <typename NewGenerator>
-    static std::unique_ptr<sampler> with_mean(std::unique_ptr<NewGenerator>&& generator, double mean, double alpha,
+    static std::shared_ptr<sampler> with_mean(std::shared_ptr<NewGenerator>&& generator, double mean, double alpha,
                                               double m = 0.) {
-        return std::make_unique<frechet_rng>(std::move(generator), alpha, mean / std::tgamma(1 - 1 / alpha), m, true);
+        return std::make_shared<frechet_rng>(std::move(generator), alpha, mean / std::tgamma(1 - 1 / alpha), m, true);
     }
 
     // frechet::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
     template <typename NewGenerator>
-    static std::unique_ptr<sampler> with_rate(std::unique_ptr<NewGenerator>&& generator, double rate, double alpha,
+    static std::shared_ptr<sampler> with_rate(std::shared_ptr<NewGenerator>&& generator, double rate, double alpha,
                                               double m = 0.) {
-        return std::make_unique<frechet_rng>(std::move(generator), 1 / std::tgammaf(1 - 1 / alpha), alpha, rate, m);
-    }
-
-    std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64> generator) const override {
-        return std::make_unique<frechet_rng<random_mersenne>>(std::make_unique<random_mersenne>(std::move(generator), rng_sampler<Generator>::generator->name), alpha, s, m, true);
+        return std::make_shared<frechet_rng>(std::move(generator), 1 / std::tgammaf(1 - 1 / alpha), alpha, rate, m);
     }
 
     explicit operator std::string() const override {
@@ -102,19 +97,15 @@ public:
     double d_variance() const override { return variance; }
     double sample() override { return s * pow(-log(random_uniform(*generator)), exponent); }
 
-    static std::unique_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean, double alpha,
+    static std::shared_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean, double alpha,
                                               double m = 0.) {
-        return std::make_unique<frechet>(std::move(generator), alpha, mean / std::tgamma(1 - 1 / alpha), m, true);
+        return std::make_shared<frechet>(std::move(generator), alpha, mean / std::tgamma(1 - 1 / alpha), m, true);
     }
 
     // frechet::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
-    static std::unique_ptr<sampler> with_rate(std::shared_ptr<std::mt19937_64> generator, double rate, double alpha,
+    static std::shared_ptr<sampler> with_rate(std::shared_ptr<std::mt19937_64> generator, double rate, double alpha,
                                               double m = 0.) {
-        return std::make_unique<frechet>(std::move(generator), 1 / std::tgammaf(1 - 1 / alpha), alpha, rate, m);
-    }
-
-    std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64> generator) const override {
-        return std::make_unique<frechet>(std::move(generator), alpha, s, m, true);
+        return std::make_shared<frechet>(std::move(generator), 1 / std::tgammaf(1 - 1 / alpha), alpha, rate, m);
     }
 
     explicit operator std::string() const override {

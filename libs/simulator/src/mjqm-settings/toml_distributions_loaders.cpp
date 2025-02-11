@@ -13,7 +13,7 @@
 
 bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, const distribution_use& use,
                          random_source_factory<random_mersenne>& generator,
-                         std::unique_ptr<sampler>* distribution // out
+                         std::shared_ptr<sampler>* distribution // out
 ) {
     auto opt_alpha = distribution_parameter<double>(data, cls, use, "alpha");
     auto opt_mean = distribution_parameter<double>(data, cls, use, "mean");
@@ -47,7 +47,7 @@ bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, c
 
 bool load_deterministic(const toml::table& data, const std::string_view& cls, const distribution_use& use,
                         random_source_factory<random_mersenne>&,
-                        std::unique_ptr<sampler>* distribution // out
+                        std::shared_ptr<sampler>* distribution // out
 ) {
     const auto opt_value = distribution_parameter<double>(data, cls, use, "value");
     const auto opt_mean = distribution_parameter<double>(data, cls, use, "mean");
@@ -62,7 +62,7 @@ bool load_deterministic(const toml::table& data, const std::string_view& cls, co
 
 bool load_exponential(const toml::table& data, const std::string_view& cls, const distribution_use& use,
                       random_source_factory<random_mersenne>& generator,
-                      std::unique_ptr<sampler>* distribution // out
+                      std::shared_ptr<sampler>* distribution // out
 ) {
     const auto opt_mean = distribution_parameter<double>(data, cls, use, "mean");
     const auto opt_lambda = distribution_parameter<double>(data, cls, use, "lambda");
@@ -84,7 +84,7 @@ bool load_exponential(const toml::table& data, const std::string_view& cls, cons
 
 bool load_frechet(const toml::table& data, const std::string_view& cls, const distribution_use& use,
                   random_source_factory<random_mersenne>& generator,
-                  std::unique_ptr<sampler>* distribution // out
+                  std::shared_ptr<sampler>* distribution // out
 ) {
     auto opt_alpha = distribution_parameter<double>(data, cls, use, "alpha");
     auto opt_mean = distribution_parameter<double>(data, cls, use, "mean");
@@ -113,7 +113,7 @@ bool load_frechet(const toml::table& data, const std::string_view& cls, const di
 
 bool load_uniform(const toml::table& data, const std::string_view& cls, const distribution_use& use,
                   random_source_factory<random_mersenne>& generator,
-                  std::unique_ptr<sampler>* distribution // out
+                  std::shared_ptr<sampler>* distribution // out
 ) {
     auto opt_mean = distribution_parameter<double>(data, cls, use, "mean");
     auto opt_variance = distribution_parameter<double>(data, cls, use, "variance");
@@ -140,7 +140,7 @@ bool load_uniform(const toml::table& data, const std::string_view& cls, const di
 
 bool load_distribution(const toml::table& data, const std::string_view& cls, const distribution_use& use,
                        random_source_factory<random_mersenne>& generator, // we do want it to be copied
-                       std::unique_ptr<sampler>* sampler // out
+                       std::shared_ptr<sampler>* sampler // out
 ) {
     auto opt_type = distribution_parameter<std::string>(data, cls, use, "distribution");
     if (!opt_type.has_value()) {

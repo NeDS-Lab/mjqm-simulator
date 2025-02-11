@@ -9,12 +9,11 @@
 #include <memory>
 #include <mjqm-math/sampler.h>
 #include <random>
-#include "mjqm-math/random_mersenne.h"
 
 template <typename Generator>
 class uniform_rng : public rng_sampler<Generator> {
 public:
-    explicit uniform_rng(std::unique_ptr<Generator>&& generator, const double min, const double max) :
+    explicit uniform_rng(std::shared_ptr<Generator>&& generator, const double min, const double max) :
       rng_sampler<Generator>(std::move(generator)),  distribution(min, max) {
         assert(distribution.min() > 0);
     }
@@ -30,14 +29,10 @@ public:
     double sample() override { return this->rand_u01() * (distribution.b() - distribution.a()) + distribution.a(); }
 
     template <typename NewGenerator>
-    static std::unique_ptr<sampler> with_mean(std::unique_ptr<NewGenerator>&& generator, double mean,
+    static std::shared_ptr<sampler> with_mean(std::shared_ptr<NewGenerator>&& generator, double mean,
                                               double variance = 1.) {
-        return std::make_unique<uniform_rng>(std::move(generator), (1. - variance / 2.) * mean,
+        return std::make_shared<uniform_rng>(std::move(generator), (1. - variance / 2.) * mean,
                                          (1. + variance / 2.) * mean);
-    }
-
-    std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64> generator) const override {
-        return std::make_unique<uniform_rng<random_mersenne>>(std::make_unique<random_mersenne>(std::move(generator), rng_sampler<Generator>::generator->name), distribution.min(), distribution.max());
     }
 
     explicit operator std::string() const override {
@@ -64,14 +59,10 @@ public:
     double d_variance() const override { return variance; }
     double sample() override { return distribution(*generator); }
 
-    static std::unique_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean,
+    static std::shared_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean,
                                               double variance = 1.) {
-        return std::make_unique<uniform>(std::move(generator), (1. - variance / 2.) * mean,
+        return std::make_shared<uniform>(std::move(generator), (1. - variance / 2.) * mean,
                                          (1. + variance / 2.) * mean);
-    }
-
-    std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64> generator) const override {
-        return std::make_unique<uniform>(std::move(generator), distribution.min(), distribution.max());
     }
 
     explicit operator std::string() const override {
