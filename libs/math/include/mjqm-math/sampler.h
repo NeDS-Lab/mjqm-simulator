@@ -6,6 +6,7 @@
 #define MJQM_SAMPLER_H
 
 #include <memory>
+#include <mjqm-math/random.h>
 
 class sampler {
 public:
@@ -18,14 +19,13 @@ public:
     explicit virtual operator std::string() const = 0;
 };
 
-template <typename RandomSource>
 class rng_sampler : public sampler {
 protected:
-    std::shared_ptr<RandomSource> generator;
+    std::shared_ptr<random_source> generator;
     double rand_u01() { return generator->RandU01(); }
 
 public:
-    explicit rng_sampler(std::shared_ptr<RandomSource>&& generator) : generator(std::move(generator)) {}
+    explicit rng_sampler(std::shared_ptr<random_source>&& generator) : generator(std::move(generator)) {}
     double sample() override = 0;
     double d_mean() const override = 0;
     double d_variance() const override = 0;

@@ -5,14 +5,13 @@
 #include <mjqm-math/samplers.h>
 #include <mjqm-settings/toml_distributions_loaders.h>
 #include <unordered_map>
-#include "mjqm-math/random_mersenne.h"
 
 #ifndef XOR
 #define XOR(a, b) (!(a) != !(b))
 #endif // XOR
 
 bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                         random_source_factory<random_mersenne>& generator,
+                         random_source_factory& generator,
                          std::shared_ptr<sampler>* distribution // out
 ) {
     auto opt_alpha = distribution_parameter<double>(data, cls, use, "alpha");
@@ -34,19 +33,19 @@ bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, c
     const auto name = std::string(cls) + "." + distribution_use_to_key.at(use);
     const double alpha = opt_alpha.value();
     if (opt_mean.has_value()) {
-        *distribution = bounded_pareto_rng<random_mersenne>::with_mean(generator.create(name), opt_mean.value(), alpha);
+        *distribution = bounded_pareto_rng::with_mean(generator.create(name), opt_mean.value(), alpha);
         return true;
     }
     if (opt_rate.has_value()) {
-        *distribution = bounded_pareto_rng<random_mersenne>::with_rate(generator.create(name), opt_rate.value(), alpha);
+        *distribution = bounded_pareto_rng::with_rate(generator.create(name), opt_rate.value(), alpha);
         return true;
     }
-    *distribution = std::make_unique<bounded_pareto_rng<random_mersenne>>(std::move(generator.create(name)), alpha, opt_l.value(), opt_h.value());
+    *distribution = std::make_unique<bounded_pareto_rng>(std::move(generator.create(name)), alpha, opt_l.value(), opt_h.value());
     return true;
 }
 
 bool load_deterministic(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                        random_source_factory<random_mersenne>&,
+                        random_source_factory&,
                         std::shared_ptr<sampler>* distribution // out
 ) {
     const auto opt_value = distribution_parameter<double>(data, cls, use, "value");
@@ -61,7 +60,7 @@ bool load_deterministic(const toml::table& data, const std::string_view& cls, co
 }
 
 bool load_exponential(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                      random_source_factory<random_mersenne>& generator,
+                      random_source_factory& generator,
                       std::shared_ptr<sampler>* distribution // out
 ) {
     const auto opt_mean = distribution_parameter<double>(data, cls, use, "mean");
@@ -75,15 +74,15 @@ bool load_exponential(const toml::table& data, const std::string_view& cls, cons
     }
     const auto name = std::string(cls) + "." + distribution_use_to_key.at(use);
     if (opt_mean.has_value()) {
-        *distribution = exponential_rng<random_mersenne>::with_mean(generator.create(name), opt_mean.value() / opt_prob.value_or(1.));
+        *distribution = exponential_rng::with_mean(generator.create(name), opt_mean.value() / opt_prob.value_or(1.));
         return true;
     }
-    *distribution = exponential_rng<random_mersenne>::with_rate(generator.create(name), either(opt_lambda, opt_rate) * opt_prob.value_or(0.));
+    *distribution = exponential_rng::with_rate(generator.create(name), either(opt_lambda, opt_rate) * opt_prob.value_or(0.));
     return true;
 }
 
 bool load_frechet(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                  random_source_factory<random_mersenne>& generator,
+                  random_source_factory& generator,
                   std::shared_ptr<sampler>* distribution // out
 ) {
     auto opt_alpha = distribution_parameter<double>(data, cls, use, "alpha");
@@ -100,19 +99,19 @@ bool load_frechet(const toml::table& data, const std::string_view& cls, const di
     const auto name = std::string(cls) + "." + distribution_use_to_key.at(use);
     const double alpha = opt_alpha.value();
     if (opt_mean.has_value()) {
-        *distribution = frechet_rng<random_mersenne>::with_mean(generator.create(name), opt_mean.value(), alpha, m);
+        *distribution = frechet_rng::with_mean(generator.create(name), opt_mean.value(), alpha, m);
         return true;
     }
     if (opt_rate.has_value()) {
-        *distribution = frechet_rng<random_mersenne>::with_rate(generator.create(name), opt_rate.value(), alpha, m);
+        *distribution = frechet_rng::with_rate(generator.create(name), opt_rate.value(), alpha, m);
         return true;
     }
-    *distribution = std::make_unique<frechet_rng<random_mersenne>>(generator.create(name), alpha, opt_s.value(), m, true);
+    *distribution = std::make_unique<frechet_rng>(generator.create(name), alpha, opt_s.value(), m, true);
     return true;
 }
 
 bool load_uniform(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                  random_source_factory<random_mersenne>& generator,
+                  random_source_factory& generator,
                   std::shared_ptr<sampler>* distribution // out
 ) {
     auto opt_mean = distribution_parameter<double>(data, cls, use, "mean");
@@ -131,15 +130,15 @@ bool load_uniform(const toml::table& data, const std::string_view& cls, const di
     }
     const auto name = std::string(cls) + "." + distribution_use_to_key.at(use);
     if (opt_mean.has_value()) {
-        *distribution = uniform_rng<random_mersenne>::with_mean(generator.create(name), opt_mean.value(), opt_variance.value_or(1.));
+        *distribution = uniform_rng::with_mean(generator.create(name), opt_mean.value(), opt_variance.value_or(1.));
         return true;
     }
-    *distribution = std::make_unique<uniform_rng<random_mersenne>>(generator.create(name), opt_min.value(), opt_max.value());
+    *distribution = std::make_unique<uniform_rng>(generator.create(name), opt_min.value(), opt_max.value());
     return true;
 }
 
 bool load_distribution(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                       random_source_factory<random_mersenne>& generator, // we do want it to be copied
+                       random_source_factory& generator, // we do want it to be copied
                        std::shared_ptr<sampler>* sampler // out
 ) {
     auto opt_type = distribution_parameter<std::string>(data, cls, use, "distribution");

@@ -19,5 +19,11 @@ public:
     long RandInt(long low, long high) override;
 };
 
+class random_ecuyer_factory final : public random_source_factory {
+public:
+    std::shared_ptr<random_source> create(const std::string& name) override {
+        return std::make_shared<random_ecuyer>(name);
+    }
+};
 
 #endif // MJQM_RANDOM_ECUYER_H

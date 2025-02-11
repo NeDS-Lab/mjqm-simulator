@@ -7,7 +7,7 @@
 
 #include <cassert>
 #include <memory>
-#include <mjqm-math/random_mersenne.h>
+#include <mjqm-math/random.h>
 #include <mjqm-math/sampler.h>
 #include <random>
 
@@ -16,11 +16,10 @@
 // H > L location (real)
 // α > 0 shape (real)
 
-template <typename Generator>
-class bounded_pareto_rng : public rng_sampler<Generator> {
+class bounded_pareto_rng : public rng_sampler {
 public:
-    explicit bounded_pareto_rng(std::shared_ptr<Generator>&& generator, double alpha, double l, double h) :
-        rng_sampler<Generator>(std::move(generator)), l(l), h(h), alpha(alpha) {
+    explicit bounded_pareto_rng(std::shared_ptr<random_source>&& generator, double alpha, double l, double h) :
+        rng_sampler(std::move(generator)), l(l), h(h), alpha(alpha) {
         assert(l > 0.);
         assert(h > l);
         assert(alpha > 0.);
@@ -48,15 +47,13 @@ public:
         return pow(-frac, -1 / alpha);
     }
 
-    template <typename NewGenerator>
-    static std::shared_ptr<sampler> with_rate(std::shared_ptr<NewGenerator>&& generator, double rate, double alpha) {
-        return std::make_shared<bounded_pareto_rng<NewGenerator>>(std::move(generator), alpha, (12000.0 / 23999.0) / rate,
+    static std::shared_ptr<sampler> with_rate(std::shared_ptr<random_source>&& generator, double rate, double alpha) {
+        return std::make_shared<bounded_pareto_rng>(std::move(generator), alpha, (12000.0 / 23999.0) / rate,
                                                     12000 / rate);
     }
 
-    template <typename NewGenerator>
-    static std::shared_ptr<sampler> with_mean(std::shared_ptr<NewGenerator>&& generator, double mean, double alpha) {
-        return std::make_shared<bounded_pareto_rng<NewGenerator>>(std::move(generator), alpha, (12000.0 / 23999.0) * mean,
+    static std::shared_ptr<sampler> with_mean(std::shared_ptr<random_source>&& generator, double mean, double alpha) {
+        return std::make_shared<bounded_pareto_rng>(std::move(generator), alpha, (12000.0 / 23999.0) * mean,
                                                     12000 * mean);
     }
 

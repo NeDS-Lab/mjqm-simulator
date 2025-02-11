@@ -1,6 +1,7 @@
 #ifndef MJQM_RANDOM_H
 #define MJQM_RANDOM_H
 
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -17,5 +18,10 @@ public:
     }
 };
 
+class random_source_factory {
+public:
+    virtual ~random_source_factory() = default;
+    virtual std::shared_ptr<random_source> create(const std::string& name) = 0;
+};
 
 #endif // MJQM_RANDOM_H

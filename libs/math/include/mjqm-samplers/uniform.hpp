@@ -10,33 +10,34 @@
 #include <mjqm-math/sampler.h>
 #include <random>
 
-template <typename Generator>
-class uniform_rng : public rng_sampler<Generator> {
+class uniform_rng : public rng_sampler {
 public:
-    explicit uniform_rng(std::shared_ptr<Generator>&& generator, const double min, const double max) :
-      rng_sampler<Generator>(std::move(generator)),  distribution(min, max) {
-        assert(distribution.min() > 0);
+    explicit uniform_rng(std::shared_ptr<random_source>&& generator, const double min, const double max) :
+        rng_sampler(std::move(generator)), min(min), max(max) {
+        assert(min > 0);
+        assert(max > min);
     }
 
 private:
-    std::uniform_real_distribution<> distribution;
-    const double mean = (distribution.min() + distribution.max()) / 2.;
-    const double variance = (mean - distribution.min()) * 2.;
+    const double min;
+    const double max;
+    const double values_range = max - min + 1.;
+    const double mean = (min + max) / 2.;
+    const double variance = (mean - min) * 2. + 1.;
 
 public:
     double d_mean() const override { return mean; }
     double d_variance() const override { return variance; }
-    double sample() override { return this->rand_u01() * (distribution.b() - distribution.a()) + distribution.a(); }
+    double sample() override { return this->rand_u01() * values_range + min; }
 
-    template <typename NewGenerator>
-    static std::shared_ptr<sampler> with_mean(std::shared_ptr<NewGenerator>&& generator, double mean,
+    static std::shared_ptr<sampler> with_mean(std::shared_ptr<random_source>&& generator, double mean,
                                               double variance = 1.) {
         return std::make_shared<uniform_rng>(std::move(generator), (1. - variance / 2.) * mean,
-                                         (1. + variance / 2.) * mean);
+                                             (1. + variance / 2.) * mean);
     }
 
     explicit operator std::string() const override {
-        return "uniform (range [" + std::to_string(distribution.min()) + ", " + std::to_string(distribution.max()) +
+        return "uniform (range [" + std::to_string(min) + ", " + std::to_string(max) +
             ") => mean=" + std::to_string(mean) + " ; variance=" + std::to_string(variance) + ")";
     }
 };

@@ -6,14 +6,14 @@
 #define MJQM_SAMPLERS_EXPONENTIAL_H
 
 #include <memory>
+#include <mjqm-math/random.h>
 #include <mjqm-math/sampler.h>
 #include <random>
 
-template <typename Generator>
-class exponential_rng : public rng_sampler<Generator> {
+class exponential_rng : public rng_sampler {
 public:
-    explicit exponential_rng(double mean, std::shared_ptr<Generator>&& generator) :
-        rng_sampler<Generator>(std::move(generator)), mean(mean), lambda(1 / mean) {}
+    explicit exponential_rng(double mean, std::shared_ptr<random_source>&& generator) :
+        rng_sampler(std::move(generator)), mean(mean), lambda(1 / mean) {}
 
 private:
     const double mean;
@@ -25,12 +25,10 @@ public:
     double d_variance() const override { return variance; }
     double sample() override { return -log(this->rand_u01()) * mean; }
 
-    template <typename NewGenerator>
-    static std::shared_ptr<sampler> with_rate(std::shared_ptr<NewGenerator>&& generator, const double rate) {
+    static std::shared_ptr<sampler> with_rate(std::shared_ptr<random_source>&& generator, const double rate) {
         return std::make_shared<exponential_rng>(1. / rate, std::move(generator));
     }
-    template <typename NewGenerator>
-    static std::shared_ptr<sampler> with_mean(std::shared_ptr<NewGenerator>&& generator, const double mean) {
+    static std::shared_ptr<sampler> with_mean(std::shared_ptr<random_source>&& generator, const double mean) {
         return std::make_shared<exponential_rng>(mean, std::move(generator));
     }
 

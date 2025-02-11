@@ -20,15 +20,14 @@
 // Variance
 //  sigma^2 = s^2 * (t_gamma(1 - 2 / alpha) - t_gamma(1 - 1 / alpha)^2), for alpha > 2
 
-template <typename Generator>
-class frechet_rng : public rng_sampler<Generator> {
+class frechet_rng : public rng_sampler {
 public:
-    explicit frechet_rng(std::shared_ptr<Generator>&& generator, const double alpha, const double s = 1.,
-                     const double m = 0., bool = true) : rng_sampler<Generator>(std::move(generator)), alpha(alpha), s(s), m(m) {
+    explicit frechet_rng(std::shared_ptr<random_source>&& generator, const double alpha, const double s = 1.,
+                     const double m = 0., bool = true) : rng_sampler(std::move(generator)), alpha(alpha), s(s), m(m) {
         assert(alpha > 1); // alpha must be greater than 1 for the mean to be finite
     }
-    explicit frechet_rng(std::shared_ptr<Generator>&& generator, const double s_ratio, const double alpha,
-                     const double rate, const double m = 0.) :rng_sampler<Generator>(std::move(generator)),
+    explicit frechet_rng(std::shared_ptr<random_source>&& generator, const double s_ratio, const double alpha,
+                     const double rate, const double m = 0.) :rng_sampler(std::move(generator)),
         alpha(alpha), s(s_ratio / rate), m(m) {
         assert(alpha > 1); // alpha must be greater than 1 for the mean to be finite
     }
@@ -48,15 +47,13 @@ public:
     double d_variance() const override { return variance; }
     double sample() override { return s * pow(-log(this->rand_u01()), exponent); }
 
-    template <typename NewGenerator>
-    static std::shared_ptr<sampler> with_mean(std::shared_ptr<NewGenerator>&& generator, double mean, double alpha,
+    static std::shared_ptr<sampler> with_mean(std::shared_ptr<random_source>&& generator, double mean, double alpha,
                                               double m = 0.) {
         return std::make_shared<frechet_rng>(std::move(generator), alpha, mean / std::tgamma(1 - 1 / alpha), m, true);
     }
 
     // frechet::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
-    template <typename NewGenerator>
-    static std::shared_ptr<sampler> with_rate(std::shared_ptr<NewGenerator>&& generator, double rate, double alpha,
+    static std::shared_ptr<sampler> with_rate(std::shared_ptr<random_source>&& generator, double rate, double alpha,
                                               double m = 0.) {
         return std::make_shared<frechet_rng>(std::move(generator), 1 / std::tgammaf(1 - 1 / alpha), alpha, rate, m);
     }
