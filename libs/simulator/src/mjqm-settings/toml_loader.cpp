@@ -156,7 +156,6 @@ from_toml(const toml::table& data, const std::map<std::string, std::vector<std::
 Simulator::Simulator(const ExperimentConfig& conf) : nclasses(conf.classes.size()) {
     this->n = conf.cores;
     // this->w = w; // TODO still needed? Y/N (should transform all things that need it)
-    // this->sampling_method = sampling_method; // TODO still needed? Y/N (should transform all things that need it)
     this->rep_free_servers_distro = std::vector<double>(conf.cores + 1);
     this->fel.resize(nclasses * 2);
     this->job_fel.resize(nclasses * 2);

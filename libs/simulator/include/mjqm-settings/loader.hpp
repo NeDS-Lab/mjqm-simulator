@@ -129,7 +129,6 @@ Simulator::Simulator(const std::vector<double>& l, const std::vector<double>& u,
     this->n = servers;
     this->sizes = sizes;
     this->w = w;
-    this->sampling_method = sampling_method;
     this->rep_free_servers_distro = std::vector<double>(servers + 1);
     this->nclasses = static_cast<int>(sizes.size());
     this->fel.resize(sizes.size() * 2);

@@ -84,16 +84,14 @@ public:
         for (auto& e : fel)
             e -= simtime;
 
-        if (this->w == -2 || this->sampling_method != 10) {
-            for (int i = 0; i < jobs_inservice.size(); ++i) {
-                for (auto job = jobs_inservice[i].begin(); job != jobs_inservice[i].end(); ++job) {
-                    jobs_inservice[i][job->first] -= simtime;
-                }
+        for (int i = 0; i < jobs_inservice.size(); ++i) {
+            for (auto job = jobs_inservice[i].begin(); job != jobs_inservice[i].end(); ++job) {
+                jobs_inservice[i][job->first] -= simtime;
             }
+        }
 
-            for (auto job_id = arrTime.begin(); job_id != arrTime.end(); ++job_id) {
-                arrTime[job_id->first] -= simtime;
-            }
+        for (auto job_id = arrTime.begin(); job_id != arrTime.end(); ++job_id) {
+            arrTime[job_id->first] -= simtime;
         }
 
         phase_two_start -= simtime;
@@ -347,15 +345,13 @@ public:
                 collect_statistics(pos);
                 // std::cout << "collect" << std::endl;
                 if (pos < nclasses) { // departure
-                    if (this->w == -2 || this->sampling_method != 10) {
-                        jobs_inservice[pos].erase(
-                            job_fel[pos]); // Remove jobs from in_service (they cannot be in preempted list)
-                        rawWaitingTime[pos].push_back(waitTime[job_fel[pos]]);
-                        rawResponseTime[pos].push_back(waitTime[job_fel[pos]] + holdTime[job_fel[pos]]);
-                        arrTime.erase(job_fel[pos]);
-                        waitTime.erase(job_fel[pos]);
-                        holdTime.erase(job_fel[pos]);
-                    }
+                    jobs_inservice[pos].erase(
+                        job_fel[pos]); // Remove jobs from in_service (they cannot be in preempted list)
+                    rawWaitingTime[pos].push_back(waitTime[job_fel[pos]]);
+                    rawResponseTime[pos].push_back(waitTime[job_fel[pos]] + holdTime[job_fel[pos]]);
+                    arrTime.erase(job_fel[pos]);
+                    waitTime.erase(job_fel[pos]);
+                    holdTime.erase(job_fel[pos]);
                     // std::cout << "before dep" << std::endl;
 
                     policy->departure(pos, sizes[pos], job_fel[pos]);
@@ -626,8 +622,6 @@ private:
 
     std::shared_ptr<std::mt19937_64> generator;
 
-    int sampling_method = 0;
-
     void resample() {
         // add arrivals and departures
         if (this->w == -2) { // special blocks for serverFilling (memoryful)
@@ -685,7 +679,7 @@ private:
                     job_fel[i] = fastest_job_id;
                 }
             }
-        } else if (this->sampling_method != 10) { // exponential distro can use the faster memoryless blocks
+        } else  { // exponential distro can use the faster memoryless blocks
             auto ongoing_jobs = policy->get_ongoing_jobs();
             int pooled_i;
             for (int i = 0; i < nclasses; i++) {
