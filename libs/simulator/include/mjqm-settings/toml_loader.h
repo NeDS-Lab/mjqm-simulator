@@ -43,8 +43,10 @@ struct ExperimentConfig {
     unsigned int get_sizes(std::vector<unsigned int>&) const;
 
     std::string output_filename() const {
+        std::string arrival_distri = toml.at_path("arrival.distribution").value<std::string>().value_or("exponential");
+        arrival_distri[0] = std::toupper(arrival_distri[0]);
         return "Results/simulator_toml/overLambdas-nClasses" + std::to_string(classes.size()) + "-N" +
-               std::to_string(cores) + "-Win" + std::to_string(policy->get_w()) + "-Exponential-" + name + ".csv";
+               std::to_string(cores) + "-Win" + std::to_string(policy->get_w()) + "-" + arrival_distri + "-" + name + ".csv";
     }
 
     friend std::ostream& operator<<(std::ostream& os, const ExperimentConfig& conf) {

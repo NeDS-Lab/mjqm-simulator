@@ -1,3 +1,14 @@
 #!/usr/bin/bash
-cmake --preset default -Wno-dev --fresh
-cmake --build . --preset default
+
+cd "$(dirname "$0")"
+preset=default
+if [ ! -z "$1" ]; then
+    case "$1" in
+        --clean) rm -rf build build-debug ;;
+        --debug) preset=debug ;;
+        --help) echo "Usage: $0 [--clean] [--debug]"; exit 0 ;;
+    esac
+fi
+
+cmake --preset ${preset} -Wno-dev --fresh
+cmake --build . --preset ${preset}

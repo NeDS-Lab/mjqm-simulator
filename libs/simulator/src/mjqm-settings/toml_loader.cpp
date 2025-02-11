@@ -85,18 +85,9 @@ bool from_toml(const std::string_view filename, ExperimentConfig& conf) {
     return from_toml(data, conf);
 }
 
-bool from_toml(toml::table& data, ExperimentConfig& conf) {
-    bool ok = true;
-    conf.toml = data;
-    ok = ok && load_into(data, "identifier", conf.name);
-    ok = ok && load_into(data, "events", conf.events);
-    ok = ok && load_into(data, "repetitions", conf.repetitions);
-    ok = ok && load_into(data, "cores", conf.cores);
-    ok = ok && load_into(data, "policy", conf.policy_name, "smash"s);
-    ok = ok && load_into(data, "generator", conf.generator, "mersenne"s);
-    random_ecuyer_factory factory{};
+bool load_classes(toml::table& data, ExperimentConfig& conf, random_source_factory& factory) {
     if (toml::array* classes = data.at_path(CLASS_ROOT).as_array()) {
-        ok = normalise_probs(data) && ok;
+        bool ok = normalise_probs(data);
         for (size_t index = 0; index < classes->size(); ++index) {
             ok = load_class_from_toml(data, "[" + std::to_string(index) + "]", conf, factory) && ok;
             // keep going if one soft fails to show all errors
@@ -108,6 +99,33 @@ bool from_toml(toml::table& data, ExperimentConfig& conf) {
             }
             return a.cores < b.cores;
         });
+        return ok;
+    } else {
+        return false;
+    }
+}
+
+bool from_toml(toml::table& data, ExperimentConfig& conf) {
+    bool ok = true;
+    conf.toml = data;
+    ok = ok && load_into(data, "identifier", conf.name);
+    ok = ok && load_into(data, "events", conf.events);
+    ok = ok && load_into(data, "repetitions", conf.repetitions);
+    ok = ok && load_into(data, "cores", conf.cores);
+    ok = ok && load_into(data, "policy", conf.policy_name, "smash"s);
+    ok = ok && load_into(data, "generator", conf.generator, "mersenne"s);
+    if (conf.generator == "mersenne") {
+        random_mersenne_factory_shared factory{};
+        ok = load_classes(data, conf, factory);
+    } else if (conf.generator == "mersenne_streams") {
+        random_mersenne_factory factory{};
+        ok = load_classes(data, conf, factory);
+    } else if (conf.generator == "ecuyer") {
+        random_ecuyer_factory factory{};
+        ok = load_classes(data, conf, factory);
+    } else {
+        print_error("Unsupported generator " << error_highlight(conf.generator));
+        return false;
     }
 
     if (!policy_builders.contains(conf.policy_name)) {

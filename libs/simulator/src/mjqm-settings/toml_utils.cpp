@@ -14,22 +14,44 @@ template void overwrite_value(toml::table&, const toml::path&, const double&);
 template void overwrite_value(toml::table&, const toml::path&, const long&);
 template void overwrite_value(toml::table&, const toml::path&, const bool&);
 
+toml::node_type interpreted_node_type(toml::node_view<toml::node>& node, const std::string& value) {
+    if (!node) {
+        if (value == "true" || value == "false") {
+            return toml::node_type::boolean;
+        } else if (value.find_first_not_of("0123456789") == std::string::npos) {
+            return toml::node_type::integer;
+        } else if (value.find_first_not_of("0123456789.") == std::string::npos) {
+            return toml::node_type::floating_point;
+        }
+        return toml::node_type::string;
+    }
+    if (node.is_boolean()) {
+        return toml::node_type::boolean;
+    } else if (node.is_integer()) {
+        return toml::node_type::integer;
+    } else if (node.is_floating_point()) {
+        return toml::node_type::floating_point;
+    } else if (node.is_string()) {
+        return toml::node_type::string;
+    } else {
+        print_error("Unsupported type for key " << value);
+        return toml::node_type::none;
+    }
+}
+
 template <>
 void overwrite_value<std::string>(toml::table& data, const toml::path& path, const std::string& value) {
     auto parent_node = data.at_path(path.parent()).as_table();
     auto current_node = data.at_path(path);
-    if (!current_node) {
+    auto type = interpreted_node_type(current_node, value);
+    if (type == toml::node_type::none || type == toml::node_type::string) {
         parent_node->insert_or_assign(path.leaf().str(), value);
-    } else if (current_node.is_boolean()) {
+    } else if (type == toml::node_type::boolean) {
         parent_node->insert_or_assign(path.leaf().str(), value == "true");
-    } else if (current_node.is_integer()) {
+    } else if (type == toml::node_type::integer) {
         parent_node->insert_or_assign(path.leaf().str(), std::stol(value));
-    } else if (current_node.is_floating_point()) {
+    } else if (type == toml::node_type::floating_point) {
         parent_node->insert_or_assign(path.leaf().str(), std::stod(value));
-    } else if (current_node.is_string()) {
-        parent_node->insert_or_assign(path.leaf().str(), value);
-    } else {
-        print_error("Unsupported type for key " << path);
     }
 }
 
