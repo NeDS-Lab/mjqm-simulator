@@ -221,10 +221,10 @@ Simulator::Simulator(const std::vector<double>& l, const std::vector<double>& u,
         arr_time_samplers.push_back(exponential::with_rate(generator, l[i]));
     }
     for (int i = 0; i < nclasses; i++) {
-        std::cout << "Class: " << sizes[i] << std::endl;
-        std::cout << "\tCores: " << sizes[i] << std::endl;
-        std::cout << "\tArrival: " << std::string(*arr_time_samplers[i]) << std::endl;
-        std::cout << "\tService: " << std::string(*ser_time_samplers[i]) << std::endl;
+        std::cout << "Class: " << sizes[i] << std::endl
+                  << "\tCores: " << sizes[i] << std::endl
+                  << "\tArrival: " << std::string(*arr_time_samplers[i]) << std::endl
+                  << "\tService: " << std::string(*ser_time_samplers[i]) << std::endl;
     }
 }
 

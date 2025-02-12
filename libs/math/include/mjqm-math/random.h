@@ -13,8 +13,8 @@ public:
     explicit random_source(std::string name) : name(std::move(name)) {}
 
     virtual inline double RandU01() = 0;
-    constexpr inline double min() const { return 0.0; }
-    constexpr inline double max() const { return 1.0; }
+    static constexpr inline double min()  { return 0.0; }
+    static constexpr inline double max()  { return 1.0; }
     inline double operator()() { return RandU01(); }
 };
 
