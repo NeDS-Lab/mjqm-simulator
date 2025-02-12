@@ -28,12 +28,22 @@ typedef bool (*distribution_loader)(const toml::table& data, const std::string_v
                                     std::unique_ptr<sampler>* distribution // out
 );
 
-template <typename VAR_TYPE>
+template <typename VAR_TYPE=double>
 std::optional<VAR_TYPE> distribution_parameter(const toml::table& data, const std::string_view& cls,
                                                const distribution_use use, const std::string_view& param) {
-    return either_optional<VAR_TYPE>(
-        data.at_path(cls).at_path(distribution_use_to_key.at(use)).at_path(param),
-        data.at_path(distribution_use_to_key.at(use)).at_path(param));
+    return either_optional<VAR_TYPE>(data.at_path(cls).at_path(distribution_use_to_key.at(use)).at_path(param),
+                                     data.at_path(distribution_use_to_key.at(use)).at_path(param));
+}
+
+template <typename VAR_TYPE=double, typename... ALTS>
+std::optional<VAR_TYPE> distribution_parameter(const toml::table& data, const std::string_view& cls,
+                                               const distribution_use use, const std::string_view& param,
+                                               const ALTS... alt_params) {
+    auto opt_current = distribution_parameter<VAR_TYPE>(data, cls, use, param);
+    if (opt_current.has_value()) {
+        return opt_current;
+    }
+    return distribution_parameter<VAR_TYPE>(data, cls, use, alt_params...);
 }
 
 bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, const distribution_use& use,

@@ -14,16 +14,12 @@ bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, c
                          std::shared_ptr<std::mt19937_64> generator,
                          std::unique_ptr<sampler>* distribution // out
 ) {
-    auto opt_alpha = distribution_parameter<double>(data, cls, use, "alpha");
-    auto opt_mean = distribution_parameter<double>(data, cls, use, "mean");
-    auto opt_rate = distribution_parameter<double>(data, cls, use, "rate");
-    auto opt_l = distribution_parameter<double>(data, cls, use, "l");
-    auto opt_L = distribution_parameter<double>(data, cls, use, "L");
-    opt_l = either_optional(opt_l, opt_L);
-    auto opt_h = distribution_parameter<double>(data, cls, use, "h");
-    auto opt_H = distribution_parameter<double>(data, cls, use, "H");
-    opt_h = either_optional(opt_h, opt_H);
-    const auto opt_prob = distribution_parameter<double>(data, cls, use, "prob");
+    const auto opt_alpha = distribution_parameter(data, cls, use, "alpha");
+    const auto opt_mean = distribution_parameter(data, cls, use, "mean");
+    const auto opt_rate = distribution_parameter(data, cls, use, "rate");
+    const auto opt_l = distribution_parameter(data, cls, use, "l", "L");
+    const auto opt_h = distribution_parameter(data, cls, use, "h", "H");
+    const auto opt_prob = distribution_parameter(data, cls, use, "prob");
     if (!(opt_alpha.has_value() &&
           XOR(XOR(opt_mean.has_value(), opt_rate.has_value()), opt_l.has_value() && opt_h.has_value()))) {
         print_error("Bounded pareto distribution at path "
@@ -53,19 +49,18 @@ bool load_deterministic(const toml::table& data, const std::string_view& cls, co
                         std::shared_ptr<std::mt19937_64>,
                         std::unique_ptr<sampler>* distribution // out
 ) {
-    const auto opt_value = distribution_parameter<double>(data, cls, use, "value");
-    const auto opt_mean = distribution_parameter<double>(data, cls, use, "mean");
-    const auto opt_rate = distribution_parameter<double>(data, cls, use, "rate");
-    const auto opt_prob = distribution_parameter<double>(data, cls, use, "prob");
+    const auto opt_value = distribution_parameter(data, cls, use, "value", "mean");
+    const auto opt_rate = distribution_parameter(data, cls, use, "rate");
+    const auto opt_prob = distribution_parameter(data, cls, use, "prob");
 
-    if (!XOR(XOR(opt_value.has_value(), opt_mean.has_value()), opt_rate.has_value())) {
+    if (!XOR(opt_value.has_value(), opt_rate.has_value())) {
         print_error("Deterministic distribution at path " << error_highlight(cls << "." << use)
                                                           << " must have exactly one of value or mean defined");
         return false;
     }
     double value;
-    if (opt_mean.has_value() || opt_value.has_value()) {
-        value = either(opt_value, opt_mean);
+    if (opt_value.has_value()) {
+        value = opt_value.value();
         if (opt_prob.has_value()) {
             value /= opt_prob.value();
         }
@@ -84,11 +79,10 @@ bool load_exponential(const toml::table& data, const std::string_view& cls, cons
                       std::shared_ptr<std::mt19937_64> generator,
                       std::unique_ptr<sampler>* distribution // out
 ) {
-    const auto opt_mean = distribution_parameter<double>(data, cls, use, "mean");
-    const auto opt_lambda = distribution_parameter<double>(data, cls, use, "lambda");
-    const auto opt_rate = distribution_parameter<double>(data, cls, use, "rate");
-    const auto opt_prob = distribution_parameter<double>(data, cls, use, "prob");
-    if (!XOR(opt_mean.has_value(), XOR(opt_lambda.has_value(), opt_rate.has_value()))) {
+    const auto opt_mean = distribution_parameter(data, cls, use, "mean");
+    const auto opt_lambda = distribution_parameter(data, cls, use, "lambda", "rate");
+    const auto opt_prob = distribution_parameter(data, cls, use, "prob");
+    if (!XOR(opt_mean.has_value(), opt_lambda.has_value())) {
         print_error("Exponential distribution at path " << error_highlight(cls << "." << use)
                                                         << " must have exactly one of mean or lambda/rate defined");
         return false;
@@ -97,7 +91,7 @@ bool load_exponential(const toml::table& data, const std::string_view& cls, cons
         *distribution = exponential::with_mean(generator, opt_mean.value() / opt_prob.value_or(1.));
         return true;
     }
-    *distribution = exponential::with_rate(generator, either(opt_lambda, opt_rate) * opt_prob.value_or(1.));
+    *distribution = exponential::with_rate(generator, opt_lambda.value() * opt_prob.value_or(1.));
     return true;
 }
 
@@ -105,12 +99,12 @@ bool load_frechet(const toml::table& data, const std::string_view& cls, const di
                   std::shared_ptr<std::mt19937_64> generator,
                   std::unique_ptr<sampler>* distribution // out
 ) {
-    auto opt_alpha = distribution_parameter<double>(data, cls, use, "alpha");
-    auto opt_mean = distribution_parameter<double>(data, cls, use, "mean");
-    auto opt_rate = distribution_parameter<double>(data, cls, use, "rate");
-    auto opt_s = distribution_parameter<double>(data, cls, use, "s");
-    auto m = distribution_parameter<double>(data, cls, use, "m").value_or(0.);
-    const auto opt_prob = distribution_parameter<double>(data, cls, use, "prob");
+    auto opt_alpha = distribution_parameter(data, cls, use, "alpha");
+    auto opt_mean = distribution_parameter(data, cls, use, "mean");
+    auto opt_rate = distribution_parameter(data, cls, use, "rate");
+    auto opt_s = distribution_parameter(data, cls, use, "s");
+    auto m = distribution_parameter(data, cls, use, "m").value_or(0.);
+    const auto opt_prob = distribution_parameter(data, cls, use, "prob");
     if (!(opt_alpha.has_value() && XOR(XOR(opt_mean.has_value(), opt_s.has_value()), opt_rate.has_value()))) {
         print_error("Frechet distribution at path "
                     << error_highlight(cls << "." << use)
@@ -139,16 +133,12 @@ bool load_uniform(const toml::table& data, const std::string_view& cls, const di
                   std::shared_ptr<std::mt19937_64> generator,
                   std::unique_ptr<sampler>* distribution // out
 ) {
-    auto opt_mean = distribution_parameter<double>(data, cls, use, "mean");
-    auto opt_variance = distribution_parameter<double>(data, cls, use, "variance");
-    auto opt_a = distribution_parameter<double>(data, cls, use, "a");
-    auto opt_min = distribution_parameter<double>(data, cls, use, "min");
-    opt_min = either_optional(opt_min, opt_a);
-    auto opt_b = distribution_parameter<double>(data, cls, use, "b");
-    auto opt_max = distribution_parameter<double>(data, cls, use, "max");
-    opt_max = either_optional(opt_max, opt_b);
-    const auto opt_rate = distribution_parameter<double>(data, cls, use, "rate");
-    const auto opt_prob = distribution_parameter<double>(data, cls, use, "prob");
+    const auto opt_mean = distribution_parameter(data, cls, use, "mean");
+    const auto opt_variance = distribution_parameter(data, cls, use, "variance");
+    const auto opt_min = distribution_parameter(data, cls, use, "min", "a");
+    const auto opt_max = distribution_parameter(data, cls, use, "max", "b");
+    const auto opt_rate = distribution_parameter(data, cls, use, "rate");
+    const auto opt_prob = distribution_parameter(data, cls, use, "prob");
     if (!XOR(XOR(opt_mean.has_value(), opt_rate.has_value()), opt_min.has_value() && opt_max.has_value() && !opt_variance.has_value())) {
         print_error("Uniform distribution at path " << error_highlight(cls << "." << use)
                                                     << " must have either the pair of a/min and b/max defined, or mean "
