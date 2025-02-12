@@ -21,16 +21,15 @@ private:
     std::uniform_real_distribution<> distribution;
     const std::shared_ptr<std::mt19937_64> generator;
     const double mean = (distribution.min() + distribution.max()) / 2.;
-    const double variance = (mean - distribution.min()) * 2.;
+    const double variance = pow(distribution.max() - distribution.min(), 2.) / 12.;
 
 public:
     double d_mean() const override { return mean; }
     double d_variance() const override { return variance; }
     double sample() override { return distribution(*generator); }
 
-    static std::unique_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean,
-                                              double variance = 1.) {
-        return std::make_unique<uniform>(std::move(generator), mean - variance / 2., mean + variance / 2.);
+    static std::unique_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean) {
+        return std::make_unique<uniform>(std::move(generator), .5 * mean, 1.5 * mean);
     }
 
     std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64> generator) const override {

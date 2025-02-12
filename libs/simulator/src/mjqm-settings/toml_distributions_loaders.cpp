@@ -134,23 +134,22 @@ bool load_uniform(const toml::table& data, const std::string_view& cls, const di
                   std::unique_ptr<sampler>* distribution // out
 ) {
     const auto opt_mean = distribution_parameter(data, cls, use, "mean");
-    const auto opt_variance = distribution_parameter(data, cls, use, "variance");
     const auto opt_min = distribution_parameter(data, cls, use, "min", "a");
     const auto opt_max = distribution_parameter(data, cls, use, "max", "b");
     const auto opt_rate = distribution_parameter(data, cls, use, "rate");
     const auto opt_prob = distribution_parameter(data, cls, use, "prob");
-    if (!XOR(XOR(opt_mean.has_value(), opt_rate.has_value()), opt_min.has_value() && opt_max.has_value() && !opt_variance.has_value())) {
-        print_error("Uniform distribution at path " << error_highlight(cls << "." << use)
-                                                    << " must have either the pair of a/min and b/max defined, or mean "
-                                                       "defined with optional variance (default 1)");
+    if (!XOR(XOR(opt_mean.has_value(), opt_rate.has_value()), opt_min.has_value() && opt_max.has_value())) {
+        print_error("Uniform distribution at path "
+                    << error_highlight(cls << "." << use)
+                    << " must have either the pair of a/min and b/max defined, or mean defined");
         return false;
     }
     if (opt_mean.has_value()) {
-        *distribution = uniform::with_mean(generator, opt_mean.value() / opt_prob.value_or(1.), opt_variance.value_or(1.));
+        *distribution = uniform::with_mean(generator, opt_mean.value() / opt_prob.value_or(1.));
         return true;
     }
     if (opt_rate.has_value()) {
-        *distribution = uniform::with_mean(generator, 1. / (opt_rate.value() * opt_prob.value_or(1.)), opt_variance.value_or(1.));
+        *distribution = uniform::with_mean(generator, 1. / (opt_rate.value() * opt_prob.value_or(1.)));
         return true;
     }
     *distribution = std::make_unique<uniform>(generator, opt_min.value(), opt_max.value());
