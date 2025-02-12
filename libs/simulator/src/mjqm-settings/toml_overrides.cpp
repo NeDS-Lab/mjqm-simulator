@@ -2,12 +2,12 @@
 // Created by Marco Ciotola on 05/02/25.
 //
 
+#include <iostream>
 #include <map>
 #include <mjqm-settings/toml_overrides.h>
 #include <mjqm-settings/toml_utils.h>
 #include <string>
 #include <vector>
-#include <iostream>
 
 std::map<std::string, std::vector<std::string>> parse_overrides_from_args(int argc, char* argv[], int start_from) {
     // accept any type of value:
@@ -46,15 +46,16 @@ std::map<std::string, std::vector<std::string>> parse_overrides_from_args(int ar
 }
 
 std::string as_string(const toml::node& node) {
-    if (node.is_string()) {
+    switch (node.type()) {
+    case toml::node_type::string:
         return node.value<std::string>().value();
-    } else if (node.is_integer()) {
+    case toml::node_type::integer:
         return std::to_string(node.value<int64_t>().value());
-    } else if (node.is_floating_point()) {
+    case toml::node_type::floating_point:
         return std::to_string(node.value<double>().value());
-    } else if (node.is_boolean()) {
+    case toml::node_type::boolean:
         return node.value<bool>().value() ? "true" : "false";
-    } else {
+    default:
         throw std::runtime_error("Unsupported value type");
     }
 }
@@ -103,11 +104,10 @@ std::map<std::string, std::vector<std::string>> parse_overrides_from_variation(c
     return overrides;
 }
 
-std::map<std::string, std::vector<std::string>> merge_overrides(
-    const std::map<std::string, std::vector<std::string>>& base,
-    const std::map<std::string, std::vector<std::string>>& higher_priority
-) {
-    std::map<std::string, std::vector<std::string>> merged(base);
+std::map<std::string, std::vector<std::string>>
+merge_overrides(const std::map<std::string, std::vector<std::string>>& base,
+                const std::map<std::string, std::vector<std::string>>& higher_priority) {
+    std::map merged(base);
     for (const auto& [key, values] : higher_priority) {
         if (merged.contains(key)) {
             merged.erase(key);

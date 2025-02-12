@@ -28,14 +28,14 @@ typedef bool (*distribution_loader)(const toml::table& data, const std::string_v
                                     std::unique_ptr<sampler>* distribution // out
 );
 
-template <typename VAR_TYPE=double>
+template <typename VAR_TYPE = double>
 std::optional<VAR_TYPE> distribution_parameter(const toml::table& data, const std::string_view& cls,
                                                const distribution_use use, const std::string_view& param) {
     return either_optional<VAR_TYPE>(data.at_path(cls).at_path(distribution_use_to_key.at(use)).at_path(param),
                                      data.at_path(distribution_use_to_key.at(use)).at_path(param));
 }
 
-template <typename VAR_TYPE=double, typename... ALTS>
+template <typename VAR_TYPE = double, typename... ALTS>
 std::optional<VAR_TYPE> distribution_parameter(const toml::table& data, const std::string_view& cls,
                                                const distribution_use use, const std::string_view& param,
                                                const ALTS... alt_params) {

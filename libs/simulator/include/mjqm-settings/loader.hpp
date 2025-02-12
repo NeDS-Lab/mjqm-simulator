@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-void read_classes(std::string& filename, std::vector<double>& p, std::vector<unsigned int>& sizes,
+inline void read_classes(std::string& filename, std::vector<double>& p, std::vector<unsigned int>& sizes,
                   std::vector<double>& mus) {
     std::vector<std::vector<std::string>> content;
     std::vector<std::string> row;
@@ -53,7 +53,7 @@ void read_classes(std::string& filename, std::vector<double>& p, std::vector<uns
         x /= sum;
 }
 
-void read_lambdas(const std::string& filename, std::vector<double>& values) {
+inline void read_lambdas(const std::string& filename, std::vector<double>& values) {
     // Open the file
     std::ifstream file(filename, std::ios::in);
 
@@ -92,10 +92,10 @@ void read_lambdas(const std::string& filename, std::vector<double>& values) {
     }
 }
 
-void from_argv(char** argv, std::vector<double>& p, std::vector<unsigned int>& sizes, std::vector<double>& mus,
-               std::vector<double>& arr_rate, std::string& cell, int& n, int& w, int& sampling_method,
-               std::string& type, int& n_evs, int& n_runs, std::vector<std::string>& sampling_name,
-               std::string& out_filename) {
+inline void from_argv(char** argv, std::vector<double>& p, std::vector<unsigned int>& sizes, std::vector<double>& mus,
+                      std::vector<double>& arr_rate, std::string& cell, int& n, int& w, int& sampling_method,
+                      std::string& type, int& n_evs, int& n_runs, std::vector<std::string>& sampling_name,
+                      std::string& out_filename) {
     cell = std::string(argv[1]);
     n = std::stoi(argv[2]);
     w = std::stoi(argv[3]);
@@ -122,7 +122,7 @@ void from_argv(char** argv, std::vector<double>& p, std::vector<unsigned int>& s
         std::to_string(n) + "-Win" + std::to_string(w) + "-" + sampling_name[sampling_method] + "-" + cell + ".csv";
 }
 
-Simulator::Simulator(const std::vector<double>& l, const std::vector<double>& u, const std::vector<unsigned int>& sizes,
+inline Simulator::Simulator(const std::vector<double>& l, const std::vector<double>& u, const std::vector<unsigned int>& sizes,
                      int w, int servers, int sampling_method, std::string logfile_name) {
     this->l = l;
     this->u = u;
