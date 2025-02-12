@@ -11,8 +11,8 @@
 #endif // XOR
 
 bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                         random_source_factory& generator,
-                         std::shared_ptr<sampler>* distribution // out
+                         std::shared_ptr<std::mt19937_64> generator,
+                         std::unique_ptr<sampler>* distribution // out
 ) {
     auto opt_alpha = distribution_parameter<double>(data, cls, use, "alpha");
     auto opt_mean = distribution_parameter<double>(data, cls, use, "mean");
@@ -31,16 +31,13 @@ bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, c
                     << " must have alpha defined, and either mean, rate or the l/h pair");
         return false;
     }
-    const auto name = std::string(cls) + "." + distribution_use_to_key.at(use);
     const double alpha = opt_alpha.value();
     if (opt_mean.has_value()) {
-        *distribution =
-            bounded_pareto_rng::with_mean(generator.create(name), opt_mean.value() / opt_prob.value_or(1.), alpha);
+        *distribution = bounded_pareto::with_mean(generator, opt_mean.value() / opt_prob.value_or(1.), alpha);
         return true;
     }
     if (opt_rate.has_value()) {
-        *distribution =
-            bounded_pareto_rng::with_rate(generator.create(name), opt_rate.value() * opt_prob.value_or(1.), alpha);
+        *distribution = bounded_pareto::with_rate(generator, opt_rate.value() * opt_prob.value_or(1.), alpha);
         return true;
     }
     if (opt_prob.has_value()) {
@@ -48,14 +45,13 @@ bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, c
                                                            << " must have rate or mean defined when prob is defined");
         return false;
     }
-    *distribution =
-        std::make_unique<bounded_pareto_rng>(std::move(generator.create(name)), alpha, opt_l.value(), opt_h.value());
+    *distribution = std::make_unique<bounded_pareto>(generator, alpha, opt_l.value(), opt_h.value());
     return true;
 }
 
 bool load_deterministic(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                        random_source_factory&,
-                        std::shared_ptr<sampler>* distribution // out
+                        std::shared_ptr<std::mt19937_64>,
+                        std::unique_ptr<sampler>* distribution // out
 ) {
     const auto opt_value = distribution_parameter<double>(data, cls, use, "value");
     const auto opt_mean = distribution_parameter<double>(data, cls, use, "mean");
@@ -85,8 +81,8 @@ bool load_deterministic(const toml::table& data, const std::string_view& cls, co
 }
 
 bool load_exponential(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                      random_source_factory& generator,
-                      std::shared_ptr<sampler>* distribution // out
+                      std::shared_ptr<std::mt19937_64> generator,
+                      std::unique_ptr<sampler>* distribution // out
 ) {
     const auto opt_mean = distribution_parameter<double>(data, cls, use, "mean");
     const auto opt_lambda = distribution_parameter<double>(data, cls, use, "lambda");
@@ -97,19 +93,17 @@ bool load_exponential(const toml::table& data, const std::string_view& cls, cons
                                                         << " must have exactly one of mean or lambda/rate defined");
         return false;
     }
-    const auto name = std::string(cls) + "." + distribution_use_to_key.at(use);
     if (opt_mean.has_value()) {
-        *distribution = exponential_rng::with_mean(generator.create(name), opt_mean.value() / opt_prob.value_or(1.));
+        *distribution = exponential::with_mean(generator, opt_mean.value() / opt_prob.value_or(1.));
         return true;
     }
-    *distribution =
-        exponential_rng::with_rate(generator.create(name), either(opt_lambda, opt_rate) * opt_prob.value_or(1.));
+    *distribution = exponential::with_rate(generator, either(opt_lambda, opt_rate) * opt_prob.value_or(1.));
     return true;
 }
 
 bool load_frechet(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                  random_source_factory& generator,
-                  std::shared_ptr<sampler>* distribution // out
+                  std::shared_ptr<std::mt19937_64> generator,
+                  std::unique_ptr<sampler>* distribution // out
 ) {
     auto opt_alpha = distribution_parameter<double>(data, cls, use, "alpha");
     auto opt_mean = distribution_parameter<double>(data, cls, use, "mean");
@@ -123,14 +117,13 @@ bool load_frechet(const toml::table& data, const std::string_view& cls, const di
                     << " must have alpha defined, and either mean, rate or s, while m has default value 0");
         return false;
     }
-    const auto name = std::string(cls) + "." + distribution_use_to_key.at(use);
     const double alpha = opt_alpha.value();
     if (opt_mean.has_value()) {
-        *distribution = frechet_rng::with_mean(generator.create(name), opt_mean.value() / opt_prob.value_or(1.), alpha, m);
+        *distribution = frechet::with_mean(generator, opt_mean.value() / opt_prob.value_or(1.), alpha, m);
         return true;
     }
     if (opt_rate.has_value()) {
-        *distribution = frechet_rng::with_rate(generator.create(name), opt_rate.value() * opt_prob.value_or(1.), alpha, m);
+        *distribution = frechet::with_rate(generator, opt_rate.value() * opt_prob.value_or(1.), alpha, m);
         return true;
     }
     if (opt_prob.has_value()) {
@@ -138,13 +131,13 @@ bool load_frechet(const toml::table& data, const std::string_view& cls, const di
                                                     << " must have rate or mean defined when prob is defined");
         return false;
     }
-    *distribution = std::make_unique<frechet_rng>(generator.create(name), alpha, opt_s.value(), m, true);
+    *distribution = std::make_unique<frechet>(generator, alpha, opt_s.value(), m, true);
     return true;
 }
 
 bool load_uniform(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                  random_source_factory& generator,
-                  std::shared_ptr<sampler>* distribution // out
+                  std::shared_ptr<std::mt19937_64> generator,
+                  std::unique_ptr<sampler>* distribution // out
 ) {
     auto opt_mean = distribution_parameter<double>(data, cls, use, "mean");
     auto opt_variance = distribution_parameter<double>(data, cls, use, "variance");
@@ -162,33 +155,32 @@ bool load_uniform(const toml::table& data, const std::string_view& cls, const di
                                                        "defined with optional variance (default 1)");
         return false;
     }
-    const auto name = std::string(cls) + "." + distribution_use_to_key.at(use);
     if (opt_mean.has_value()) {
-        *distribution = uniform_rng::with_mean(generator.create(name), opt_mean.value() / opt_prob.value_or(1.), opt_variance.value_or(1.));
+        *distribution = uniform::with_mean(generator, opt_mean.value() / opt_prob.value_or(1.), opt_variance.value_or(1.));
         return true;
     }
     if (opt_rate.has_value()) {
-        *distribution = uniform_rng::with_mean(generator.create(name), 1. / (opt_rate.value() * opt_prob.value_or(1.)), opt_variance.value_or(1.));
+        *distribution = uniform::with_mean(generator, 1. / (opt_rate.value() * opt_prob.value_or(1.)), opt_variance.value_or(1.));
         return true;
     }
-    *distribution = std::make_unique<uniform_rng>(generator.create(name), opt_min.value(), opt_max.value());
+    *distribution = std::make_unique<uniform>(generator, opt_min.value(), opt_max.value());
     return true;
 }
 
 bool load_distribution(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                       random_source_factory& generator, // we do want it to be copied
-                       std::shared_ptr<sampler>* sampler // out
+                       std::shared_ptr<std::mt19937_64> generator, // we do want it to be copied
+                       std::unique_ptr<sampler>* sampler // out
 ) {
     auto opt_type = distribution_parameter<std::string>(data, cls, use, "distribution");
     if (!opt_type.has_value()) {
         print_error("Distribution type missing at path " << error_highlight(cls << "." << use));
         return false;
     }
-    const auto& distribution = opt_type.value();
-    if (!distribution_loaders.contains(distribution)) {
-        print_error("Unsupported distribution " << error_highlight(distribution) << " at path "
+    const auto type = opt_type.value();
+    if (!distribution_loaders.contains(type)) {
+        print_error("Unsupported distribution " << error_highlight(type) << " at path "
                                                 << error_highlight(cls << "." << use));
         return false;
     }
-    return distribution_loaders.at(distribution)(data, cls, use, generator, sampler);
+    return distribution_loaders.at(type)(data, cls, use, generator, sampler);
 }

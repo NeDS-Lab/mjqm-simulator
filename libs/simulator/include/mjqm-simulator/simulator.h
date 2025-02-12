@@ -345,8 +345,8 @@ public:
                 collect_statistics(pos);
                 // std::cout << "collect" << std::endl;
                 if (pos < nclasses) { // departure
-                    jobs_inservice[pos].erase(
-                        job_fel[pos]); // Remove jobs from in_service (they cannot be in preempted list)
+                    // Remove jobs from in_service (they cannot be in preempted list)
+                    jobs_inservice[pos].erase(job_fel[pos]);
                     rawWaitingTime[pos].push_back(waitTime[job_fel[pos]]);
                     rawResponseTime[pos].push_back(waitTime[job_fel[pos]] + holdTime[job_fel[pos]]);
                     arrTime.erase(job_fel[pos]);
@@ -526,8 +526,8 @@ private:
     int nclasses;
     std::vector<double> l;
     std::vector<double> u;
-    std::vector<std::shared_ptr<sampler>> ser_time_samplers;
-    std::vector<std::shared_ptr<sampler>> arr_time_samplers;
+    std::vector<std::unique_ptr<sampler>> ser_time_samplers;
+    std::vector<std::unique_ptr<sampler>> arr_time_samplers;
     std::vector<unsigned int> sizes;
     int n;
     int w = 1;

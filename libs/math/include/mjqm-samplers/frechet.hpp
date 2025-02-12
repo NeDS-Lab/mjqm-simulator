@@ -20,51 +20,6 @@
 // Variance
 //  sigma^2 = s^2 * (t_gamma(1 - 2 / alpha) - t_gamma(1 - 1 / alpha)^2), for alpha > 2
 
-class frechet_rng : public rng_sampler {
-public:
-    explicit frechet_rng(std::shared_ptr<random_source>&& generator, const double alpha, const double s = 1.,
-                     const double m = 0., bool = true) : rng_sampler(std::move(generator)), alpha(alpha), s(s), m(m) {
-        assert(alpha > 1); // alpha must be greater than 1 for the mean to be finite
-    }
-    explicit frechet_rng(std::shared_ptr<random_source>&& generator, const double s_ratio, const double alpha,
-                     const double rate, const double m = 0.) :rng_sampler(std::move(generator)),
-        alpha(alpha), s(s_ratio / rate), m(m) {
-        assert(alpha > 1); // alpha must be greater than 1 for the mean to be finite
-    }
-
-    const double alpha;
-    const double s;
-    const double m;
-    const double mean = alpha > 1 ? m + (s * std::tgamma(1 - 1 / alpha)) : std::numeric_limits<double>::infinity();
-    const double variance = alpha > 2 ? pow(s, 2) * (std::tgamma(1 - 2 / alpha) - pow(std::tgamma(1 - 1 / alpha), 2))
-                                      : std::numeric_limits<double>::infinity();
-
-private:
-    const double exponent = -1 / alpha;
-
-public:
-    double d_mean() const override { return mean; }
-    double d_variance() const override { return variance; }
-    double sample() override { return s * pow(-log(this->rand_u01()), exponent); }
-
-    static std::shared_ptr<sampler> with_mean(std::shared_ptr<random_source>&& generator, double mean, double alpha,
-                                              double m = 0.) {
-        return std::make_shared<frechet_rng>(std::move(generator), alpha, mean / std::tgamma(1 - 1 / alpha), m, true);
-    }
-
-    // frechet::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
-    static std::shared_ptr<sampler> with_rate(std::shared_ptr<random_source>&& generator, double rate, double alpha,
-                                              double m = 0.) {
-        return std::make_shared<frechet_rng>(std::move(generator), 1 / std::tgammaf(1 - 1 / alpha), alpha, rate, m);
-    }
-
-    explicit operator std::string() const override {
-        return "frechet (alpha=" + std::to_string(alpha) + " ; s=" + std::to_string(s) + " ; m=" + std::to_string(m) +
-            " => mean=" + std::to_string(mean) + " ; variance=" + std::to_string(variance) + ")";
-    }
-};
-
-
 class frechet : public sampler {
 public:
     explicit frechet(std::shared_ptr<std::mt19937_64> generator, const double alpha, const double s = 1.,
@@ -94,15 +49,19 @@ public:
     double d_variance() const override { return variance; }
     double sample() override { return s * pow(-log(random_uniform(*generator)), exponent); }
 
-    static std::shared_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean, double alpha,
+    static std::unique_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean, double alpha,
                                               double m = 0.) {
-        return std::make_shared<frechet>(std::move(generator), alpha, mean / std::tgamma(1 - 1 / alpha), m, true);
+        return std::make_unique<frechet>(std::move(generator), alpha, mean / std::tgamma(1 - 1 / alpha), m, true);
     }
 
     // frechet::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
-    static std::shared_ptr<sampler> with_rate(std::shared_ptr<std::mt19937_64> generator, double rate, double alpha,
+    static std::unique_ptr<sampler> with_rate(std::shared_ptr<std::mt19937_64> generator, double rate, double alpha,
                                               double m = 0.) {
-        return std::make_shared<frechet>(std::move(generator), 1 / std::tgammaf(1 - 1 / alpha), alpha, rate, m);
+        return std::make_unique<frechet>(std::move(generator), 1 / std::tgammaf(1 - 1 / alpha), alpha, rate, m);
+    }
+
+    std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64> generator) const override {
+        return std::make_unique<frechet>(std::move(generator), alpha, s, m, true);
     }
 
     explicit operator std::string() const override {

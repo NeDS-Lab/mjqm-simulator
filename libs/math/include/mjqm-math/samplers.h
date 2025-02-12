@@ -6,8 +6,6 @@
 #define MJQM_SAMPLERS_H
 
 #include <mjqm-math/sampler.h>
-#include <mjqm-math/random_ecuyer.h>
-#include <mjqm-math/random_mersenne.h>
 #include <mjqm-samplers/bounded_pareto.hpp>
 #include <mjqm-samplers/deterministic.hpp>
 #include <mjqm-samplers/exponential.hpp>
