@@ -27,6 +27,13 @@ struct ClassConfig {
         os << "\tService: " << std::string(*cls.service_sampler) << std::endl;
         return os;
     }
+    template <class Archive>
+    void serialize(Archive& ar, unsigned int) {
+        ar & name;
+        ar & cores;
+        ar & arrival_sampler;
+        ar & service_sampler;
+    }
 };
 
 struct ExperimentConfig {
@@ -61,6 +68,16 @@ struct ExperimentConfig {
             os << cls;
         }
         return os;
+    }
+    template <class Archive>
+    void serialize(Archive& ar, unsigned int) {
+        ar & name;
+        ar & events;
+        ar & repetitions;
+        ar & cores;
+        ar & policy_name;
+        ar & generator;
+        ar & classes;
     }
 };
 

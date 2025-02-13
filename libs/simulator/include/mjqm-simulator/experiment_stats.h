@@ -5,9 +5,14 @@
 #ifndef EXPERIMENT_STATS_H
 #define EXPERIMENT_STATS_H
 
+// ReSharper disable once CppUnusedIncludeDirective
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+// ReSharper disable once CppUnusedIncludeDirective
+#include <boost/serialization/vector.hpp>
 #include <iostream>
-#include <vector>
 #include <mjqm-math/confidence_intervals.h>
+#include <vector>
 
 struct ExperimentStats {
     std::vector<Confidence_inter> occupancy_buf; // out: occupancy buffer per class
@@ -40,6 +45,37 @@ struct ExperimentStats {
 
     friend std::ostream& operator<<(std::ostream& os, ExperimentStats const& m);
     void add_headers(std::vector<std::string>& headers, std::vector<unsigned int>& sizes) const;
+
+    template <class Archive>
+    void serialize(Archive& ar, unsigned int) {
+        ar & occupancy_buf;
+        ar & occupancy_ser;
+        ar & throughput;
+        ar & wait_time;
+        ar & wait_time_var;
+        ar & resp_time;
+        ar & resp_time_var;
+        ar & warnings;
+        ar & preemption_avg;
+        ar & wasted;
+        ar & violations;
+        ar & utilisation;
+        ar & occupancy_tot;
+        ar & wait_tot;
+        ar & wait_var_tot;
+        ar & resp_tot;
+        ar & resp_var_tot;
+        ar & timings_tot;
+        ar & big_seq_avg_len;
+        ar & small_seq_avg_len;
+        ar & big_seq_avg_dur;
+        ar & small_seq_avg_dur;
+        ar & big_seq_amount;
+        ar & small_seq_amount;
+        ar & phase_two_dur;
+        ar & phase_three_dur;
+        ar & window_size;
+    }
 };
 
 #endif // EXPERIMENT_STATS_H

@@ -5,6 +5,9 @@
 #ifndef MJQM_MATH_CONFIDENCE_INTERVALS_H
 #define MJQM_MATH_CONFIDENCE_INTERVALS_H
 
+// ReSharper disable once CppUnusedIncludeDirective
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <iostream>
 #include <vector>
 
@@ -22,6 +25,12 @@ struct Confidence_inter {
     }
 
     Confidence_inter& operator=(Confidence_inter const& o) = default;
+    template<class Archive>
+    void serialize(Archive & ar, unsigned int version) {
+        ar & min;
+        ar & max;
+        ar & mean;
+    }
 };
 
 Confidence_inter compute_interval_student(const std::vector<double>& rep, double confidence);

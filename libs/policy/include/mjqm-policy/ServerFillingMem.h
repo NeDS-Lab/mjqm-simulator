@@ -52,6 +52,21 @@ private:
     void printMset();
     void printBuffer();
     void flush_buffer() override;
+
+    friend class boost::serialization::access;
+    template <class Archive>
+    void serialize(Archive& ar, unsigned int) {
+        ar & buffer;
+        ar & mset;
+        ar & state_buf;
+        ar & state_ser;
+        ar & stopped_jobs;
+        ar & ongoing_jobs;
+        ar & mset_coreNeed;
+        ar & freeservers;
+        ar & servers;
+        ar & w;
+    }
 };
 
 #endif // SERVERFILLINGMEM_H
