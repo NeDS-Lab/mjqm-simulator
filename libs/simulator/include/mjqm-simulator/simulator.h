@@ -6,16 +6,6 @@
 #define SIMULATOR_H
 
 #include <algorithm>
-// ReSharper disable once CppUnusedIncludeDirective
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/list.hpp>
-#include <boost/serialization/shared_ptr.hpp>
-#include <boost/serialization/split_free.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/unique_ptr.hpp>
-#include <boost/serialization/unordered_map.hpp>
-#include <boost/serialization/vector.hpp>
 #include <chrono>
 #include <cmath>
 #include <ctime>
@@ -689,7 +679,7 @@ private:
                     job_fel[i] = fastest_job_id;
                 }
             }
-        } else { // exponential distro can use the faster memoryless blocks
+        } else  { // exponential distro can use the faster memoryless blocks
             auto ongoing_jobs = policy->get_ongoing_jobs();
             int pooled_i;
             for (int i = 0; i < nclasses; i++) {
@@ -892,116 +882,6 @@ private:
 
         windowSize.push_back(policy->get_window_size() * delta);
     }
-
-    friend class boost::serialization::access;
-    template <class Archive>
-    void serialize(Archive& ar, const unsigned int) {
-        ar & nclasses;
-        ar & l;
-        ar & u;
-        ar & sizes;
-        ar & n;
-        ar & w;
-        ar & debugMode;
-        ar & ser_time_samplers;
-        ar & arr_time_samplers;
-        ar & policy;
-        ar & simtime;
-        ar & rep_occupancy_buf;
-        ar & rep_occupancy_ser;
-        ar & rep_free_servers_distro;
-        ar & rep_th;
-        ar & rep_wait;
-        ar & rep_wait_var;
-        ar & rep_resp;
-        ar & rep_resp_var;
-        ar & rep_tot_wait;
-        ar & rep_tot_wait_var;
-        ar & rep_tot_resp;
-        ar & rep_tot_resp_var;
-        ar & rep_timings;
-        ar & rep_tot_buf;
-        ar & rep_waste;
-        ar & rep_viol;
-        ar & rep_util;
-        ar & rep_big_seq_avg_len;
-        ar & rep_small_seq_avg_len;
-        ar & rep_big_seq_avg_dur;
-        ar & rep_small_seq_avg_dur;
-        ar & rep_big_seq_amount;
-        ar & rep_small_seq_amount;
-        ar & rep_big_seq_max_len;
-        ar & rep_small_seq_max_len;
-        ar & rep_big_seq_max_dur;
-        ar & rep_small_seq_max_dur;
-        ar & rep_window_size;
-        ar & rep_preemption;
-        ar & rep_phase_two_duration;
-        ar & rep_phase_three_duration;
-        ar & occupancy_buf;
-        ar & occupancy_ser;
-        ar & completion;
-        ar & preemption;
-        ar & throughput;
-        ar & waitingTime;
-        ar & waitingTimeVar;
-        ar & arrTime;
-        ar & waitTime;
-        ar & holdTime;
-        ar & rawWaitingTime;
-        ar & rawResponseTime;
-        ar & windowSize;
-        ar & responseTime;
-        ar & responseTimeVar;
-        ar & waste;
-        ar & viol;
-        ar & util;
-        ar & occ;
-
-        ar & curr_job_seq;
-        ar & curr_job_seq_start;
-        ar & tot_job_seq;
-        ar & tot_job_seq_dur;
-        ar & job_seq_amount;
-        ar & last_job;
-        ar & phase_two_duration;
-        ar & phase_three_duration;
-        ar & phase_two_start;
-        ar & phase_three_start;
-        ar & curr_phase;
-        ar & add_phase_two;
-
-        ar & fel;
-        ar & job_fel;
-        // std::vector<std::list<double>> fels;
-        // std::list<int> job_ids;
-        ar & jobs_inservice; //[id, time_end]
-        ar & jobs_preempted; //[id, time_left]
-
-        ar & logfile_name;
-
-        ar & generator;
-    }
 };
-namespace boost {
-    namespace serialization {
 
-        template <class Archive>
-        void save(Archive& ar, const std::mt19937_64& g, const unsigned int) {
-            std::stringbuf sb;
-            std::ostream os(&sb);
-            os << g;
-            ar & sb.str();
-        }
-        template <class Archive>
-        void load(Archive& ar, std::mt19937_64& g, const unsigned int) {
-            std::string s;
-            ar & s;
-            std::stringbuf sb(s);
-            std::istream is(&sb);
-            is >> g;
-        }
-    } // namespace serialization
-} // namespace boost
-BOOST_SERIALIZATION_SPLIT_FREE(std::mt19937_64)
 #endif // SIMULATOR_H

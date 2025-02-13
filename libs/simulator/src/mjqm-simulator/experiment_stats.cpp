@@ -3,6 +3,7 @@
 //
 
 #include <mjqm-simulator/experiment_stats.h>
+#include <iostream>
 
 std::ostream& operator<<(std::ostream& os, ExperimentStats const& m) {
     for (int c = 0; c < m.occupancy_buf.size(); c++) {

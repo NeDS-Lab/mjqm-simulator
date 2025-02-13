@@ -55,26 +55,6 @@ private:
     bool big_priority;
 
     void flush_buffer() override;
-
-    friend class boost::serialization::access;
-    template <class Archive>
-    void serialize(Archive& ar, unsigned int) {
-        ar.template register_type<MostServerFirstSkip>();
-        ar& boost::serialization::base_object<Policy>(*this);
-        ar & servers;
-        ar & w;
-        ar & state_buf;
-        ar & state_ser;
-        ar & stopped_jobs;
-        ar & ongoing_jobs;
-        ar & sizes;
-        ar & freeservers;
-        ar & violations_counter;
-        ar & threshold;
-        ar & drops_below;
-        ar & big_priority;
-    }
 };
-BOOST_CLASS_EXPORT_IMPLEMENT(MostServerFirstSkip);
 
 #endif // MOSTSERVERFIRSTSKIP_H

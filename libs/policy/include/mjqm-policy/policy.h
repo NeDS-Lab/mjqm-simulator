@@ -5,18 +5,6 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
 
-// ReSharper disable once CppUnusedIncludeDirective
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
-#include <boost/serialization/list.hpp>
-#include <mjqm-utils/tuple_ser.h>
-#include <boost/serialization/shared_ptr.hpp>
-#include <boost/serialization/split_free.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/unique_ptr.hpp>
-#include <boost/serialization/unordered_map.hpp>
-#include <boost/serialization/vector.hpp>
 #include <list>
 #include <memory>
 #include <unordered_map>
@@ -43,9 +31,6 @@ public:
     virtual ~Policy() = 0;
     virtual std::unique_ptr<Policy> clone() const = 0;
     explicit virtual operator std::string() const = 0;
-    // ReSharper disable once CppMemberFunctionMayBeStatic
-    template <class Archive>
-    void serialize(Archive&, unsigned int) {}
 };
 
 inline Policy::~Policy() = default;

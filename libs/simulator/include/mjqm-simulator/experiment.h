@@ -16,18 +16,6 @@ struct Experiment {
     int n;
     int sm;
     std::string logf;
-    template <class Archive>
-    void serialize(Archive& ar, unsigned int);
 };
-template <class Archive>
-void Experiment::serialize(Archive& ar, const unsigned int) {
-    ar & l;
-    ar & u;
-    ar & s;
-    ar & w;
-    ar & n;
-    ar & sm;
-    ar & logf;
-}
 
 #endif // EXPERIMENT_H

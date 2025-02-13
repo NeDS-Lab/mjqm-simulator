@@ -22,20 +22,8 @@ void run_simulation(const ExperimentConfig& conf,
     sim.reset_simulation();
     sim.reset_statistics();
 
-    {
-        std::ofstream ofs(conf.output_filename() + ".Before.boost_serialized", std::ios::trunc);
-        boost::archive::text_oarchive oa(ofs);
-        oa << sim;
-    }
-
     sim.simulate(conf.events, conf.repetitions);
     sim.produce_statistics(stats);
-
-    {
-        std::ofstream ofs(conf.output_filename() + ".After.boost_serialized", std::ios::trunc);
-        boost::archive::text_oarchive oa(ofs);
-        oa << sim;
-    }
 }
 
 int main(int argc, char* argv[]) {
@@ -86,11 +74,6 @@ int main(int argc, char* argv[]) {
         threads[i].join();
     }
 
-    {
-        std::ofstream ofs("Result_Stats.boost_serialized", std::ios::trunc);
-        boost::archive::text_oarchive oa(ofs);
-        oa << experiments_stats;
-    }
     for (int i = 0; i < n_experiments; ++i) {
         const auto& conf = experiments->at(i).second;
         std::string out_filename = conf.output_filename();

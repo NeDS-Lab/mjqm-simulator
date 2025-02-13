@@ -37,7 +37,7 @@ add_executable(simulator_toml simulator_toml.cpp)
 target_link_libraries(simulator_toml math policies stats toml_loader)
 
 add_executable(toml_loader_test toml_loader_test.cpp)
-target_link_libraries(toml_loader_test stats toml_loader)
+target_link_libraries(toml_loader_test toml_loader)
 
 foreach (target main_allPols simulator_smash simulator_toml toml_loader_test)
     add_custom_command(
@@ -48,25 +48,6 @@ foreach (target main_allPols simulator_smash simulator_toml toml_loader_test)
         ${CMAKE_CURRENT_SOURCE_DIR}/${target}
     )
 endforeach ()
-
-#set(FETCHCONTENT_TRY_FIND_PACKAGE_MODE NEVER)
-#include(FetchContent)
-#FetchContent_Declare(
-#        cista
-#        GIT_REPOSITORY https://github.com/felixguendling/cista.git
-#        GIT_TAG        v0.15
-#)
-#FetchContent_MakeAvailable(cista)
-
-# Include the Boost library
-set(Boost_USE_DEBUG_LIBS        OFF)  # ignore debug libs and
-set(Boost_USE_RELEASE_LIBS       ON)  # only find release libs
-set(Boost_USE_MULTITHREADED      ON)
-set(Boost_USE_STATIC_RUNTIME    OFF)
-find_package(Boost 1.83 REQUIRED COMPONENTS serialization)
-include_directories(${Boost_INCLUDE_DIR})
-target_link_libraries(simulator_toml ${Boost_LIBRARIES})
-target_link_libraries(toml_loader_test ${Boost_LIBRARIES})
 
 add_custom_target(test_all)
 
