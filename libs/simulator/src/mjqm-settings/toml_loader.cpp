@@ -14,6 +14,7 @@
 #include <mjqm-settings/toml_policies_loaders.h>
 #include <mjqm-settings/toml_utils.h>
 #include <mjqm-simulator/simulator.h>
+#include "RngStream.h"
 
 using namespace std::string_literals;
 
@@ -188,7 +189,8 @@ Simulator::Simulator(const ExperimentConfig& conf) : nclasses(static_cast<int>(c
     util = 0;
     occ = 0;
 
-    RngStreamRestart();
+    auto lock = std::lock_guard(RNG_STREAMS_GENERATION_LOCK);
+    RngStream::SetPackageSeed(MJQM_RANDOM_ECUYER_SEED);
     for (const auto& cls : conf.classes) {
         sizes.push_back(cls.cores);
         arr_time_samplers.push_back(cls.arrival_sampler->clone());
@@ -196,4 +198,7 @@ Simulator::Simulator(const ExperimentConfig& conf) : nclasses(static_cast<int>(c
         l.push_back(1. / cls.arrival_sampler->getMean());
         u.push_back(cls.service_sampler->getMean());
     }
+    // for debugging purposes, all simulations should print the same state of the RNG,
+    // unless some distribution is deterministic only in some of them
+    RngStream(("After Last " + conf.output_filename()).data()).WriteStateFull();
 }

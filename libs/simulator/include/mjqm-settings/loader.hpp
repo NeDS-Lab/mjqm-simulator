@@ -180,7 +180,8 @@ inline Simulator::Simulator(const std::vector<double>& l, const std::vector<doub
     util = 0;
     occ = 0;
 
-    RngStreamRestart();
+    auto lock = std::lock_guard(RNG_STREAMS_GENERATION_LOCK);
+    RngStream::SetPackageSeed(MJQM_RANDOM_ECUYER_SEED);
     for (int i = 0; i < nclasses; i++) {
         auto baseName = "SerTime" + std::to_string(i);
         switch (sampling_method) {
@@ -217,6 +218,10 @@ inline Simulator::Simulator(const std::vector<double>& l, const std::vector<doub
                   << "\tArrival: " << std::string(*arr_time_samplers[i]) << std::endl
                   << "\tService: " << std::string(*ser_time_samplers[i]) << std::endl;
     }
+
+    // for debugging purposes, all simulations should print the same state of the RNG,
+    // unless some distribution is deterministic only in some of them
+    RngStream("After Last").WriteStateFull();
 }
 
 #endif // LOADER_H
