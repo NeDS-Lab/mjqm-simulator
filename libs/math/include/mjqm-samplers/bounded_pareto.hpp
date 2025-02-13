@@ -6,27 +6,32 @@
 #define MJQM_SAMPLERS_BOUNDED_PARETO_H
 
 #include <cassert>
+#include <cmath>
 #include <memory>
-#include <mjqm-math/sampler.h>
-#include <random>
+#include <string>
+#include <string_view>
+
+#include "RngStream.h"
+#include "mjqm-math/sampler.h"
 
 // Parameters
 // L > 0 location (real)
 // H > L location (real)
 // α > 0 shape (real)
 
-class bounded_pareto : public sampler {
+class BoundedPareto : public DistributionSampler {
 public:
-    explicit bounded_pareto(std::shared_ptr<std::mt19937_64> generator, double alpha, double l, double h) :
-        generator(std::move(generator)), l(l), h(h), alpha(alpha) {
+    explicit BoundedPareto(const std::string_view& name, double alpha, double l, double h) :
+        DistributionSampler(name.data()), generator(name.data()), l(l), h(h), alpha(alpha) {
         assert(l > 0.);
         assert(h > l);
         assert(alpha > 0.);
     }
 
 private:
-    std::uniform_real_distribution<> random_uniform{0, 1};
-    const std::shared_ptr<std::mt19937_64> generator;
+    RngStream generator;
+
+public: // descriptive parameters and statistics
     const double l;
     const double h;
     const double alpha;
@@ -38,26 +43,26 @@ private:
                                           (1 / pow(l, alpha - 2) - 1 / pow(h, alpha - 2)));
 
 public:
-    double d_mean() const override { return mean; }
-    double d_variance() const override { return variance; }
-    double sample() override {
-        double u = random_uniform(*generator);
+    inline double getMean() const override { return mean; }
+    inline double getVariance() const override { return variance; }
+    inline double sample() override {
+        double u = generator.RandU01();
         double num = u * pow(h, alpha) - u * pow(l, alpha) - pow(h, alpha);
         double den = pow(h, alpha) * pow(l, alpha);
         double frac = num / den;
         return pow(-frac, -1 / alpha);
     }
 
-    static std::unique_ptr<sampler> with_rate(std::shared_ptr<std::mt19937_64> generator, double rate, double alpha) {
-        return std::make_unique<bounded_pareto>(std::move(generator), alpha, (12000.0 / 23999.0) / rate, 12000 / rate);
+    static std::unique_ptr<DistributionSampler> with_rate(const std::string_view& name, double rate, double alpha) {
+        return std::make_unique<BoundedPareto>(name, alpha, (12000.0 / 23999.0) / rate, 12000 / rate);
     }
 
-    static std::unique_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean, double alpha) {
-        return std::make_unique<bounded_pareto>(std::move(generator), alpha, (12000.0 / 23999.0) * mean, 12000 * mean);
+    static std::unique_ptr<DistributionSampler> with_mean(const std::string_view& name, double mean, double alpha) {
+        return std::make_unique<BoundedPareto>(name, alpha, (12000.0 / 23999.0) * mean, 12000 * mean);
     }
 
-    std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64> generator) const override {
-        return std::make_unique<bounded_pareto>(std::move(generator), alpha, l, h);
+    std::unique_ptr<DistributionSampler> clone(const std::string_view& name) const override {
+        return std::make_unique<BoundedPareto>(name, alpha, l, h);
     }
 
     explicit operator std::string() const override {

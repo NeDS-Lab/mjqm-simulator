@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <mjqm-policy/policy.h>
 #include <mjqm-settings/toml_utils.h>
+#include <mjqm-settings/toml_loader.h>
 
 typedef std::unique_ptr<Policy> (*policy_builder)(const toml::table& data, const ExperimentConfig& conf);
 

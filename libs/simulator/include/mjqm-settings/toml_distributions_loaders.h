@@ -10,7 +10,6 @@
 #include <memory>
 #include <mjqm-math/samplers.h>
 #include <mjqm-settings/toml_utils.h>
-#include <random>
 #include <string_view>
 #include <unordered_map>
 
@@ -23,9 +22,12 @@ inline std::ostream& operator<<(std::ostream& os, const distribution_use& use) {
     return os << distribution_use_to_key.at(use);
 }
 
+inline std::string full_name(const std::string_view& cls, const distribution_use& use) {
+    return std::string(cls) + '.' + distribution_use_to_key.at(use);
+}
+
 typedef bool (*distribution_loader)(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                                    std::shared_ptr<std::mt19937_64> generator,
-                                    std::unique_ptr<sampler>* distribution // out
+                                    std::unique_ptr<DistributionSampler>* distribution // out
 );
 
 template <typename VAR_TYPE = double>
@@ -47,28 +49,23 @@ std::optional<VAR_TYPE> distribution_parameter(const toml::table& data, const st
 }
 
 bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                         std::shared_ptr<std::mt19937_64> generator,
-                         std::unique_ptr<sampler>* distribution // out
+                         std::unique_ptr<DistributionSampler>* distribution // out
 );
 
 bool load_deterministic(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                        std::shared_ptr<std::mt19937_64>,
-                        std::unique_ptr<sampler>* distribution // out
+                        std::unique_ptr<DistributionSampler>* distribution // out
 );
 
 bool load_exponential(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                      std::shared_ptr<std::mt19937_64> generator,
-                      std::unique_ptr<sampler>* distribution // out
+                      std::unique_ptr<DistributionSampler>* distribution // out
 );
 
 bool load_frechet(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                  std::shared_ptr<std::mt19937_64> generator,
-                  std::unique_ptr<sampler>* distribution // out
+                  std::unique_ptr<DistributionSampler>* distribution // out
 );
 
 bool load_uniform(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                  std::shared_ptr<std::mt19937_64> generator,
-                  std::unique_ptr<sampler>* distribution // out
+                  std::unique_ptr<DistributionSampler>* distribution // out
 );
 
 inline static std::unordered_map<std::string_view, distribution_loader> distribution_loaders = {
@@ -80,8 +77,7 @@ inline static std::unordered_map<std::string_view, distribution_loader> distribu
 };
 
 bool load_distribution(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-                       std::shared_ptr<std::mt19937_64> generator, // we do want it to be copied
-                       std::unique_ptr<sampler>* sampler // out
+                       std::unique_ptr<DistributionSampler>* sampler // out
 );
 
 #endif // TOML_DISTRIBUTIONS_LOADERS_H

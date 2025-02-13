@@ -6,25 +6,30 @@
 #define MJQM_SAMPLERS_DETERMINISTIC_H
 
 #include <memory>
-#include <mjqm-math/sampler.h>
+#include <string>
+#include <string_view>
 
-class deterministic : public sampler {
+#include "mjqm-math/sampler.h"
+
+class Deterministic : public DistributionSampler {
 public:
-    explicit deterministic(const double value) : value(value) {}
+    explicit Deterministic(std::string_view name, const double value) : DistributionSampler(name.data()), value(value) {}
 
-private:
+public: // descriptive parameters and statistics
     const double value;
     const double variance = 0;
 
 public:
-    double d_mean() const override { return value; }
-    double d_variance() const override { return variance; }
-    double sample() override { return value; }
+    inline double getMean() const override { return value; }
+    inline double getVariance() const override { return variance; }
+    inline double sample() override { return value; }
 
-    static std::unique_ptr<sampler> with_value(double value) { return std::make_unique<deterministic>(value); }
+    static std::unique_ptr<DistributionSampler> with_value(const std::string_view& name, double value) {
+        return std::make_unique<Deterministic>(name, value);
+    }
 
-    std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64>) const override {
-        return std::make_unique<deterministic>(value);
+    std::unique_ptr<DistributionSampler> clone(const std::string_view& name) const override {
+        return std::make_unique<Deterministic>(name.data(), value);
     }
 
     explicit operator std::string() const override {

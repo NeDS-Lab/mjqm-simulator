@@ -14,11 +14,11 @@
 #include <list>
 #include <mjqm-math/sampler.h>
 #include <mjqm-policy/policy.h>
+#include <numeric>
 #if __has_include("toml++/toml.h")
 #include <mjqm-settings/toml_loader.h>
 #endif
 #include <mjqm-simulator/experiment_stats.h>
-#include <random>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -523,11 +523,11 @@ public:
     }
 
 private:
-    int nclasses;
+    const int nclasses;
     std::vector<double> l;
     std::vector<double> u;
-    std::vector<std::unique_ptr<sampler>> ser_time_samplers;
-    std::vector<std::unique_ptr<sampler>> arr_time_samplers;
+    std::vector<std::unique_ptr<DistributionSampler>> ser_time_samplers;
+    std::vector<std::unique_ptr<DistributionSampler>> arr_time_samplers;
     std::vector<unsigned int> sizes;
     int n;
     int w = 1;
@@ -620,8 +620,6 @@ private:
 
     std::string logfile_name;
 
-    std::shared_ptr<std::mt19937_64> generator;
-
     void resample() {
         // add arrivals and departures
         if (this->w == -2) { // special blocks for serverFilling (memoryful)
@@ -679,7 +677,7 @@ private:
                     job_fel[i] = fastest_job_id;
                 }
             }
-        } else  { // exponential distro can use the faster memoryless blocks
+        } else { // exponential distro can use the faster memoryless blocks
             auto ongoing_jobs = policy->get_ongoing_jobs();
             int pooled_i;
             for (int i = 0; i < nclasses; i++) {

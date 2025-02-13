@@ -5,19 +5,32 @@
 #ifndef MJQM_SAMPLER_H
 #define MJQM_SAMPLER_H
 
+#include <cmath>
 #include <memory>
-#include <random>
+#include <string>
+#include <string_view>
 
-class sampler {
+class DistributionSampler {
 public:
-    typedef double result_type; // for mirroring how std usually does it
-    virtual double sample() = 0;
-    virtual ~sampler() = default;
-    virtual double d_mean() const = 0;
-    virtual double d_variance() const = 0;
-    virtual std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64> generator) const = 0;
+    const std::string name;
 
+    explicit DistributionSampler(std::string name) : name(std::move(name)) {}
+
+    virtual double sample() = 0;
+    virtual double getMean() const = 0;
+    virtual double getVariance() const = 0;
+
+    virtual std::unique_ptr<DistributionSampler> clone(const std::string_view& name) const = 0;
+    inline std::unique_ptr<DistributionSampler> clone() const { return clone(name); }
+
+    virtual ~DistributionSampler() = default;
     explicit virtual operator std::string() const = 0;
+
+    // These methods offer a compatible layer to generators from the standard library
+    typedef double result_type;
+    inline double operator()() { return sample(); }
+    // virtual double min() const = 0;
+    // virtual double max() const = 0;
 };
 
 #endif // MJQM_SAMPLER_H

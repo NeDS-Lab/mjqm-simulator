@@ -17,8 +17,8 @@
 struct ClassConfig {
     std::string name;
     unsigned int cores;
-    std::unique_ptr<sampler> arrival_sampler;
-    std::unique_ptr<sampler> service_sampler;
+    std::unique_ptr<DistributionSampler> arrival_sampler;
+    std::unique_ptr<DistributionSampler> service_sampler;
 
     friend std::ostream& operator<<(std::ostream& os, const ClassConfig& cls) {
         os << "Class: " << cls.name << std::endl;

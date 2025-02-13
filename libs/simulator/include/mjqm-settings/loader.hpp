@@ -5,17 +5,20 @@
 #ifndef LOADER_H
 #define LOADER_H
 
+#include <cctype>
 #include <fstream>
 #include <iostream>
-#include <mjqm-math/samplers.h>
-#include <mjqm-policy/policies.h>
-#include <mjqm-simulator/simulator.h>
 #include <sstream>
 #include <string>
 #include <vector>
 
+#include "mjqm-math/random_ecuyer.h"
+#include "mjqm-math/samplers.h"
+#include "mjqm-policy/policies.h"
+#include "mjqm-simulator/simulator.h"
+
 inline void read_classes(std::string& filename, std::vector<double>& p, std::vector<unsigned int>& sizes,
-                  std::vector<double>& mus) {
+                         std::vector<double>& mus) {
     std::vector<std::vector<std::string>> content;
     std::vector<std::string> row;
     std::string line, word;
@@ -122,15 +125,15 @@ inline void from_argv(char** argv, std::vector<double>& p, std::vector<unsigned 
         std::to_string(n) + "-Win" + std::to_string(w) + "-" + sampling_name[sampling_method] + "-" + cell + ".csv";
 }
 
-inline Simulator::Simulator(const std::vector<double>& l, const std::vector<double>& u, const std::vector<unsigned int>& sizes,
-                     int w, int servers, int sampling_method, std::string logfile_name) {
+inline Simulator::Simulator(const std::vector<double>& l, const std::vector<double>& u,
+                            const std::vector<unsigned int>& sizes, int w, int servers, int sampling_method,
+                            std::string logfile_name): nclasses(static_cast<int>(sizes.size())) {
     this->l = l;
     this->u = u;
     this->n = servers;
     this->sizes = sizes;
     this->w = w;
     this->rep_free_servers_distro = std::vector<double>(servers + 1);
-    this->nclasses = static_cast<int>(sizes.size());
     this->fel.resize(sizes.size() * 2);
     this->job_fel.resize(sizes.size() * 2);
     this->jobs_inservice.resize(sizes.size());
@@ -176,49 +179,37 @@ inline Simulator::Simulator(const std::vector<double>& l, const std::vector<doub
     viol = 0;
     util = 0;
     occ = 0;
-    constexpr std::uint64_t seed = 1862248485;
-    generator = std::make_shared<std::mt19937_64>(next(seed));
 
-    switch (sampling_method) {
-    case 0: // exponential
-        for (int i = 0; i < nclasses; i++) {
-            ser_time_samplers.push_back(exponential::with_mean(generator, u[i]));
+    RngStreamRestart();
+    for (int i = 0; i < nclasses; i++) {
+        auto baseName = "SerTime" + std::to_string(i);
+        switch (sampling_method) {
+        case 0: // exponential
+            ser_time_samplers.push_back(Exponential::with_mean(baseName + "Exponential", u[i]));
             // exponential::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
             // ser_time_samplers.push_back(exponential::with_rate(generator, 1/u[i]));
-        }
-        break;
-    case 1: // pareto
-        for (int i = 0; i < nclasses; i++) {
-            ser_time_samplers.push_back(pareto::with_mean(generator, u[i], 2));
-        }
-        break;
-    case 2: // deterministic
-        for (int i = 0; i < nclasses; i++) {
-            ser_time_samplers.push_back(deterministic::with_value(u[i]));
-        }
-        break;
-    case 4: // bounded pareto
-        for (int i = 0; i < nclasses; i++) {
-            ser_time_samplers.push_back(bounded_pareto::with_mean(generator, u[i], 2));
-        }
-        break;
-    case 5: // frechet
-        for (int i = 0; i < nclasses; i++) {
-            ser_time_samplers.push_back(frechet::with_mean(generator, u[i], 2.15));
+            break;
+        case 2: // deterministic
+            ser_time_samplers.push_back(Deterministic::with_value(baseName + "Deterministic", u[i]));
+            break;
+        case 4: // bounded pareto
+            ser_time_samplers.push_back(BoundedPareto::with_mean(baseName + "BoundedPareto", u[i], 2));
+            break;
+        case 5: // frechet
+            ser_time_samplers.push_back(Frechet::with_mean(baseName + "Frechet", u[i], 2.15));
             // frechet::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
             // ser_time_samplers.push_back(frechet::with_rate(generator, 1 / u[i], 2.15));
+            break;
+        case 3: // uniform
+        default:
+            ser_time_samplers.push_back(Uniform::with_mean(baseName + "Uniform", u[i]));
+            break;
         }
-        break;
-    case 3: // uniform
-    default:
-        for (int i = 0; i < nclasses; i++) {
-            ser_time_samplers.push_back(uniform::with_mean(generator, u[i]));
-        }
-        break;
     }
 
     for (int i = 0; i < nclasses; i++) {
-        arr_time_samplers.push_back(exponential::with_rate(generator, l[i]));
+        auto baseName = "ArrTime" + std::to_string(i);
+        arr_time_samplers.push_back(Exponential::with_rate(baseName + "Exponential", l[i]));
     }
     for (int i = 0; i < nclasses; i++) {
         std::cout << "Class: " << sizes[i] << std::endl

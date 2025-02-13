@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 
+#include <mjqm-math/random_ecuyer.h>
 #include <mjqm-policy/policies.h>
 #include <mjqm-settings/toml_distributions_loaders.h>
 #include <mjqm-settings/toml_loader.h>
@@ -27,17 +28,16 @@ unsigned int ExperimentConfig::get_sizes(std::vector<unsigned int>& sizes) const
     return classes.size();
 }
 
-bool load_class_from_toml(const toml::table& data, const std::string& index, ExperimentConfig& conf,
-                          std::shared_ptr<std::mt19937_64>& generator) {
+bool load_class_from_toml(const toml::table& data, const std::string& index, ExperimentConfig& conf) {
     const auto full_key = toml::path(CLASS_ROOT).append(index);
     unsigned int cores;
     const bool cores_ok = load_into(data, toml::path(full_key).append("cores").str(), cores);
     const std::string name =
         data.at_path(full_key).at_path("name").value<std::string>().value_or(std::to_string(cores));
-    std::unique_ptr<sampler> arrival_sampler;
-    std::unique_ptr<sampler> service_sampler;
-    const bool arrival_ok = load_distribution(data, full_key.str(), ARRIVAL, generator, &arrival_sampler);
-    const bool service_ok = load_distribution(data, full_key.str(), SERVICE, generator, &service_sampler);
+    std::unique_ptr<DistributionSampler> arrival_sampler;
+    std::unique_ptr<DistributionSampler> service_sampler;
+    const bool arrival_ok = load_distribution(data, full_key.str(), ARRIVAL, &arrival_sampler);
+    const bool service_ok = load_distribution(data, full_key.str(), SERVICE, &service_sampler);
     if (cores_ok && arrival_ok && service_ok) {
         conf.classes.emplace_back(name, cores, std::move(arrival_sampler), std::move(service_sampler));
         return true;
@@ -91,13 +91,16 @@ bool from_toml(toml::table& data, ExperimentConfig& conf) {
     ok = ok && load_into(data, "repetitions", conf.repetitions);
     ok = ok && load_into(data, "cores", conf.cores);
     ok = ok && load_into(data, "policy", conf.policy_name, "smash"s);
-    ok = ok && load_into(data, "generator", conf.generator, "mersenne"s);
+    ok = ok && load_into(data, "generator", conf.generator, "lecuyer"s);
+    if (conf.generator != "lecuyer") {
+        print_error("Unsupported generator " << error_highlight(conf.generator));
+        return false;
+    }
 
     if (toml::array* classes = data.at_path(CLASS_ROOT).as_array()) {
         ok = normalise_probs(data) && ok;
-        auto generator = std::make_shared<std::mt19937_64>();
         for (size_t index = 0; index < classes->size(); ++index) {
-            ok = load_class_from_toml(data, "[" + std::to_string(index) + "]", conf, generator) && ok;
+            ok = load_class_from_toml(data, "[" + std::to_string(index) + "]", conf) && ok;
             // keep going if one soft fails to show all errors
         }
         // sort classes by cores, or alphabetically by name if cores are equal
@@ -152,9 +155,9 @@ from_toml(const toml::table& data, const std::map<std::string, std::vector<std::
     return experiments;
 }
 
-Simulator::Simulator(const ExperimentConfig& conf) : nclasses(conf.classes.size()) {
-    this->n = conf.cores;
-    // this->w = w; // TODO still needed? Y/N (should transform all things that need it)
+Simulator::Simulator(const ExperimentConfig& conf) : nclasses(static_cast<int>(conf.classes.size())) {
+    this->n = static_cast<int>(conf.cores);
+    this->w = conf.policy->get_w(); // TODO should transform all branches that need it here
     this->rep_free_servers_distro = std::vector<double>(conf.cores + 1);
     this->fel.resize(nclasses * 2);
     this->job_fel.resize(nclasses * 2);
@@ -184,14 +187,13 @@ Simulator::Simulator(const ExperimentConfig& conf) : nclasses(conf.classes.size(
     viol = 0;
     util = 0;
     occ = 0;
-    std::uint64_t seed = 1862248485;
-    generator = std::make_shared<std::mt19937_64>(next(seed));
 
+    RngStreamRestart();
     for (const auto& cls : conf.classes) {
         sizes.push_back(cls.cores);
-        arr_time_samplers.push_back(cls.arrival_sampler->clone(generator));
-        ser_time_samplers.push_back(cls.service_sampler->clone(generator));
-        l.push_back(1. / cls.arrival_sampler->d_mean());
-        u.push_back(cls.service_sampler->d_mean());
+        arr_time_samplers.push_back(cls.arrival_sampler->clone());
+        ser_time_samplers.push_back(cls.service_sampler->clone());
+        l.push_back(1. / cls.arrival_sampler->getMean());
+        u.push_back(cls.service_sampler->getMean());
     }
 }

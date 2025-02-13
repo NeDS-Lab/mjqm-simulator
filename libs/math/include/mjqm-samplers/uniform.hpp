@@ -6,38 +6,46 @@
 #define MJQM_SAMPLERS_UNIFORM_H
 
 #include <cassert>
+#include <cmath>
 #include <memory>
-#include <mjqm-math/sampler.h>
-#include <random>
+#include <string>
+#include <string_view>
 
-class uniform : public sampler {
+#include "RngStream.h"
+#include "mjqm-math/sampler.h"
+
+class Uniform : public DistributionSampler {
 public:
-    explicit uniform(std::shared_ptr<std::mt19937_64> generator, const double min, const double max) :
-        distribution(min, max), generator(std::move(generator)) {
+    explicit Uniform(const std::string_view& name, const double min, const double max) :
+        DistributionSampler(name.data()), min(min), max(max), generator(name.data()) {
         assert(distribution.min() > 0);
     }
 
 private:
-    std::uniform_real_distribution<> distribution;
-    const std::shared_ptr<std::mt19937_64> generator;
-    const double mean = (distribution.min() + distribution.max()) / 2.;
-    const double variance = pow(distribution.max() - distribution.min(), 2.) / 12.;
+    RngStream generator;
+
+public: // descriptive parameters and statistics
+    const double min;
+    const double max;
+    const double diff = max - min;
+    const double mean = (min + max) / 2.;
+    const double variance = pow(max - min, 2.) / 12.;
 
 public:
-    double d_mean() const override { return mean; }
-    double d_variance() const override { return variance; }
-    double sample() override { return distribution(*generator); }
+    inline double getMean() const override { return mean; }
+    inline double getVariance() const override { return variance; }
+    inline double sample() override { return generator.RandU01() * diff + min; }
 
-    static std::unique_ptr<sampler> with_mean(std::shared_ptr<std::mt19937_64> generator, double mean) {
-        return std::make_unique<uniform>(std::move(generator), .5 * mean, 1.5 * mean);
+    static std::unique_ptr<DistributionSampler> with_mean(const std::string_view& name, double mean) {
+        return std::make_unique<Uniform>(name, .5 * mean, 1.5 * mean);
     }
 
-    std::unique_ptr<sampler> clone(std::shared_ptr<std::mt19937_64> generator) const override {
-        return std::make_unique<uniform>(std::move(generator), distribution.min(), distribution.max());
+    std::unique_ptr<DistributionSampler> clone(const std::string_view& name) const override {
+        return std::make_unique<Uniform>(name, min, max);
     }
 
     explicit operator std::string() const override {
-        return "uniform (range [" + std::to_string(distribution.min()) + ", " + std::to_string(distribution.max()) +
+        return "uniform (range [" + std::to_string(min) + ", " + std::to_string(max) +
             ") => mean=" + std::to_string(mean) + " ; variance=" + std::to_string(variance) + ")";
     }
 };
