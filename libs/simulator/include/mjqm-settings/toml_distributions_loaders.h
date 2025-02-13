@@ -8,10 +8,11 @@
 #include <iostream>
 #include <map>
 #include <memory>
-#include <mjqm-math/samplers.h>
-#include <mjqm-settings/toml_utils.h>
 #include <string_view>
 #include <unordered_map>
+
+#include <mjqm-math/samplers.h>
+#include <mjqm-settings/toml_utils.h>
 
 enum distribution_use { ARRIVAL, SERVICE };
 static const std::map<std::string_view, distribution_use> distribution_use_from_key = {{"arrival", ARRIVAL},

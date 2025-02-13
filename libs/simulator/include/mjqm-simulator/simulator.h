@@ -12,17 +12,19 @@
 #include <iostream>
 #include <limits>
 #include <list>
-#include <mjqm-math/sampler.h>
-#include <mjqm-policy/policy.h>
 #include <numeric>
-#if __has_include("toml++/toml.h")
-#include <mjqm-settings/toml_loader.h>
-#endif
-#include <mjqm-simulator/experiment_stats.h>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include <mjqm-math/sampler.h>
+#include <mjqm-policy/policy.h>
+#include <mjqm-simulator/experiment_stats.h>
+
+#if __has_include("toml++/toml.h")
+#include <mjqm-settings/toml_loader.h>
+#endif
 
 class Simulator {
 public:

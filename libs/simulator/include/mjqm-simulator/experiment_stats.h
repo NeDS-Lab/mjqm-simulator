@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <vector>
+
 #include <mjqm-math/confidence_intervals.h>
 
 struct ExperimentStats {

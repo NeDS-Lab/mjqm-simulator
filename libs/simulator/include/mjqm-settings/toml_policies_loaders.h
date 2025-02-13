@@ -6,6 +6,7 @@
 #define TOML_POLICIES_LOADERS_H
 
 #include <unordered_map>
+
 #include <mjqm-policy/policy.h>
 #include <mjqm-settings/toml_utils.h>
 #include <mjqm-settings/toml_loader.h>

@@ -6,14 +6,15 @@
 
 #include <fstream>
 #include <iostream>
-#include <mjqm-settings/toml_loader.h>
-#include <mjqm-simulator/simulator.h>
-#include <mjqm-simulator/stats.h>
 #include <ranges>
 #include <string>
 #include <thread>
 #include <unordered_map>
 #include <vector>
+
+#include <mjqm-settings/toml_loader.h>
+#include <mjqm-simulator/experiment_stats.h>
+#include <mjqm-simulator/simulator.h>
 
 void run_simulation(const ExperimentConfig& conf,
                     ExperimentStats& stats // out

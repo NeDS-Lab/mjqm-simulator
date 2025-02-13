@@ -4,13 +4,14 @@
 //  Created by Andrea Marin on 13/10/23.
 //
 
-#include <mjqm-settings/loader.hpp>
-#include <mjqm-simulator/experiment.h>
-#include <mjqm-simulator/simulator.h>
-#include <mjqm-simulator/stats.h>
 #include <string>
 #include <thread>
 #include <vector>
+
+#include <mjqm-settings/loader.hpp>
+#include <mjqm-simulator/experiment.h>
+#include <mjqm-simulator/experiment_stats.h>
+#include <mjqm-simulator/simulator.h>
 
 void run_simulation(Experiment e, unsigned long events, unsigned int repetitions,
                     ExperimentStats& stats // out

@@ -164,11 +164,11 @@ bool load_distribution(const toml::table& data, const std::string_view& cls, con
         print_error("Distribution type missing at path " << error_highlight(cls << "." << use));
         return false;
     }
-    const auto type = opt_type.value();
-    if (!distribution_loaders.contains(type)) {
-        print_error("Unsupported distribution " << error_highlight(type) << " at path "
+    const auto& distribution = opt_type.value();
+    if (!distribution_loaders.contains(distribution)) {
+        print_error("Unsupported distribution " << error_highlight(distribution) << " at path "
                                                 << error_highlight(cls << "." << use));
         return false;
     }
-    return distribution_loaders.at(type)(data, cls, use, sampler);
+    return distribution_loaders.at(distribution)(data, cls, use, sampler);
 }

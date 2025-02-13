@@ -8,11 +8,12 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <string>
+
 #include <mjqm-math/sampler.h>
 #include <mjqm-policy/policy.h>
 #include <mjqm-settings/toml_utils.h>
 #include <mjqm-settings/toml_overrides.h>
-#include <string>
 
 struct ClassConfig {
     std::string name;

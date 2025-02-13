@@ -12,10 +12,10 @@
 #include <string>
 #include <vector>
 
-#include "mjqm-math/random_ecuyer.h"
-#include "mjqm-math/samplers.h"
-#include "mjqm-policy/policies.h"
-#include "mjqm-simulator/simulator.h"
+#include <mjqm-math/random_ecuyer.h>
+#include <mjqm-math/samplers.h>
+#include <mjqm-policy/policies.h>
+#include <mjqm-simulator/simulator.h>
 
 inline void read_classes(std::string& filename, std::vector<double>& p, std::vector<unsigned int>& sizes,
                          std::vector<double>& mus) {
@@ -127,7 +127,7 @@ inline void from_argv(char** argv, std::vector<double>& p, std::vector<unsigned 
 
 inline Simulator::Simulator(const std::vector<double>& l, const std::vector<double>& u,
                             const std::vector<unsigned int>& sizes, int w, int servers, int sampling_method,
-                            std::string logfile_name): nclasses(static_cast<int>(sizes.size())) {
+                            std::string logfile_name) : nclasses(static_cast<int>(sizes.size())) {
     this->l = l;
     this->u = u;
     this->n = servers;
