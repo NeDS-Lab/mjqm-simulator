@@ -194,6 +194,7 @@ Simulator::Simulator(const ExperimentConfig& conf) : nclasses(static_cast<int>(c
     RngStream::SetPackageSeed(MJQM_RANDOM_ECUYER_SEED);
     for (const auto& cls : conf.classes) {
         sizes.push_back(cls.cores);
+        class_names.push_back(cls.name);
         arr_time_samplers.push_back(cls.arrival_sampler->clone());
         ser_time_samplers.push_back(cls.service_sampler->clone());
         l.push_back(1. / cls.arrival_sampler->getMean());

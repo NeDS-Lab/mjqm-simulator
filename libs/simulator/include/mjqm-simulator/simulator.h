@@ -489,20 +489,19 @@ public:
     }
 
     void produce_statistics(ExperimentStats& stats, const double confidence = 0.05) const {
-        for (int i = 0; i < nclasses; i++) {
-            stats.occupancy_buf.push_back(compute_interval_class_student(rep_occupancy_buf, i, confidence));
-            stats.occupancy_ser.push_back(compute_interval_class_student(rep_occupancy_ser, i, confidence));
-            stats.throughput.push_back(compute_interval_class_student(rep_th, i, confidence));
-            stats.wait_time.push_back(compute_interval_class_student(rep_wait, i, confidence));
-            stats.wait_time_var.push_back(compute_interval_class_student(rep_wait_var, i, confidence));
-            stats.resp_time.push_back(compute_interval_class_student(rep_resp, i, confidence));
-            stats.resp_time_var.push_back(compute_interval_class_student(rep_resp_var, i, confidence));
-            stats.preemption_avg.push_back(compute_interval_class_student(rep_preemption, i, confidence));
-
-            if (1.0 - stats.throughput[stats.throughput.size() - 1].mean / l[i] > 0.05)
-                stats.warnings.push_back(true);
-            else
-                stats.warnings.push_back(false);
+        int i = 0;
+        for (auto& cn : class_names) {
+            ClassStats& res = stats.class_stats.emplace_back(cn);
+            res.occupancy_buf = compute_interval_class_student(rep_occupancy_buf, i, confidence);
+            res.occupancy_ser = compute_interval_class_student(rep_occupancy_ser, i, confidence);
+            res.throughput = compute_interval_class_student(rep_th, i, confidence);
+            res.wait_time = compute_interval_class_student(rep_wait, i, confidence);
+            res.wait_time_var = compute_interval_class_student(rep_wait_var, i, confidence);
+            res.resp_time = compute_interval_class_student(rep_resp, i, confidence);
+            res.resp_time_var = compute_interval_class_student(rep_resp_var, i, confidence);
+            res.preemption_avg = compute_interval_class_student(rep_preemption, i, confidence);
+            res.warnings = 1.0 - res.throughput.value.mean / l[i] > 0.05;
+            ++i;
         }
         stats.wasted = compute_interval_student(rep_waste, confidence);
         stats.violations = compute_interval_student(rep_viol, confidence);
@@ -531,6 +530,7 @@ private:
     std::vector<std::unique_ptr<DistributionSampler>> ser_time_samplers;
     std::vector<std::unique_ptr<DistributionSampler>> arr_time_samplers;
     std::vector<unsigned int> sizes;
+    std::vector<std::string> class_names;
     int n;
     int w = 1;
     bool debugMode;

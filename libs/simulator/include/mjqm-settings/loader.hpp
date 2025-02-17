@@ -132,6 +132,9 @@ inline Simulator::Simulator(const std::vector<double>& l, const std::vector<doub
     this->u = u;
     this->n = servers;
     this->sizes = sizes;
+    for (const unsigned int size : sizes) {
+        this->class_names.push_back(std::to_string(size));
+    }
     this->w = w;
     this->rep_free_servers_distro = std::vector<double>(servers + 1);
     this->fel.resize(sizes.size() * 2);
