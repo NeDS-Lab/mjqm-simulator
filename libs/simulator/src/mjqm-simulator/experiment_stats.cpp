@@ -7,7 +7,10 @@
 #include <vector>
 
 std::ostream& operator<<(std::ostream& os, const Stat<Confidence_inter>& m) {
-    os << m.value;
+    if (m.has_confidence_interval)
+        os << m.value;
+    else
+        os << m.value.mean << ";";
     return os;
 }
 
