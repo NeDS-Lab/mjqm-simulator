@@ -539,7 +539,8 @@ private:
 
     double simtime = 0.0;
 
-    // overall statistics
+public:
+    // overall statistics, vectors are per-run, and when double vector is present, the inner one is per-class
     std::vector<std::vector<double>> rep_occupancy_buf;
     std::vector<std::vector<double>> rep_occupancy_ser;
     std::vector<double> rep_free_servers_distro;

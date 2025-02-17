@@ -2,6 +2,11 @@ add_library(stats
         src/mjqm-simulator/experiment_stats.cpp
 )
 
+add_library(new_stats
+        src/mjqm-simulator/stats.cpp
+)
+target_link_libraries(new_stats math)
+
 set(FETCHCONTENT_TRY_FIND_PACKAGE_MODE NEVER)
 include(FetchContent)
 FetchContent_Declare(
