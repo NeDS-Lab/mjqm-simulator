@@ -16,15 +16,13 @@
 #include <mjqm-simulator/experiment_stats.h>
 #include <mjqm-simulator/simulator.h>
 
-void run_simulation(const ExperimentConfig& conf,
-                    ExperimentStats& stats // out
-) {
+void run_simulation(ExperimentConfig& conf) {
     Simulator sim(conf);
     sim.reset_simulation();
     sim.reset_statistics();
 
     sim.simulate(conf.events, conf.repetitions);
-    sim.produce_statistics(stats);
+    sim.produce_statistics(conf.stats);
 }
 
 int main(int argc, char* argv[]) {
@@ -45,7 +43,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    std::vector<ExperimentStats> experiments_stats(n_experiments);
     std::vector<std::thread> threads(n_experiments);
 
     std::unordered_map<std::string, std::ofstream> out_files;
@@ -55,21 +52,10 @@ int main(int argc, char* argv[]) {
         std::string out_filename = conf.output_filename();
         if (!out_files.contains(out_filename)) {
             out_files[out_filename] = std::ofstream(out_filename, std::ios::app);
-            if (out_files[out_filename].tellp() == 0) {
-                std::vector<unsigned int> sizes;
-                std::vector<std::string> headers{"Arrival Rate"};
-                conf.get_sizes(sizes);
-                experiments_stats[i].add_headers(headers, sizes);
-                // Write the headers to the CSV file
-                for (const std::string& header : headers) {
-                    out_files[out_filename] << header << ";";
-                }
-                out_files[out_filename] << "\n";
-            }
         }
     }
     for (int i = 0; i < n_experiments; ++i) {
-        threads[i] = std::thread(run_simulation, std::ref(experiments->at(i).second), std::ref(experiments_stats[i]));
+        threads[i] = std::thread(run_simulation, std::ref(experiments->at(i).second));
     }
     for (int i = 0; i < n_experiments; ++i) {
         threads[i].join();
@@ -78,8 +64,18 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < n_experiments; ++i) {
         const auto& conf = experiments->at(i).second;
         std::string out_filename = conf.output_filename();
-        out_files[out_filename] << conf.toml.at_path("arrival.rate").value<double>().value() << ";";
-        out_files[out_filename] << experiments_stats[i] << "\n";
+        if (out_files[out_filename].tellp() == 0) {
+            std::vector<unsigned int> sizes;
+            std::vector<std::string> headers{};
+            conf.stats.add_headers(headers);
+            // Write the headers to the CSV file
+            for (const std::string& header : headers) {
+                out_files[out_filename] << header << ";";
+            }
+            out_files[out_filename] << "\n";
+        }
+        // out_files[out_filename] << conf.toml.at_path("arrival.rate").value<double>().value() << ";";
+        out_files[out_filename] << conf.stats << "\n";
     }
 
     for (auto& file : out_files | std::views::values) {

@@ -49,15 +49,15 @@ std::ostream& operator<<(std::ostream& os, const Stat<std::variant<double, long,
 class ClassStats {
 public:
     const std::string name;
-    Stat<Confidence_inter> occupancy_buf; // out: occupancy buffer per class
-    Stat<Confidence_inter> occupancy_ser; // out: occupancy servers per class
-    Stat<Confidence_inter> occupancy_system; // out: occupancy in the system per class
-    Stat<Confidence_inter> wait_time; // output: waiting time per class
-    Stat<Confidence_inter> wait_time_var; // output: waiting time variance per class
-    Stat<Confidence_inter> throughput; // out: throughput per class
-    Stat<Confidence_inter> resp_time; // output: response time per class
-    Stat<Confidence_inter> resp_time_var; // output: waiting time variance per class
-    Stat<Confidence_inter> preemption_avg;
+    Stat<> occupancy_buf; // out: occupancy buffer per class
+    Stat<> occupancy_ser; // out: occupancy servers per class
+    Stat<> occupancy_system; // out: occupancy in the system per class
+    Stat<> wait_time; // output: waiting time per class
+    Stat<> wait_time_var; // output: waiting time variance per class
+    Stat<> throughput; // out: throughput per class
+    Stat<> resp_time; // output: response time per class
+    Stat<> resp_time_var; // output: waiting time variance per class
+    Stat<> preemption_avg;
     Stat<bool> warnings; // out: warning for class stability
 
     explicit ClassStats(const std::string& name) :
@@ -95,37 +95,39 @@ public:
 };
 
 class ExperimentStats {
+    std::vector<Stat<std::variant<double, long, std::string>>> pivot_values{};
+
 public:
-    std::vector<Stat<std::variant<double, long, std::string>>> additional_static_values{};
-    std::vector<ClassStats> class_stats;
-    Stat<Confidence_inter> wasted{"Wasted Servers", true}; // out: wasted servers
-    Stat<Confidence_inter> utilisation{"Utilisation", true}; // out: wasted servers
-    Stat<Confidence_inter> occupancy_tot{"Queue Total", true}; // out: total queue length
-    Stat<Confidence_inter> wait_tot{"WaitTime Total", true}; // out: total waiting time
-    Stat<Confidence_inter> wait_var_tot{"WaitTime Variance", true}; // out: total waiting time variance
-    Stat<Confidence_inter> resp_tot{"RespTime Total", true}; // out: total response time
-    Stat<Confidence_inter> resp_var_tot{"RespTime Variance", true}; // out: total response time
-    Stat<Confidence_inter> window_size{"Window Size", true};
-    Stat<Confidence_inter> violations{"FIFO Violations", true}; // out: fifo violations counter
-    Stat<Confidence_inter> timings_tot{"Run Duration", true}; // out: average run duration
-    Stat<Confidence_inter> big_seq_avg_len{"Big Sequence Length", true}; // out: average length of big service sequence
-    Stat<Confidence_inter> small_seq_avg_len{"Small Sequence Length",
-                                             true}; // out: average length of big service sequence
-    Stat<Confidence_inter> big_seq_avg_dur{"Big Sequence Duration",
-                                           true}; // out: average length of big service sequence
-    Stat<Confidence_inter> small_seq_avg_dur{"Small Sequence Duration",
-                                             true}; // out: average length of big service sequence
-    Stat<Confidence_inter> big_seq_amount{"Big Sequence Amount", true}; // out: amount of big service sequence
-    Stat<Confidence_inter> small_seq_amount{"Small Sequence Amount", true}; // out: amount of small service sequence
-    Stat<Confidence_inter> phase_two_dur{"Phase Two Duration", true}; // out: duration of phase two
-    Stat<Confidence_inter> phase_three_dur{"Phase Three Duration", true}; // out: duration of phase three
+    std::vector<ClassStats> class_stats{};
+    Stat<> wasted{"Wasted Servers", true}; // out: wasted servers
+    Stat<> utilisation{"Utilisation", true}; // out: wasted servers
+    Stat<> occupancy_tot{"Queue Total", true}; // out: total queue length
+    Stat<> wait_tot{"WaitTime Total", true}; // out: total waiting time
+    Stat<> wait_var_tot{"WaitTime Variance", true}; // out: total waiting time variance
+    Stat<> resp_tot{"RespTime Total", true}; // out: total response time
+    Stat<> resp_var_tot{"RespTime Variance", true}; // out: total response time
+    Stat<> window_size{"Window Size", true};
+    Stat<> violations{"FIFO Violations", true}; // out: fifo violations counter
+    Stat<> timings_tot{"Run Duration", true}; // out: average run duration
+    Stat<> big_seq_avg_len{"Big Sequence Length", true}; // out: average length of big service sequence
+    Stat<> small_seq_avg_len{"Small Sequence Length", true}; // out: average length of big service sequence
+    Stat<> big_seq_avg_dur{"Big Sequence Duration", true}; // out: average length of big service sequence
+    Stat<> small_seq_avg_dur{"Small Sequence Duration", true}; // out: average length of big service sequence
+    Stat<> big_seq_amount{"Big Sequence Amount", true}; // out: amount of big service sequence
+    Stat<> small_seq_amount{"Small Sequence Amount", true}; // out: amount of small service sequence
+    Stat<> phase_two_dur{"Phase Two Duration", true}; // out: duration of phase two
+    Stat<> phase_three_dur{"Phase Three Duration", true}; // out: duration of phase three
 
     friend std::ostream& operator<<(std::ostream& os, ExperimentStats const& m);
     void add_headers(std::vector<std::string>& headers, std::vector<unsigned int>& sizes) const;
     void add_headers(std::vector<std::string>& headers) const;
 
     template <typename VAL_TYPE>
-    bool add_static_value(const std::string& name, VAL_TYPE value);
+    bool add_pivot_value(const std::string& name, const VAL_TYPE& value) {
+        pivot_values.emplace_back(name, false);
+        pivot_values.back() = std::variant<double, long, std::string>(value);
+        return true;
+    }
 };
 
 #endif // EXPERIMENT_STATS_H

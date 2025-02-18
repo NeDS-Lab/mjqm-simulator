@@ -14,6 +14,7 @@
 #include <mjqm-policy/policy.h>
 #include <mjqm-settings/toml_utils.h>
 #include <mjqm-settings/toml_overrides.h>
+#include "mjqm-simulator/experiment_stats.h"
 
 struct ClassConfig {
     std::string name;
@@ -40,6 +41,7 @@ struct ExperimentConfig {
     std::string generator;
     std::vector<ClassConfig> classes;
     toml::table toml;
+    ExperimentStats stats{};
 
     unsigned int get_sizes(std::vector<unsigned int>&) const;
 

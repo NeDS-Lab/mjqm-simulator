@@ -38,7 +38,7 @@ std::ostream& operator<<(std::ostream& os, const Stat<std::variant<double, long,
 }
 
 std::ostream& operator<<(std::ostream& os, const ExperimentStats& m) {
-    for (auto& asv : m.additional_static_values) {
+    for (auto& asv : m.pivot_values) {
         os << asv;
     }
     for (auto& cs : m.class_stats) {
@@ -64,19 +64,13 @@ std::ostream& operator<<(std::ostream& os, const ExperimentStats& m) {
     os << m.phase_three_dur;
     return os;
 }
-template <typename VAL_TYPE>
-bool ExperimentStats::add_static_value(const std::string& name, VAL_TYPE value) {
-    additional_static_values.emplace_back(name, false);
-    additional_static_values.back() = std::variant<double, long, std::string>(value);
-    return true;
-}
 
 void ExperimentStats::add_headers(std::vector<std::string>& headers, std::vector<unsigned int>&) const {
     add_headers(headers);
 }
 
 void ExperimentStats::add_headers(std::vector<std::string>& headers) const {
-    for (auto& asv : additional_static_values) {
+    for (auto& asv : pivot_values) {
         asv.add_headers(headers);
     }
     for (auto& cs : class_stats) {

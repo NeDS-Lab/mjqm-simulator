@@ -134,10 +134,11 @@ void from_toml(const std::unique_ptr<std::vector<std::pair<bool, ExperimentConfi
     toml_overrides arguments_overrides(overrides);
     for (const auto override : arguments_overrides) {
         toml::table overridden_data(data);
+        auto& [success, config] = experiments->emplace_back();
         for (const auto& [key, value] : override) {
             overwrite_value(overridden_data, key, value);
+            config.stats.add_pivot_value(key, value);
         }
-        auto& [success, config] = experiments->emplace_back();
         success = from_toml(overridden_data, config);
     }
 }
