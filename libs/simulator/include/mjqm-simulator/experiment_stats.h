@@ -10,21 +10,26 @@
 #include <ostream>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <mjqm-math/confidence_intervals.h>
 
-template <typename CONTENT>
+template <typename CONTENT = Confidence_inter>
 class Stat {
 public:
     const std::string name;
     const bool has_confidence_interval;
     CONTENT value;
+    bool visible = true;
 
     Stat(std::string name, bool has_confidence_interval) :
         name{std::move(name)}, has_confidence_interval{has_confidence_interval} {}
 
     void add_headers(std::vector<std::string>& headers) const {
+        if (!visible) {
+            return;
+        }
         headers.insert(headers.end(), name);
         if (has_confidence_interval) {
             headers.insert(headers.end(), name + " ConfInt");
@@ -39,6 +44,7 @@ public:
 };
 std::ostream& operator<<(std::ostream& os, const Stat<Confidence_inter>& m);
 std::ostream& operator<<(std::ostream& os, const Stat<bool>& m);
+std::ostream& operator<<(std::ostream& os, const Stat<std::variant<double, long, std::string>>& m);
 
 class ClassStats {
 public:
@@ -90,6 +96,7 @@ public:
 
 class ExperimentStats {
 public:
+    std::vector<Stat<std::variant<double, long, std::string>>> additional_static_values{};
     std::vector<ClassStats> class_stats;
     Stat<Confidence_inter> wasted{"Wasted Servers", true}; // out: wasted servers
     Stat<Confidence_inter> utilisation{"Utilisation", true}; // out: wasted servers
@@ -116,6 +123,9 @@ public:
     friend std::ostream& operator<<(std::ostream& os, ExperimentStats const& m);
     void add_headers(std::vector<std::string>& headers, std::vector<unsigned int>& sizes) const;
     void add_headers(std::vector<std::string>& headers) const;
+
+    template <typename VAL_TYPE>
+    bool add_static_value(const std::string& name, VAL_TYPE value);
 };
 
 #endif // EXPERIMENT_STATS_H

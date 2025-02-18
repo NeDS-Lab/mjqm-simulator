@@ -18,9 +18,9 @@ toml::node_type interpreted_node_type(toml::node_view<toml::node>& node, const s
     if (!node) {
         if (value == "true" || value == "false") {
             return toml::node_type::boolean;
-        } else if (value.find_first_not_of("0123456789") == std::string::npos) {
+        } else if (value.find_first_not_of("-+0123456789") == std::string::npos) {
             return toml::node_type::integer;
-        } else if (value.find_first_not_of("0123456789.") == std::string::npos) {
+        } else if (value.find_first_not_of("-+0123456789.") == std::string::npos) {
             return toml::node_type::floating_point;
         }
         return toml::node_type::string;
