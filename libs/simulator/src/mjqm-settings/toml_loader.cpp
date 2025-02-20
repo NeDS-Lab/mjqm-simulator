@@ -129,11 +129,11 @@ bool from_toml(toml::table& data, ExperimentConfig& conf) {
             }
             auto column_str = column.value<std::string>().value();
             if (column_str == "*") {
-                ok = conf.stats.show_all_columns() && ok;
+                ok = conf.stats.show_computed_columns() && ok;
                 continue;
             }
             if (column_str == "-*") {
-                ok = conf.stats.hide_all_columns() && ok;
+                ok = conf.stats.hide_computed_columns() && ok;
                 continue;
             }
             if (column_str.ends_with("]")) {

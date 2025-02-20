@@ -21,7 +21,7 @@ std::map<std::string, std::vector<std::string>> parse_overrides_from_args(int ar
             std::string key = arg.substr(2);
             overrides[key] = {};
             i++;
-            while (i < argc && argv[i][0] != '-') {
+            while (i < argc && !std::string(argv[i]).starts_with("--")) {
                 overrides[key].emplace_back(argv[i]);
                 i++;
             }

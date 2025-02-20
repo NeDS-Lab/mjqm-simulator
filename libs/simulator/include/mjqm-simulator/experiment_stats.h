@@ -44,9 +44,11 @@ public:
 };
 std::ostream& operator<<(std::ostream& os, const Stat<Confidence_inter>& m);
 std::ostream& operator<<(std::ostream& os, const Stat<bool>& m);
-std::ostream& operator<<(std::ostream& os, const Stat<std::variant<double, long, std::string>>& m);
+typedef std::variant<double, long, std::string> VariantStat;
+std::ostream& operator<<(std::ostream& os, const Stat<VariantStat>& m);
 
 class ClassStats {
+
 public:
     const std::string name;
     Stat<> occupancy_buf; // out: occupancy buffer per class
@@ -79,6 +81,7 @@ public:
         preemption_avg.add_headers(headers);
         warnings.add_headers(headers);
     }
+
     friend std::ostream& operator<<(std::ostream& os, ClassStats const& m) {
         os << m.occupancy_buf;
         os << m.occupancy_ser;
@@ -99,7 +102,8 @@ public:
 };
 
 class ExperimentStats {
-    std::vector<Stat<std::variant<double, long, std::string>>> custom_values{};
+    std::vector<Stat<VariantStat>> pivot_values{};
+    std::vector<Stat<VariantStat>> custom_values{};
 
 public:
     std::vector<ClassStats> class_stats{};
@@ -127,15 +131,22 @@ public:
     void add_headers(std::vector<std::string>& headers) const;
 
     template <typename VAL_TYPE>
+    bool add_pivot_column(const std::string& name, const VAL_TYPE& value) {
+        pivot_values.emplace_back(name, false);
+        pivot_values.back() = VariantStat(value);
+        return true;
+    }
+
+    template <typename VAL_TYPE>
     bool add_custom_column(const std::string& name, const VAL_TYPE& value) {
         custom_values.emplace_back(name, false);
-        custom_values.back() = std::variant<double, long, std::string>(value);
+        custom_values.back() = VariantStat(value);
         return true;
     }
 
     bool set_computed_columns_visibility(bool visible);
-    bool show_all_columns() { return set_computed_columns_visibility(true); }
-    bool hide_all_columns() { return set_computed_columns_visibility(false); }
+    bool show_computed_columns() { return set_computed_columns_visibility(true); }
+    bool hide_computed_columns() { return set_computed_columns_visibility(false); }
 
     bool set_column_visibility(const std::string& column, bool visible);
     bool show_column(const std::string& column) { return set_column_visibility(column, true); }

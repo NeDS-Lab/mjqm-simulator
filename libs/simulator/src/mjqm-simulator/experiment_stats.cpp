@@ -26,7 +26,7 @@ std::ostream& operator<<(std::ostream& os, const Stat<bool>& m) {
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const Stat<std::variant<double, long, std::string>>& m) {
+std::ostream& operator<<(std::ostream& os, const Stat<VariantStat>& m) {
     if (!m.visible) {
         return os;
     }
@@ -38,8 +38,11 @@ std::ostream& operator<<(std::ostream& os, const Stat<std::variant<double, long,
 }
 
 std::ostream& operator<<(std::ostream& os, const ExperimentStats& m) {
-    for (auto& asv : m.custom_values) {
-        os << asv;
+    for (auto& pv : m.pivot_values) {
+        os << pv;
+    }
+    for (auto& cv : m.custom_values) {
+        os << cv;
     }
     for (auto& cs : m.class_stats) {
         os << cs;
@@ -70,6 +73,9 @@ void ExperimentStats::add_headers(std::vector<std::string>& headers, std::vector
 }
 
 void ExperimentStats::add_headers(std::vector<std::string>& headers) const {
+    for (auto& pv : pivot_values) {
+        pv.add_headers(headers);
+    }
     for (auto& cv : custom_values) {
         cv.add_headers(headers);
     }
@@ -93,7 +99,7 @@ void ExperimentStats::add_headers(std::vector<std::string>& headers) const {
     big_seq_amount.add_headers(headers);
     small_seq_amount.add_headers(headers);
     phase_two_dur.add_headers(headers);
-    phase_three_dur .add_headers(headers);
+    phase_three_dur.add_headers(headers);
 }
 
 bool ExperimentStats::set_computed_columns_visibility(bool visible) {
@@ -121,6 +127,17 @@ bool ExperimentStats::set_computed_columns_visibility(bool visible) {
     return true;
 }
 bool ExperimentStats::set_column_visibility(const std::string& column, bool visible) {
+    for (auto& pv : pivot_values) {
+        if (column == "pivots") {
+            pv.visible = visible;
+        } else if (pv.name == column) {
+            pv.visible = visible;
+            return true;
+        }
+    }
+    if (column == "pivots") {
+        return true;
+    }
     for (auto& cv : custom_values) {
         if (cv.name == column) {
             cv.visible = visible;
