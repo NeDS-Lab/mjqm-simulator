@@ -18,4 +18,4 @@ add_library(toml_loader
         src/mjqm-settings/toml_policies_loaders.cpp
         src/mjqm-settings/toml_distributions_loaders.cpp
 )
-target_link_libraries(toml_loader tomlplusplus::tomlplusplus math policies)
+target_link_libraries(toml_loader tomlplusplus::tomlplusplus math policies stats)

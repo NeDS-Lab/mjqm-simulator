@@ -42,6 +42,7 @@ bool load_class_from_toml(const toml::table& data, const std::string& index, Exp
     const bool service_ok = load_distribution(data, full_key.str(), SERVICE, &service_sampler);
     if (cores_ok && arrival_ok && service_ok) {
         conf.classes.emplace_back(name, cores, std::move(arrival_sampler), std::move(service_sampler));
+        conf.stats.add_class(name);
         return true;
     }
     return false;
@@ -119,6 +120,49 @@ bool from_toml(toml::table& data, ExperimentConfig& conf) {
         return false;
     }
     conf.policy = policy_builders.at(conf.policy_name)(data, conf);
+    if (toml::array* columns = data.at_path("output.columns").as_array()) {
+        for (const auto& column : *columns) {
+            if (!column.value<std::string>().has_value()) {
+                ok = false;
+                // print_error("Column " << error_highlight(column) << " badly defined");
+                continue;
+            }
+            auto column_str = column.value<std::string>().value();
+            if (column_str == "*") {
+                ok = conf.stats.show_all_columns() && ok;
+                continue;
+            }
+            if (column_str == "-*") {
+                ok = conf.stats.hide_all_columns() && ok;
+                continue;
+            }
+            if (column_str.ends_with("]")) {
+                if (column_str.ends_with("[*]")) {
+                    if (column_str.starts_with("-")) {
+                        conf.stats.hide_class_column(column_str.substr(1, column_str.size() - 4));
+                    } else {
+                        conf.stats.show_class_column(column_str.substr(0, column_str.size() - 4));
+                    }
+                    continue;
+                }
+                if (auto class_start_at = column_str.find("[")) {
+                    auto class_name = column_str.substr(class_start_at + 1, column_str.size() - class_start_at - 2);
+                    if (column_str.starts_with("-")) {
+                        conf.stats.hide_class_column(column_str.substr(1, class_start_at - 1), class_name);
+                    } else {
+                        conf.stats.show_class_column(column_str.substr(0, class_start_at - 1), class_name);
+                    }
+                    continue;
+                }
+                print_error("Column " << error_highlight(column_str) << " badly defined");
+            }
+            if (column_str.starts_with("-")) {
+                conf.stats.hide_column(column_str.substr(1));
+                continue;
+            }
+            conf.stats.show_column(column_str);
+        }
+    }
 
     return ok;
 }
@@ -137,7 +181,7 @@ void from_toml(const std::unique_ptr<std::vector<std::pair<bool, ExperimentConfi
         auto& [success, config] = experiments->emplace_back();
         for (const auto& [key, value] : override) {
             overwrite_value(overridden_data, key, value);
-            config.stats.add_pivot_value(key, value);
+            config.stats.add_custom_column(key, value);
         }
         success = from_toml(overridden_data, config);
     }
@@ -146,13 +190,13 @@ void from_toml(const std::unique_ptr<std::vector<std::pair<bool, ExperimentConfi
 std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
 from_toml(const toml::table& data, const std::map<std::string, std::vector<std::string>>& arguments_overrides) {
     auto experiments = std::make_unique<std::vector<std::pair<bool, ExperimentConfig>>>();
-    if (auto vars = data.at_path("variation").as_array()) {
+    if (auto vars = data.at_path("pivot").as_array()) {
         for (auto& var : *vars) {
-            auto file_overrides = parse_overrides_from_variation(*var.as_table());
+            auto file_overrides = parse_overrides_from_pivot(*var.as_table());
             from_toml(experiments, data, merge_overrides(file_overrides, arguments_overrides));
         }
     }
-    if (experiments->empty()) { // catch both no variation and empty variation list
+    if (experiments->empty()) { // catch both no pivot and empty pivot list
         from_toml(experiments, data, arguments_overrides);
     }
     return experiments;

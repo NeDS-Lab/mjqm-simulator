@@ -32,7 +32,7 @@ public:
         return std::make_unique<ServerFilling>(w, servers, state_buf.size());
     }
     explicit operator std::string() const override {
-        return std::string("ServerFilling(servers=") + std::to_string(servers) +
+        return "ServerFilling(servers=" + std::to_string(servers) +
             ", classes=" + std::to_string(state_buf.size()) + ")";
     }
 

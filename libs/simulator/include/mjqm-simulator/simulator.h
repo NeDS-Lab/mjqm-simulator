@@ -489,9 +489,9 @@ public:
     }
 
     void produce_statistics(ExperimentStats& stats, const double confidence = 0.05) const {
-        int i = 0;
-        for (auto& cn : class_names) {
-            ClassStats& res = stats.class_stats.emplace_back(cn);
+        bool stats_prepared = stats.class_stats.size() > 0;
+        for (int i = 0; i < nclasses; ++i) {
+            ClassStats& res = stats_prepared ? stats.class_stats.at(i) : stats.class_stats.emplace_back(class_names[i]);
             res.occupancy_buf = compute_interval_class_student(rep_occupancy_buf, i, confidence);
             res.occupancy_ser = compute_interval_class_student(rep_occupancy_ser, i, confidence);
             res.throughput = compute_interval_class_student(rep_th, i, confidence);
@@ -501,7 +501,6 @@ public:
             res.resp_time_var = compute_interval_class_student(rep_resp_var, i, confidence);
             res.preemption_avg = compute_interval_class_student(rep_preemption, i, confidence);
             res.warnings = 1.0 - res.throughput.value.mean / l[i] > 0.05;
-            ++i;
         }
         stats.wasted = compute_interval_student(rep_waste, confidence);
         stats.violations = compute_interval_student(rep_viol, confidence);

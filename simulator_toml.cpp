@@ -34,19 +34,17 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    size_t n_experiments = experiments->size();
-
-    for (int i = 0; i < n_experiments; ++i) {
+    for (int i = 0; i < experiments->size(); ++i) {
         if (!experiments->at(i).first) {
             std::cerr << "Error reading TOML file" << std::endl;
             return 1;
         }
     }
 
-    std::vector<std::thread> threads(n_experiments);
+    std::vector<std::thread> threads(experiments->size());
 
     std::unordered_map<std::string, std::ofstream> out_files;
-    for (int i = 0; i < n_experiments; ++i) {
+    for (int i = 0; i < experiments->size(); ++i) {
         const auto& conf = experiments->at(i).second;
         std::cout << conf << std::endl;
         std::string out_filename = conf.output_filename();
@@ -54,14 +52,14 @@ int main(int argc, char* argv[]) {
             out_files[out_filename] = std::ofstream(out_filename, std::ios::app);
         }
     }
-    for (int i = 0; i < n_experiments; ++i) {
+    for (int i = 0; i < experiments->size(); ++i) {
         threads[i] = std::thread(run_simulation, std::ref(experiments->at(i).second));
     }
-    for (int i = 0; i < n_experiments; ++i) {
+    for (int i = 0; i < experiments->size(); ++i) {
         threads[i].join();
     }
 
-    for (int i = 0; i < n_experiments; ++i) {
+    for (int i = 0; i < experiments->size(); ++i) {
         const auto& conf = experiments->at(i).second;
         std::string out_filename = conf.output_filename();
         if (out_files[out_filename].tellp() == 0) {

@@ -41,7 +41,7 @@ service.distribution = "exponential"
 
 {classes}
 
-[[variation]]
+[[pivot]]
 arrival.rate = {rates}
 """,
         file=out,

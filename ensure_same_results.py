@@ -15,6 +15,7 @@ def load_results(path: Path):
         columns = []
         for column in loaded_columns:
             column = column.replace("Lenght", "Length")
+            column = column.replace("arrival.rate", "Arrival Rate")
             columns.append(column)
         for line in file:
             values = line.strip().split(";")

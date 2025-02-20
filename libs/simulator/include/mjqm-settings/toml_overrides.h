@@ -12,7 +12,7 @@
 #include <mjqm-settings/toml_utils.h>
 
 std::map<std::string, std::vector<std::string>> parse_overrides_from_args(int argc, char* argv[], int start_from = 2);
-std::map<std::string, std::vector<std::string>> parse_overrides_from_variation(const toml::table& table);
+std::map<std::string, std::vector<std::string>> parse_overrides_from_pivot(const toml::table& table);
 std::map<std::string, std::vector<std::string>> merge_overrides(
     const std::map<std::string, std::vector<std::string>>& base,
     const std::map<std::string, std::vector<std::string>>& higher_priority

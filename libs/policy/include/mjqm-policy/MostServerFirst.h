@@ -33,7 +33,7 @@ public:
         return std::make_unique<MostServerFirst>(w, servers, state_buf.size(), sizes);
     }
     explicit operator std::string() const override {
-        return std::string("MostServerFirst(servers=") + std::to_string(servers) +
+        return "MostServerFirst(servers=" + std::to_string(servers) +
             ", classes=" + std::to_string(state_buf.size()) + ", sizes=(" + join(sizes.begin(), sizes.end()) +
             "))";
     }

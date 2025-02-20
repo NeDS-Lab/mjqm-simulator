@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
 
     for (const auto& [success, config] : *experiments) {
         if (!success) {
-            std::cerr << "Error reading a variation" << std::endl << std::endl;
+            std::cerr << "Error reading a pivot" << std::endl << std::endl;
             continue;
         }
         std::cout << config << std::endl;

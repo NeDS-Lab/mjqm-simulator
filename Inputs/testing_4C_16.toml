@@ -26,7 +26,7 @@ arrival.prob = 0.2
 cores = 8
 arrival.prob = 0.1
 
-[[variation]]
+[[pivot]]
 arrival.rate = [
     0.1,
     0.4157894736842105,

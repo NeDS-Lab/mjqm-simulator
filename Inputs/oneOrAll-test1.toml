@@ -21,7 +21,7 @@ arrival.prob = 0.5
 service.mean = 0.5
 
 
-[[variation]]
+[[pivot]]
 arrival.rate = [
     0.1,
     0.419,

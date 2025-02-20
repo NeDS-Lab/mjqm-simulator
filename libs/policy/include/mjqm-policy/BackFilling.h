@@ -34,7 +34,7 @@ public:
         return std::make_unique<BackFilling>(w, servers, state_buf.size(), sizes);
     }
     explicit operator std::string() const override {
-        return std::string("BackFilling(servers=") + std::to_string(servers) +
+        return "BackFilling(servers=" + std::to_string(servers) +
             ", classes=" + std::to_string(state_buf.size()) + ", sizes=(" + join(sizes.begin(), sizes.end()) +
             "))";
     }

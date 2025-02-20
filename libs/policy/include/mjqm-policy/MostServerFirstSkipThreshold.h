@@ -35,7 +35,7 @@ public:
         return std::make_unique<MostServerFirstSkipThreshold>(w, servers, state_buf.size(), sizes, threshold);
     }
     explicit operator std::string() const override {
-        return std::string("MostServerFirstSkip(servers=") + std::to_string(servers) +
+        return "MostServerFirstSkip(servers=" + std::to_string(servers) +
             ", classes=" + std::to_string(state_buf.size()) + ", sizes=(" + join(sizes.begin(), sizes.end()) +
             "), threshold=" + std::to_string(threshold) + ")";
     }

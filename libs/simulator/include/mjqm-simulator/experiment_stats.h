@@ -5,7 +5,7 @@
 #ifndef EXPERIMENT_STATS_H
 #define EXPERIMENT_STATS_H
 
-#include <cwchar>
+#include <functional>
 #include <iostream>
 #include <ostream>
 #include <string>
@@ -23,16 +23,16 @@ public:
     CONTENT value;
     bool visible = true;
 
-    Stat(std::string name, bool has_confidence_interval) :
-        name{std::move(name)}, has_confidence_interval{has_confidence_interval} {}
+    Stat(const std::string& name, bool has_confidence_interval) :
+        name{name}, has_confidence_interval{has_confidence_interval} {}
 
     void add_headers(std::vector<std::string>& headers) const {
         if (!visible) {
             return;
         }
-        headers.insert(headers.end(), name);
+        headers.emplace_back(name);
         if (has_confidence_interval) {
-            headers.insert(headers.end(), name + " ConfInt");
+            headers.emplace_back(name + " ConfInt");
         }
     }
 
@@ -82,7 +82,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, ClassStats const& m) {
         os << m.occupancy_buf;
         os << m.occupancy_ser;
-        os << m.occupancy_buf + m.occupancy_ser; // occupancy system
+        os << m.occupancy_buf + m.occupancy_ser; // = occupancy system
         os << m.wait_time;
         os << m.wait_time_var;
         os << m.throughput;
@@ -92,10 +92,14 @@ public:
         os << m.warnings;
         return os;
     }
+
+    bool set_computed_columns_visibility(bool visible);
+
+    bool set_column_visibility(const std::string& column, bool visible);
 };
 
 class ExperimentStats {
-    std::vector<Stat<std::variant<double, long, std::string>>> pivot_values{};
+    std::vector<Stat<std::variant<double, long, std::string>>> custom_values{};
 
 public:
     std::vector<ClassStats> class_stats{};
@@ -123,10 +127,27 @@ public:
     void add_headers(std::vector<std::string>& headers) const;
 
     template <typename VAL_TYPE>
-    bool add_pivot_value(const std::string& name, const VAL_TYPE& value) {
-        pivot_values.emplace_back(name, false);
-        pivot_values.back() = std::variant<double, long, std::string>(value);
+    bool add_custom_column(const std::string& name, const VAL_TYPE& value) {
+        custom_values.emplace_back(name, false);
+        custom_values.back() = std::variant<double, long, std::string>(value);
         return true;
+    }
+
+    bool set_computed_columns_visibility(bool visible);
+    bool show_all_columns() { return set_computed_columns_visibility(true); }
+    bool hide_all_columns() { return set_computed_columns_visibility(false); }
+
+    bool set_column_visibility(const std::string& column, bool visible);
+    bool show_column(const std::string& column) { return set_column_visibility(column, true); }
+    bool hide_column(const std::string& column) { return set_column_visibility(column, false); }
+
+    ClassStats& add_class(const std::string& name) { return std::ref(class_stats.emplace_back(name)); }
+    bool set_class_column_visibility(const std::string& column, bool visible, const std::string& cls = "*");
+    bool show_class_column(const std::string& column, const std::string& cls = "*") {
+        return set_class_column_visibility(column, true, cls);
+    }
+    bool hide_class_column(const std::string& column, const std::string& cls = "*") {
+        return set_class_column_visibility(column, false, cls);
     }
 };
 

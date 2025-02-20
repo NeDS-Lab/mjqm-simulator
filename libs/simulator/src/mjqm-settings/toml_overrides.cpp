@@ -60,9 +60,9 @@ std::string as_string(const toml::node& node) {
     }
 }
 
-std::map<std::string, std::vector<std::string>> parse_overrides_from_variation(const toml::table& table) {
+std::map<std::string, std::vector<std::string>> parse_overrides_from_pivot(const toml::table& table) {
     // accept any type of value:
-    // [[variation]]
+    // [[pivot]]
     // arrival.rate = [ 0.1 0.2 0.3 ]
     // policy = [ "most server first" "smash" ]
     // policy = "smash" # just one value for overriding without matrix effect

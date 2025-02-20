@@ -30,7 +30,7 @@ public:
     ~Smash() override = default;
     std::unique_ptr<Policy> clone() const override { return std::make_unique<Smash>(w, servers, state_buf.size()); }
     explicit operator std::string() const override {
-        return std::string("Smash(window=") + std::to_string(w) + ", servers=" + std::to_string(servers) +
+        return "Smash(window=" + std::to_string(w) + ", servers=" + std::to_string(servers) +
             ", classes=" + std::to_string(state_buf.size()) + ")";
     }
 
