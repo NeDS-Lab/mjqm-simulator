@@ -59,6 +59,9 @@
 │       └── include
 │           └── mjqm-utils
 │               └── string.hpp
+├── scripts
+│   ├── convert_conf.py
+│   └── ensure_same_results.py
 ├── test
 │   └── expected
 │       ├── overLambdas-nClasses2-N50-Win1-Exponential-oneOrAll-test1.csv
@@ -72,8 +75,6 @@
 ├── CMakeLists.txt
 ├── CMakePresets.json
 ├── configure
-├── convert_conf.py
-├── ensure_same_results.py
 ├── main_allPols.cpp
 ├── README.md
 ├── rebuild
@@ -106,4 +107,7 @@ The project is organized in the following way:
 - `libs/simulator/`: Contains the actual simulator code and its settings loader.
     For a cleaner organization, the loaders for distributions and policies are separated.
 - `libs/utils/`: Contains some quick header-only utilities.
+- `scripts/`: Contains some scripts for solving small tasks running the project.
+    - `convert_conf.py`: Converts the configuration files from the two-file logic to the TOML format.
+    - `ensure_same_results.py`: Checks if the results of two simulations are the same.
 - `test/expected/`: Contains the expected output files for the tests.

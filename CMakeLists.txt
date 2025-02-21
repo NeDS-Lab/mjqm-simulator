@@ -84,7 +84,7 @@ function(add_custom_test)
             TARGET test_${T_TARGET}_${T_NAME} POST_BUILD
             BYPRODUCTS ${DIFF_FILE}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMAND python3 ensure_same_results.py Results/${T_TARGET}/${FILE} test/expected/${FILE} > ${DIFF_FILE} 2>&1
+            COMMAND python3 scripts/ensure_same_results.py Results/${T_TARGET}/${FILE} test/expected/${FILE} > ${DIFF_FILE} 2>&1
             COMMAND grep -q "Data is the same" ${DIFF_FILE} && cmake -E cmake_echo_color --green "${T_TARGET} PASSED test ${FILE}" || cmake -E cmake_echo_color --red "${T_TARGET} FAILED test ${FILE}"
             VERBATIM
         )
