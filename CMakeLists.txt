@@ -16,6 +16,13 @@ project(mjqm-simulator
     LANGUAGES CXX
 )
 
+# Include the Boost library
+set(Boost_USE_DEBUG_LIBS        OFF)  # ignore debug libs
+set(Boost_USE_RELEASE_LIBS       ON)  # only find release libs
+set(Boost_USE_MULTITHREADED     OFF)  # do not multithread to reduce cache clash
+find_package(Boost 1.83 REQUIRED COMPONENTS system thread)
+include_directories(${Boost_INCLUDE_DIR})
+
 include_directories(
     libs/math/include
     libs/policy/include
@@ -37,7 +44,7 @@ add_executable(simulator_toml simulator_toml.cpp)
 target_link_libraries(simulator_toml math policies stats toml_loader)
 
 add_executable(toml_loader_test toml_loader_test.cpp)
-target_link_libraries(toml_loader_test toml_loader)
+target_link_libraries(toml_loader_test toml_loader ${Boost_LIBRARIES})
 
 foreach (target main_allPols simulator_smash simulator_toml toml_loader_test)
     add_custom_command(

@@ -9,8 +9,10 @@
 #include <ranges>
 #include <string>
 #include <thread>
-#include <unordered_map>
 #include <vector>
+
+#include <boost/asio/post.hpp>
+#include <boost/asio/thread_pool.hpp>
 
 #include <mjqm-settings/toml_loader.h>
 #include <mjqm-simulator/experiment_stats.h>
@@ -23,6 +25,9 @@ void run_simulation(ExperimentConfig& conf) {
 
     sim.simulate(conf.events, conf.repetitions);
     sim.produce_statistics(conf.stats);
+    std::ofstream out_file = std::ofstream(conf.output_filename(), std::ios::app);
+    out_file << conf.stats << "\n";
+    out_file.close();
 }
 
 int main(int argc, char* argv[]) {
@@ -34,51 +39,35 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    for (int i = 0; i < experiments->size(); ++i) {
-        if (!experiments->at(i).first) {
+    for (const auto& experiment : *experiments) {
+        if (!experiment.first) {
             std::cerr << "Error reading TOML file" << std::endl;
             return 1;
         }
     }
 
-    std::vector<std::thread> threads(experiments->size());
+    boost::asio::thread_pool pool(std::thread::hardware_concurrency());
 
-    std::unordered_map<std::string, std::ofstream> out_files;
-    for (int i = 0; i < experiments->size(); ++i) {
-        const auto& conf = experiments->at(i).second;
+    for (const auto& [name, conf] : *experiments) {
         std::cout << conf << std::endl;
         std::string out_filename = conf.output_filename();
-        if (!out_files.contains(out_filename)) {
-            out_files[out_filename] = std::ofstream(out_filename, std::ios::app);
-        }
-    }
-    for (int i = 0; i < experiments->size(); ++i) {
-        threads[i] = std::thread(run_simulation, std::ref(experiments->at(i).second));
-    }
-    for (int i = 0; i < experiments->size(); ++i) {
-        threads[i].join();
-    }
-
-    for (int i = 0; i < experiments->size(); ++i) {
-        const auto& conf = experiments->at(i).second;
-        std::string out_filename = conf.output_filename();
-        if (out_files[out_filename].tellp() == 0) {
+        std::ofstream out_file = std::ofstream(out_filename, std::ios::app);
+        if (out_file.tellp() == 0) {
             std::vector<unsigned int> sizes;
             std::vector<std::string> headers{};
             conf.stats.add_headers(headers);
             // Write the headers to the CSV file
             for (const std::string& header : headers) {
-                out_files[out_filename] << header << ";";
+                out_file << header << ";";
             }
-            out_files[out_filename] << "\n";
+            out_file << "\n";
         }
-        // out_files[out_filename] << conf.toml.at_path("arrival.rate").value<double>().value() << ";";
-        out_files[out_filename] << conf.stats << "\n";
     }
-
-    for (auto& file : out_files | std::views::values) {
-        file.close();
+    for (int i = 0; i < experiments->size(); ++i) {
+        boost::asio::post(pool, [&conf = experiments->at(i).second] { run_simulation(conf); });
     }
+    pool.join();
+    std::cout << "All threads joined" << std::endl;
 
     return 0;
 }

@@ -1,15 +1,23 @@
 #!/usr/bin/bash
 
 cd "$(dirname "$0")"
+
 preset=default
-if [ ! -z "$1" ]; then
-    case "$1" in
-        --clean) rm -rf build build-debug ;;
-        --debug) preset=debug ;;
-        --help) echo "Usage: $0 [--clean] [--debug]"; exit 0 ;;
-        *) echo "Unknown option: $1"; exit 1 ;;
+build=1
+
+for ARG in $(getopt -l clean,debug,build,help,no-build -o 'cdbh' -- "$@"); do
+    case "$ARG" in
+        --clean|-c) rm -rf build build-debug ;;
+        --debug|-d) preset=debug ;;
+        --build|-b) build=1 ;;
+        --no-build) build=0 ;;
+        --help|-h) echo "Usage: $0 [--clean] [--debug] [--build|--no-build] [--help]"; exit 0 ;;
+        --) break;;
+        *) echo "Unknown option: $ARG"; exit 1 ;;
     esac
-fi
+done
 
 cmake --preset ${preset} -Wno-dev --fresh
-cmake --build . --preset ${preset}
+if [ ${build} -eq 1 ]; then
+    cmake --build . --preset ${preset}
+fi
