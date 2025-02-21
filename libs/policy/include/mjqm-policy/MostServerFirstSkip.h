@@ -23,7 +23,7 @@ public:
     const std::vector<std::list<long int>>& get_ongoing_jobs() override { return ongoing_jobs; }
     int get_free_ser() override { return freeservers; }
     int get_window_size() override { return 0; }
-    int get_w() const override  { return w; }
+    int get_w() const override { return w; }
     int get_violations_counter() override { return violations_counter; }
     void insert_completion(int size, double completion) override {}
     bool fit_jobs(std::unordered_map<long int, double> holdTime, double simTime) override { return false; }
@@ -36,8 +36,7 @@ public:
     }
     explicit operator std::string() const override {
         return "MostServerFirstSkip(servers=" + std::to_string(servers) +
-            ", classes=" + std::to_string(state_buf.size()) + ", sizes=(" + join(sizes.begin(), sizes.end()) +
-            "))";
+            ", classes=" + std::to_string(state_buf.size()) + ", sizes=(" + join(sizes.begin(), sizes.end()) + "))";
     }
 
 private:

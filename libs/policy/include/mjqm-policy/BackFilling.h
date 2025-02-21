@@ -6,6 +6,7 @@
 #define BACKFILLING_H
 
 #include <map>
+
 #include <mjqm-policy/policy.h>
 #include <mjqm-utils/string.hpp>
 
@@ -23,7 +24,7 @@ public:
     const std::vector<std::list<long int>>& get_ongoing_jobs() override { return ongoing_jobs; }
     int get_free_ser() override { return freeservers; }
     int get_window_size() override { return 0; }
-    int get_w() const override  { return w; }
+    int get_w() const override { return w; }
     int get_violations_counter() override { return violations_counter; }
     void insert_completion(int size, double completion) override;
     void reset_completion(double simtime) override;
@@ -34,9 +35,8 @@ public:
         return std::make_unique<BackFilling>(w, servers, state_buf.size(), sizes);
     }
     explicit operator std::string() const override {
-        return "BackFilling(servers=" + std::to_string(servers) +
-            ", classes=" + std::to_string(state_buf.size()) + ", sizes=(" + join(sizes.begin(), sizes.end()) +
-            "))";
+        return "BackFilling(servers=" + std::to_string(servers) + ", classes=" + std::to_string(state_buf.size()) +
+            ", sizes=(" + join(sizes.begin(), sizes.end()) + "))";
     }
 
 private:

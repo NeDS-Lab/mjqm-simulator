@@ -5,13 +5,13 @@
 #ifndef TOML_UTILS_H
 #define TOML_UTILS_H
 
-#define TOML_ENABLE_UNRELEASED_FEATURES 1
-#define TOML_HEADER_ONLY 0
-#include "toml++/toml.h"
-
 #include <iostream>
 #include <optional>
 #include <string_view>
+
+#define TOML_ENABLE_UNRELEASED_FEATURES 1
+#define TOML_HEADER_ONLY 0
+#include "toml++/toml.h"
 
 #define RESET "\033[0m"
 #define BLACK "\033[30m" // Black

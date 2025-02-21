@@ -8,8 +8,8 @@
 #include <unordered_map>
 
 #include <mjqm-policy/policy.h>
-#include <mjqm-settings/toml_utils.h>
 #include <mjqm-settings/toml_loader.h>
+#include <mjqm-settings/toml_utils.h>
 
 typedef std::unique_ptr<Policy> (*policy_builder)(const toml::table& data, const ExperimentConfig& conf);
 
@@ -37,4 +37,4 @@ inline static std::unordered_map<std::string_view, policy_builder> policy_builde
     {"most server first skip threshold", most_server_first_skip_threshold_builder},
 };
 
-#endif //TOML_POLICIES_LOADERS_H
+#endif // TOML_POLICIES_LOADERS_H

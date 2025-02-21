@@ -2,9 +2,10 @@
 // Created by Marco Ciotola on 04/02/25.
 //
 
+#include <unordered_map>
+
 #include <mjqm-math/samplers.h>
 #include <mjqm-settings/toml_distributions_loaders.h>
-#include <unordered_map>
 
 #ifndef XOR
 #define XOR(a, b) (!(a) != !(b))
@@ -23,8 +24,7 @@ bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, c
     if (!(opt_alpha.has_value() &&
           XOR(XOR(opt_mean.has_value(), opt_rate.has_value()), opt_l.has_value() && opt_h.has_value()))) {
         print_error("Bounded pareto distribution at path "
-                    << error_highlight(name)
-                    << " must have alpha defined, and either mean, rate or the l/h pair");
+                    << error_highlight(name) << " must have alpha defined, and either mean, rate or the l/h pair");
         return false;
     }
     const double alpha = opt_alpha.value();

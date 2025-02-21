@@ -2,11 +2,13 @@
 // Created by Marco Ciotola on 23/01/25.
 //
 
+#include <cmath>
+#include <vector>
+
 #include <boost/math/distributions/chi_squared.hpp>
 #include <boost/math/distributions/students_t.hpp>
-#include <cmath>
+
 #include <mjqm-math/confidence_intervals.h>
-#include <vector>
 
 Confidence_inter compute_interval_student(const std::vector<double>& rep, const double confidence) {
     double mean = 0.0;

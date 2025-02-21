@@ -4,10 +4,11 @@
 
 #include <iostream>
 #include <map>
-#include <mjqm-settings/toml_overrides.h>
-#include <mjqm-settings/toml_utils.h>
 #include <string>
 #include <vector>
+
+#include <mjqm-settings/toml_overrides.h>
+#include <mjqm-settings/toml_utils.h>
 
 std::map<std::string, std::vector<std::string>> parse_overrides_from_args(int argc, char* argv[], int start_from) {
     // accept any type of value:

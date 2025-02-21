@@ -13,7 +13,8 @@
 
 class Deterministic : public DistributionSampler {
 public:
-    explicit Deterministic(std::string_view name, const double value) : DistributionSampler(name.data()), value(value) {}
+    explicit Deterministic(std::string_view name, const double value) :
+        DistributionSampler(name.data()), value(value) {}
 
 public: // descriptive parameters and statistics
     const double value;

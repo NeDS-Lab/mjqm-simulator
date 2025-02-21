@@ -10,7 +10,8 @@
 
 class MostServerFirstSkipThreshold : public Policy {
 public:
-    MostServerFirstSkipThreshold(int w, int servers, int classes, const std::vector<unsigned int>& sizes, int threshold) :
+    MostServerFirstSkipThreshold(int w, int servers, int classes, const std::vector<unsigned int>& sizes,
+                                 int threshold) :
         servers(servers), w(w), state_buf(classes), state_ser(classes), stopped_jobs(classes), ongoing_jobs(classes),
         sizes(sizes), freeservers(servers), violations_counter(0), threshold(threshold), drops_below(false),
         big_priority(false) {}
@@ -23,7 +24,7 @@ public:
     const std::vector<std::list<long int>>& get_ongoing_jobs() override { return ongoing_jobs; }
     int get_free_ser() override { return freeservers; }
     int get_window_size() override { return 0; }
-    int get_w() const override  { return w; }
+    int get_w() const override { return w; }
     int get_violations_counter() override { return violations_counter; }
     void insert_completion(int size, double completion) override {}
     bool fit_jobs(std::unordered_map<long int, double> holdTime, double simTime) override { return false; }

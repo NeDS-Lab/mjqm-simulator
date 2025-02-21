@@ -3,12 +3,11 @@
 //
 
 #include <iostream>
-#include <mjqm-settings/toml_overrides.h>
 #include <mjqm-settings/toml_loader.h>
+#include <mjqm-settings/toml_overrides.h>
 #include <string>
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     std::string filename(argv[1]);
     std::cout << "Reading TOML file: " << filename << std::endl;
 

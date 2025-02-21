@@ -2,8 +2,9 @@
 // Created by Marco Ciotola on 21/01/25.
 //
 
-#include <mjqm-policy/ServerFillingMem.h>
 #include <iostream>
+
+#include <mjqm-policy/ServerFillingMem.h>
 
 void ServerFillingMem::arrival(int c, int size, long int id) {
     std::tuple<int, int, long int> e(c, size, id);

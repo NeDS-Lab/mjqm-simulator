@@ -3,9 +3,10 @@
 //
 
 #include <iostream>
-#include <mjqm-simulator/experiment_stats.h>
 #include <variant>
 #include <vector>
+
+#include <mjqm-simulator/experiment_stats.h>
 
 std::ostream& operator<<(std::ostream& os, const Stat<Confidence_inter>& m) {
     if (!m.visible) {

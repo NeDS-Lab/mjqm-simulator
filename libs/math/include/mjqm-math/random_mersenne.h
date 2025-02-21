@@ -2,9 +2,10 @@
 #define MJQM_RANDOM_MERSENNE_H
 
 #include <memory>
-#include <mjqm-math/random.h>
 #include <random>
 #include <string>
+
+#include <mjqm-math/random.h>
 
 #ifndef MJQM_RANDOM_MERSENNE_SEED
 #define MJQM_RANDOM_MERSENNE_SEED 1862248485
