@@ -1,8 +1,6 @@
 add_library(policies
         src/mjqm-policy/BackFilling.cpp
         src/mjqm-policy/MostServerFirst.cpp
-        src/mjqm-policy/MostServerFirstSkip.cpp
-        src/mjqm-policy/MostServerFirstSkipThreshold.cpp
         src/mjqm-policy/ServerFilling.cpp
         src/mjqm-policy/ServerFillingMem.cpp
         src/mjqm-policy/Smash.cpp

@@ -193,9 +193,7 @@
         "server filling",
         "server filling memoryful",
         "back filling",
-        "most server first",
-        "most server first skip",
-        "most server first skip threshold"
+        "most server first"
       ],
       "options": {
         "enum_titles": [
@@ -203,9 +201,7 @@
           "Server Filling",
           "Server Filling (memoryful)",
           "BackFilling",
-          "Most Server First",
-          "Most Server First (skip)",
-          "Most Server First (skip and threshold)"
+          "Most Server First"
         ]
       }
     },
@@ -217,17 +213,6 @@
       "options": {
         "dependencies": {
           "policy": "smash"
-        }
-      }
-    },
-    "msf.threshold": {
-      "title": "Threshold for Most Server First (with skip and threshold) policy",
-      "type": "integer",
-      "minimum": 1,
-      "description": "Tip! if unset, it is computed based on the smaller class configuration",
-      "options": {
-        "dependencies": {
-          "policy": "most server first skip threshold"
         }
       }
     },

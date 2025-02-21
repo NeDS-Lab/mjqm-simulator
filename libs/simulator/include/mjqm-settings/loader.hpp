@@ -157,11 +157,6 @@ inline Simulator::Simulator(const std::vector<double>& l, const std::vector<doub
         this->policy = std::make_unique<ServerFillingMem>(w, servers, nclasses);
     } else if (w == -3) {
         this->policy = std::make_unique<BackFilling>(w, servers, nclasses, sizes);
-    } else if (w == -4) {
-        this->policy = std::make_unique<MostServerFirstSkip>(w, servers, nclasses, sizes);
-    } else if (w == -5) {
-        this->policy = std::make_unique<MostServerFirstSkipThreshold>(
-            w, servers, nclasses, sizes, servers - static_cast<int>(sizes[0] * (l[0] / (1 / u[0]))));
     } else {
         this->policy = std::make_unique<Smash>(w, servers, nclasses);
     }

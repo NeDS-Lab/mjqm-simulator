@@ -31,20 +31,3 @@ std::unique_ptr<Policy> most_server_first_builder(const toml::table&, const Expe
     unsigned int n_classes = conf.get_sizes(sizes);
     return std::make_unique<MostServerFirst>(0, conf.cores, n_classes, sizes);
 }
-
-std::unique_ptr<Policy> most_server_first_skip_builder(const toml::table&, const ExperimentConfig& conf) {
-    std::vector<unsigned int> sizes;
-    unsigned int n_classes = conf.get_sizes(sizes);
-    return std::make_unique<MostServerFirstSkip>(-4, conf.cores, n_classes, sizes);
-}
-
-std::unique_ptr<Policy> most_server_first_skip_threshold_builder(const toml::table& data,
-                                                                 const ExperimentConfig& conf) {
-    std::vector<unsigned int> sizes;
-    unsigned int n_classes = conf.get_sizes(sizes);
-    int default_threshold = static_cast<int>(conf.cores -
-                                             sizes[0] * conf.classes[0].service_sampler->getMean() /
-                                                 conf.classes[0].arrival_sampler->getMean());
-    int threshold = data.at_path("msf.threshold").value<int>().value_or(default_threshold);
-    return std::make_unique<MostServerFirstSkipThreshold>(-5, conf.cores, n_classes, sizes, threshold);
-}
