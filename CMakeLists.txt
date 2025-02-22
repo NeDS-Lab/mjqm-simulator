@@ -155,30 +155,15 @@ foreach (target simulator_toml)
 
     add_custom_test(
         TARGET ${target}
-        NAME testing_4C_16_MostServerFirst_exp
+        NAME testing_4C_16
         FILES overLambdas-nClasses4-N16-Win0-Exponential-testing_4C_16.csv \\
                 overLambdas-nClasses4-N16-Win-2-Exponential-testing_4C_16.csv \\
-                overLambdas-nClasses4-N16-Win-3-Exponential-testing_4C_16.csv
-        ARGS testing_4C_16 --policy "most server first" "server filling memoryful" "back filling"
-    )
-    add_custom_test(
-        TARGET ${target}
-        NAME testing_4C_16_smash_exp
-        FILES overLambdas-nClasses4-N16-Win1-Exponential-testing_4C_16.csv \\
-                overLambdas-nClasses4-N16-Win4-Exponential-testing_4C_16.csv
-        ARGS testing_4C_16 --smash.window 1 4
-    )
-    add_custom_test(
-        TARGET ${target}
-        NAME testing_4C_16_smash_fre
-        FILES overLambdas-nClasses4-N16-Win1-Frechet-testing_4C_16.csv
-        ARGS testing_4C_16 --service.distribution frechet --service.alpha 2.15
-    )
-    add_custom_test(
-        TARGET ${target}
-        NAME testing_4C_16_smash_uni
-        FILES overLambdas-nClasses4-N16-Win1-Uniform-testing_4C_16.csv
-        ARGS testing_4C_16 --service.distribution uniform
+                overLambdas-nClasses4-N16-Win-3-Exponential-testing_4C_16.csv \\
+                overLambdas-nClasses4-N16-Win1-Exponential-testing_4C_16.csv \\
+                overLambdas-nClasses4-N16-Win4-Exponential-testing_4C_16.csv \\
+                overLambdas-nClasses4-N16-Win1-Frechet-testing_4C_16.csv \\
+                overLambdas-nClasses4-N16-Win1-Uniform-testing_4C_16.csv
+        ARGS testing_4C_16 --smash.window 1 4 --pivot --policy "most server first" "server filling memoryful" "back filling" --pivot --service.distribution uniform --pivot --service.distribution frechet --service.alpha 2.15
     )
 endforeach ()
 

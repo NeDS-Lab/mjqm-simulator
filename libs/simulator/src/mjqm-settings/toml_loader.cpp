@@ -167,14 +167,8 @@ bool from_toml(toml::table& data, ExperimentConfig& conf) {
     return ok;
 }
 
-std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
-from_toml(const std::string_view filename, const std::map<std::string, std::vector<std::string>>& overrides) {
-    toml::table data = toml::parse_file(filename);
-    return from_toml(data, overrides);
-}
-
 void from_toml(const std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>& experiments,
-               const toml::table& data, const std::map<std::string, std::vector<std::string>>& overrides) {
+               const toml::table& data, const std::multimap<std::string, std::string>& overrides = {}) {
     toml_overrides arguments_overrides(overrides);
     for (const auto override : arguments_overrides) {
         toml::table overridden_data(data);
@@ -188,18 +182,36 @@ void from_toml(const std::unique_ptr<std::vector<std::pair<bool, ExperimentConfi
 }
 
 std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
-from_toml(const toml::table& data, const std::map<std::string, std::vector<std::string>>& arguments_overrides) {
+from_toml(const toml::table& data, const std::vector<std::multimap<std::string, std::string>>& arguments_overrides) {
     auto experiments = std::make_unique<std::vector<std::pair<bool, ExperimentConfig>>>();
     if (auto vars = data.at_path("pivot").as_array()) {
         for (auto& var : *vars) {
             auto file_overrides = parse_overrides_from_pivot(*var.as_table());
-            from_toml(experiments, data, merge_overrides(file_overrides, arguments_overrides));
+            if (arguments_overrides.empty()) {
+                from_toml(experiments, data, file_overrides);
+            } else {
+                for (const auto& arg_pivot : arguments_overrides) {
+                    from_toml(experiments, data, merge_overrides(file_overrides, arg_pivot));
+                }
+            }
         }
     }
     if (experiments->empty()) { // catch both no pivot and empty pivot list
-        from_toml(experiments, data, arguments_overrides);
+        if (arguments_overrides.empty()) {
+            from_toml(experiments, data);
+        } else {
+            for (const auto& arg_pivot : arguments_overrides) {
+                from_toml(experiments, data, arg_pivot);
+            }
+        }
     }
     return experiments;
+}
+
+std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
+from_toml(const std::string_view filename, const std::vector<std::multimap<std::string, std::string>>& overrides) {
+    toml::table data = toml::parse_file(filename);
+    return from_toml(data, overrides);
 }
 
 Simulator::Simulator(const ExperimentConfig& conf) : nclasses(static_cast<int>(conf.classes.size())) {
