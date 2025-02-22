@@ -34,9 +34,6 @@ add_subdirectory(libs/math)
 add_subdirectory(libs/policy)
 add_subdirectory(libs/simulator)
 
-add_executable(main_allPols main_allPols.cpp)
-target_link_libraries(main_allPols)
-
 add_executable(simulator_smash simulator_smash.cpp)
 target_link_libraries(simulator_smash math policies stats)
 
@@ -46,7 +43,7 @@ target_link_libraries(simulator_toml math policies stats toml_loader)
 add_executable(toml_loader_test toml_loader_test.cpp)
 target_link_libraries(toml_loader_test toml_loader ${Boost_LIBRARIES})
 
-foreach (target main_allPols simulator_smash simulator_toml toml_loader_test)
+foreach (target simulator_smash simulator_toml toml_loader_test)
     add_custom_command(
         TARGET ${target} POST_BUILD
         BYPRODUCTS ${CMAKE_CURRENT_SOURCE_DIR}/${target}
@@ -91,7 +88,7 @@ function(add_custom_test)
     endforeach ()
 endfunction(add_custom_test)
 
-foreach (target main_allPols simulator_smash)
+foreach (target simulator_smash)
     add_custom_target(test_${target})
     add_dependencies(test_all test_${target})
 
@@ -185,7 +182,7 @@ foreach (target simulator_toml)
     )
 endforeach ()
 
-foreach (target main_allPols simulator_smash simulator_toml)
+foreach (target simulator_smash simulator_toml)
     add_custom_command(
         TARGET ${target} POST_BUILD
         BYPRODUCTS ${CMAKE_CURRENT_SOURCE_DIR}/Results/${target}
