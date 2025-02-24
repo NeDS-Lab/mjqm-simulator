@@ -41,7 +41,7 @@ smash.window = 1
 - `events`: the number of events to simulate in each run.
 - `repetitions`: the number of runs to perform.
 - `cores`: the number of cores available in the system.
-- `policy`: the scheduling policy to use.
+- `policy`: the scheduling policy to use. The available policies are described [later](#available-policies).
   - `smash.window`: in case of the `smash` policy, the window size to use. If omitted, the default value is 1.
 - `generator`: the random number generator to use, optional.
   Only `lecuyer` is supported at the moment, and its seed is hardcoded.
@@ -179,6 +179,21 @@ Then, you can either define the `s` parameter, or the `mean` parameter.
 
 Either the `min`/`max` pair, or `mean` is required.
 If `mean` is defined, the `min` and `max` will be calculated as `0.5 * mean` and `1.5 * mean`.
+
+## Available policies
+
+### SMASH
+- `policy = "smash"`
+- `smash.window`: the window size. Default is 1.
+
+### Server filling
+- `policy = "server filling"` or `policy = "server filling memoryful"` for the memoryful version.
+
+### Back filling
+- `policy = "back filling"`
+
+### Most server first
+- `policy = "most server first"`
 
 # Overriding parameters from command line
 
