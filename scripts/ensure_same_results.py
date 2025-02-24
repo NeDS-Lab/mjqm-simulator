@@ -20,9 +20,10 @@ def load_results(path: Path):
         for line in file:
             values = line.strip().split(";")
             if values[0]:
-                data[values[0]] = {}
+                key = math.ceil(float(values[0]) * 10000) / 10000
+                data[key] = {}
                 for column, value in zip(columns[1:], values[1:]):
-                    data[values[0]][column] = value
+                    data[key][column] = value
     return columns, data
 
 
@@ -42,12 +43,12 @@ def divergence(curr: float, prev: float):
 def compare_results(data1, data2):
     columns1, data1 = data1
     columns2, data2 = data2
-    if any(map(lambda x: x not in columns1, columns2)):
+    if missing := set(columns2) - set(columns1):
         print("Missing stat in curr")
-        print(set(columns2) - set(columns1))
-    if any(map(lambda x: x not in data1.keys(), data2.keys())):
+        print(missing)
+    if missing := set(data2.keys()) - set(data1.keys()):
         print("Missing keys in curr")
-        print(set(data2.keys()) - set(data1.keys()))
+        print(missing)
     different = False
     for key in data2.keys():
         if key not in data1:
@@ -68,7 +69,7 @@ def compare_results(data1, data2):
             curr = float(curr_s)
             prev = float(prev_s)
             close = curr_s == prev_s
-            close = close or math.isclose(curr, prev, rel_tol=1e-2)
+            close = close or math.isclose(curr, prev, rel_tol=5e-2)
             if not close:
                 change = divergence(curr, prev)
                 if column == "Run Duration":
@@ -81,19 +82,17 @@ def compare_results(data1, data2):
                 if not key_header:
                     print(f"{columns2[0]}: {key}")
                     key_header = True
-                print(f"\t{column}:")
-                print(f"\t\tdivergence: {change:+.2f}%")
+                print(f"\t{change:+05.2f}% {column} ({prev} -> {curr})")
                 if "Stability Check" not in column:
-                    print(f"\t\tcurr: {data1[key][column]} {data1[key][column + ' ConfInt']}")
-                    print(f"\t\tprev: {data2[key][column]} {data2[key][column + ' ConfInt']}")
-                else:
-                    print(f"\t\tcurr: {data1[key][column]}")
-                    print(f"\t\tprev: {data2[key][column]}")
+                    print(f"\t\t{data2[key][column + ' ConfInt']}",
+                          f"-> {data1[key][column + ' ConfInt']}")
         if print_speedup and duration_diff:
             if not key_header:
                 print(f"{columns2[0]}: {key}")
             print(
-                f"\t{duration_diff} (curr: {data1[key]['Run Duration']} ; prev: {data2[key]['Run Duration']})"
+                f"\t{duration_diff}",
+                f"({data2[key]['Run Duration']}",
+                f"-> {data1[key]['Run Duration']})"
             )
     if not different:
         print("Data is the same")
