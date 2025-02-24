@@ -41,6 +41,11 @@ bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, c
                                                            << " must have rate or mean defined when prob is defined");
         return false;
     }
+    if (opt_l.value() <= 0. || opt_h.value() <= opt_l.value() || alpha <= 0.) {
+        print_error("Bounded pareto distribution at path " << error_highlight(name)
+                                                           << " must have l > 0 and h > l and alpha > 0");
+        return false;
+    }
     *distribution = std::make_unique<BoundedPareto>(name, alpha, opt_l.value(), opt_h.value());
     return true;
 }
@@ -70,6 +75,10 @@ bool load_deterministic(const toml::table& data, const std::string_view& cls, co
             value *= opt_prob.value();
         }
         value = 1. / value;
+    }
+    if (value <= 0) {
+        print_error("Deterministic distribution at path " << error_highlight(name) << " must have value > 0");
+        return false;
     }
     *distribution = Deterministic::with_value(name, value);
     return true;
@@ -111,6 +120,10 @@ bool load_frechet(const toml::table& data, const std::string_view& cls, const di
                     << " must have alpha defined, and either mean, rate or s, while m has default value 0");
         return false;
     }
+    if (opt_alpha.value() <= 1 || m < 0) {
+        print_error("Frechet distribution at path " << error_highlight(name) << " must have alpha > 1 and m >= 0");
+        return false;
+    }
     const double alpha = opt_alpha.value();
     if (opt_mean.has_value()) {
         *distribution = Frechet::with_mean(name, opt_mean.value() / opt_prob.value_or(1.), alpha, m);
@@ -123,6 +136,10 @@ bool load_frechet(const toml::table& data, const std::string_view& cls, const di
     if (opt_prob.has_value()) {
         print_error("Frechet distribution at path " << error_highlight(cls << "." << use)
                                                     << " must have rate or mean defined when prob is defined");
+        return false;
+    }
+    if (opt_s.value() < 0) {
+        print_error("Frechet distribution at path " << error_highlight(name) << " must have s >= 0");
         return false;
     }
     *distribution = std::make_unique<Frechet>(name, alpha, opt_s.value(), m, true);
@@ -145,12 +162,24 @@ bool load_uniform(const toml::table& data, const std::string_view& cls, const di
         return false;
     }
     if (opt_mean.has_value()) {
+        if (opt_mean.value() <= 0) {
+            print_error("Uniform distribution at path " << error_highlight(name) << " must have mean > 0");
+            return false;
+        }
         *distribution = Uniform::with_mean(name, opt_mean.value() / opt_prob.value_or(1.));
         return true;
     }
     if (opt_rate.has_value()) {
+        if (opt_rate.value() <= 0) {
+            print_error("Uniform distribution at path " << error_highlight(name) << " must have rate > 0");
+            return false;
+        }
         *distribution = Uniform::with_mean(name, 1. / (opt_rate.value() * opt_prob.value_or(1.)));
         return true;
+    }
+    if (opt_min.value() <= 0 || opt_min.value() >= opt_max.value()) {
+        print_error("Uniform distribution at path " << error_highlight(name) << " must have 0 < min < max");
+        return false;
     }
     *distribution = std::make_unique<Uniform>(name, opt_min.value(), opt_max.value());
     return true;
