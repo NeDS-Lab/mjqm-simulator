@@ -1,40 +1,62 @@
 # MJQM simulator
+
 Simulator for Multiserver Job Queuing Model (MJQM)
 
 ## Prerequisite
+
 1. A working laptop
 2. CMake toolchain
 3. C++ toolchain
 
-## Input files
-We need two types of input files, both to be placed in the [Inputs](./Inputs) folder:
-1. First file containing a list of job classes with format (server need, probability, average holding time) -> e.g. [oneOrAll_N32_0.6.txt](./Inputs/oneOrAll_N32_0.6.txt)
-2. Second file containing a list of arrival rates to be supplied to the simulator in format `[xxx,.....,xxx]`. Naming has to begin with arrRate -> e.g. [arrRate_oneOrAll_N32_0.6_W1.txt](./Inputs/arrRate_oneOrAll_N32_0.6_W1.txt)
+## Build
 
-## How-to
-1. Prepare and compile the project with `cmake`.
-   ```shell
-   cmake --preset default --fresh
-   cmake --build . --preset default
-   ```
-   Same as:
-   ```shell
-   ./configure
-   ```
-   This will create an executable named `<file>` for each `<file>.cpp` in the root directory.
-2. Run the produced executable with parameters. e.g. `./simulator_smash oneOrAll_N32_0.6 32 1 exp 100000 10`
-   ```shell
-   ./<file> [experiment name] [server cores] [scheduling policy] [service time distributions -> exp/par/det/uni/bpar/fre] [Number of events] [Number of repetitions])
-   ```
-   The experiment name needs to be the same as the [input file name](#input-files) described above without the extension.
-3. Results will be given in csv format in the `Results` folder, with files named after the parameters provided.
-   The specific column we usually want is named "Queue Total" which represents the mean queue length.
+To prepare and compile the project with `cmake`, use the following command from the project root directory:
+
+```shell
+./configure
+```
+
+That is the same as running:
+
+```shell
+cmake --preset default --fresh
+cmake --build . --preset default
+```
+
+This will create an executable named `<file>` for each `<file>.cpp` in the root directory.
+
+### Build parameters
+You can provide additional parameters to the `configure` script, such as:
+- `--debug` to build with debug symbols
+- `--clean` to remove the cmake directory before configuring the project, effectively doing a _full fresh restart_.
+- `--test` to also run tests.
+- `--no-build` to only configure the project without building it.
+
+### Rebuild
+If you change some code and want to rebuild the project, you can use the `rebuild` script:
+
+```shell
+./rebuild
+```
+
+You can also provide some parameters to the `rebuild` script, such as:
+- `--debug` to rebuild with debug symbols
+- `--clean` to add the `--clean-first` parameter to cmake, that will remove all prebuilt symbols and objects before rebuilding the project, without doing a _full fresh restart_.
 
 ## Test
-To run the test suite, use the following command, or `make test_all` in the build directory:
+
+> **Note**: The test suite will be completely reworked soon.
+
+To run the test suite, use the following command after configuration is done:
+
 ```shell
 cmake --build . --preset test
 ```
+
 This will run all the simulation tests for which results are available in the [test/expected](./test/expected) folder.
 
 Their run parameters are configured in the [CMakeLists.txt](./CMakeLists.txt) file.
+
+## Run
+
+To instructions for running the simulator, please refer to the [run.md](./docs/run.md) document.

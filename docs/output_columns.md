@@ -1,9 +1,9 @@
-## Output columns
+# Output columns
 
 There are two types of values that can be output: configuration values, and computed values.
 In particular, configuration values can be classified as pivots, if they are part of a `[[pivot]]` section or a command line override.
 
-### Output order
+## Output order
 
 The order of output columns will be:
 
@@ -13,7 +13,7 @@ The order of output columns will be:
 3. Statistics per class
 4. Global statistics
 
-### Output selection
+## Output selection
 
 The following shows examples of how to configure output columns, including or excluding a single or a set of columns.
 As noted before, the order of the definition is generally relevant only for custom additional columns.
@@ -43,7 +43,7 @@ columns = [
 ]
 ```
 
-### Base configuration
+## Base configuration
 
 By default, all statistics and pivot values are included.
 
