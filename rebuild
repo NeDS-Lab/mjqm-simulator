@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 
 cd "$(dirname "$0")"
 
@@ -22,7 +22,7 @@ done
 CMAKE_VER=$(cmake --version | awk '/version/ {print $3}')
 AVAILABLE_PROC=$(nproc)
 
-if true; then #//[ ${CMAKE_VER} \< "3.19" ]; then
+if [ ${CMAKE_VER} \< "3.19" ]; then
     ( set -x; make -j ${AVAILABLE_PROC} -C $folder --no-print-directory "${targets[@]}" ; )
 
     if [ ${test} -eq 1 ]; then
