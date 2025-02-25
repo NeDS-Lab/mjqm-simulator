@@ -22,22 +22,21 @@ done
 CMAKE_VER=$(cmake --version | awk '/version/ {print $3}')
 
 if [ ${CMAKE_VER} \< "3.19" ]; then
-    if "$preset" == "debug"; then
-        export CMAKE_BUILD_TYPE="Debug"
+    flags=("-DCMAKE_EXPORT_COMPILE_COMMANDS=YES" "-DCMAKE_CXX_COMPILER=g++")
+    if [ "$preset" == "debug" ]; then
+        flags+=("-DCMAKE_BUILD_TYPE=Debug")
         folder=build-debug
     else
-        export CMAKE_BUILD_TYPE="Release"
+        flags+=("-DCMAKE_BUILD_TYPE=Release")
         folder=build
     fi ;
-    export CMAKE_EXPORT_COMPILE_COMMANDS=1 ;
-    export CMAKE_CXX_COMPILER=g++ ;
-    ( set -x; cmake -Wno-dev -B $folder -S .; );
+    ( set -x; cmake -Wno-dev "${flags[@]}" -B $folder -S .; );
 
     if [ ${build} -eq 1 ]; then
-        ( set -x; cmake --build $folder; )
+        ( set -x; cmake "${flags[@]}" --build $folder; )
     fi;
     if [ ${test} -eq 1 ]; then
-        ( set -x; cmake --build $folder --target test_all; )
+        ( set -x; cmake "${flags[@]}" --build $folder --target test_all; )
     fi;
     exit 0;
 fi
