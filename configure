@@ -31,7 +31,7 @@ if [ ${CMAKE_VER} \< "3.19" ]; then
     fi ;
     export CMAKE_EXPORT_COMPILE_COMMANDS=1 ;
     export CMAKE_CXX_COMPILER=g++ ;
-    ( set -x; cmake -Wno-dev -B $folder .; );
+    ( set -x; cmake -Wno-dev -B $folder -S .; );
 
     if [ ${build} -eq 1 ]; then
         ( set -x; cmake --build $folder; )
