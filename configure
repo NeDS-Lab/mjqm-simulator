@@ -6,6 +6,7 @@ preset=default
 clean=0
 build=1
 test=0
+configure=1
 
 for ARG in $(getopt -l clean,debug,build,help,no-build,test -o 'cdbht' -- "$@"); do
     case "$ARG" in
@@ -14,6 +15,7 @@ for ARG in $(getopt -l clean,debug,build,help,no-build,test -o 'cdbht' -- "$@");
         --build|-b) build=1 ;;
         --test|-t) test=1 ; build=1 ;;
         --no-build) build=0 ; test=0 ;;
+        --only-build) build=1 ; configure=0 ;;
         --help|-h) echo "Usage: $0 [--clean] [--debug] [--build|--no-build] [--test] [--help]"; exit 0 ;;
         --) break;;
         *) echo "Unknown option: $ARG"; exit 1 ;;
@@ -21,10 +23,10 @@ for ARG in $(getopt -l clean,debug,build,help,no-build,test -o 'cdbht' -- "$@");
 done
 
 CMAKE_VER=$(cmake --version | awk '/version/ {print $3}')
-AVAILABLE_PROC=$(nproc)
 
-if [ ${CMAKE_VER} \< "3.19" ]; then
-    flags=("-DCMAKE_EXPORT_COMPILE_COMMANDS=YES" "-DCMAKE_CXX_COMPILER=g++")
+if [ ${configure} -eq 1 ]; then
+    CXX=$(scripts/select-g++.sh)
+    flags=("-DCMAKE_EXPORT_COMPILE_COMMANDS=YES" "-DCMAKE_CXX_COMPILER=${CXX}")
     if [ "$preset" == "debug" ]; then
         flags+=("-DCMAKE_BUILD_TYPE=Debug")
         folder=build-debug
@@ -33,21 +35,33 @@ if [ ${CMAKE_VER} \< "3.19" ]; then
         folder=build
     fi ;
 
-    ( set -x; cmake "${flags[@]}" -Wno-dev --fresh -S . -B $folder ; );
-else
-    ( set -x; cmake --preset ${preset} -Wno-dev --fresh .; )
-fi;
+    if [ ${CMAKE_VER} \< "3.19" ]; then
+        ( set -x; cmake "${flags[@]}" -Wno-dev --fresh -S . -B $folder ; );
+    else
+        ( set -x; cmake --preset ${preset} "${flags[@]}" -Wno-dev --fresh .; );
+    fi;
+fi ;
 
 if [ ${build} -eq 1 ]; then
-    args=()
+    AVAILABLE_PROC=$(command -v nproc >/dev/null && nproc || sysctl -n hw.physicalcpu)
+    flags=()
+    targets=()
     if [ ${clean} -eq 1 ]; then
-        args+=(--clean)
-    fi
+        flags+=(--clean-first)
+        targets+=(clean all)
+    fi ;
+
+    if [ ${CMAKE_VER} \< "3.19" ]; then
+        ( set -x; make -j ${AVAILABLE_PROC} -C $folder --no-print-directory "${targets[@]}" ; ) ;
+    else
+        ( set -x; cmake --build --preset ${preset} -j ${AVAILABLE_PROC} "${flags[@]}"; ) ;
+    fi ;
+
     if [ ${test} -eq 1 ]; then
-        args+=(--test)
-    fi
-    if [ "$preset" == "debug" ]; then
-        args+=(--debug)
-    fi
-    ./rebuild "${args[@]}"
+        if [ ${CMAKE_VER} \< "3.19" ]; then
+            ( set -x; make -j 1 -C $folder --no-print-directory test_all; ) ;
+        else
+            ( set -x; cmake --build --preset test -j 1; ) ;
+        fi ;
+    fi ;
 fi

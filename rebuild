@@ -2,38 +2,4 @@
 
 cd "$(dirname "$0")"
 
-preset=default
-test=0
-flags=()
-targets=()
-folder=build
-
-for ARG in $(getopt -l clean,debug,test,help -o 'cdth' -- "$@"); do
-    case "$ARG" in
-        --clean|-c) flags+=(--clean-first); targets+=(clean all) ;;
-        --test|-t) test=1 ;;
-        --debug|-d) preset=debug ; folder=build-debug ;;
-        --help|-h) echo "Usage: $0 [--clean] [--debug] [--test] [--help]"; exit 0 ;;
-        --) break;;
-        *) echo "Unknown option: $ARG"; exit 1 ;;
-    esac
-done
-
-CMAKE_VER=$(cmake --version | awk '/version/ {print $3}')
-AVAILABLE_PROC=$(nproc)
-
-if [ ${CMAKE_VER} \< "3.19" ]; then
-    ( set -x; make -j ${AVAILABLE_PROC} -C $folder --no-print-directory "${targets[@]}" ; )
-
-    if [ ${test} -eq 1 ]; then
-        ( set -x; make -j 1 -C $folder --no-print-directory test_all; )
-    fi;
-
-    exit 0;
-fi
-
-( set -x; cmake --build --preset ${preset} -j ${AVAILABLE_PROC} "${flags[@]}"; )
-
-if [ ${test} -eq 1 ]; then
-    ( set -x; cmake --build --preset test -j 1; )
-fi
+./configure --only-build "$@"
