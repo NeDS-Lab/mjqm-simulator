@@ -1,0 +1,19 @@
+#!/usr/bin/bash
+
+cd "$(dirname "$0")"
+
+preset=default
+flags=()
+
+for ARG in $(getopt -l clean,debug,help -o 'cdh' -- "$@"); do
+    case "$ARG" in
+        --clean|-c) flags+=(--clean-first) ;;
+        --debug|-d) preset=debug ;;
+        --help|-h) echo "Usage: $0 [--clean] [--debug] [--help]"; exit 0 ;;
+        --) break;;
+        *) echo "Unknown option: $ARG"; exit 1 ;;
+    esac
+done
+
+set -x
+cmake --build . --preset ${preset} "${flags[@]}"
