@@ -5,8 +5,8 @@ Simulator for Multiserver Job Queuing Model (MJQM)
 ## Prerequisite
 
 1. C++ toolchain, in particular `g++` with support for the `C++20` standard
-2. CMake toolchain, version `3.27` or higher
-3. Boost library, version `1.76` or higher
+2. CMake toolchain, version `3.16` or higher
+3. Boost library, version `1.83` or higher
 4. _[optional]_ Python3, for tests
 
 ## Build
