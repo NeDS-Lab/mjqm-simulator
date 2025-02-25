@@ -4,7 +4,7 @@ Simulator for Multiserver Job Queuing Model (MJQM)
 
 ## Prerequisite
 
-1. C++ toolchain, in particular `g++` with support for the `C++20` standard
+1. C++ toolchain, in particular `g++` with support for the `C++20` standard, at least version 10
 2. CMake toolchain, version `3.16` or higher
 3. Boost library, version `1.71` or higher
    ```sh
@@ -35,13 +35,14 @@ The additional parameters work as such:
 If you change some code and want to rebuild the project, you can use the `rebuild` script:
 
 ```sh
-./rebuild [--debug] [--clean]
+./rebuild [--debug] [--clean] [--test]
 ```
 
 The additional parameters work as such:
 
 - `--debug` to rebuild with debug symbols (you need to have configured the project with the `--debug` parameter already).
 - `--clean` to add the `--clean-first` parameter to cmake, that will remove all prebuilt symbols and objects before rebuilding the project, without doing a _full fresh restart_.
+- `--test` to also run tests.
 
 ## Test
 

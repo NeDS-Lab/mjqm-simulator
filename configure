@@ -3,16 +3,17 @@
 cd "$(dirname "$0")"
 
 preset=default
+clean=0
 build=1
 test=0
 
 for ARG in $(getopt -l clean,debug,build,help,no-build,test -o 'cdbht' -- "$@"); do
     case "$ARG" in
-        --clean|-c) rm -rf build build-debug ;;
+        --clean|-c) clean=1 ; rm -rf build build-debug ;;
         --debug|-d) preset=debug ;;
         --build|-b) build=1 ;;
-        --test|-t) test=1 ;;
-        --no-build) build=0 ;;
+        --test|-t) test=1 ; build=1 ;;
+        --no-build) build=0 ; test=0 ;;
         --help|-h) echo "Usage: $0 [--clean] [--debug] [--build|--no-build] [--test] [--help]"; exit 0 ;;
         --) break;;
         *) echo "Unknown option: $ARG"; exit 1 ;;
@@ -20,6 +21,7 @@ for ARG in $(getopt -l clean,debug,build,help,no-build,test -o 'cdbht' -- "$@");
 done
 
 CMAKE_VER=$(cmake --version | awk '/version/ {print $3}')
+AVAILABLE_PROC=$(nproc)
 
 if [ ${CMAKE_VER} \< "3.19" ]; then
     flags=("-DCMAKE_EXPORT_COMPILE_COMMANDS=YES" "-DCMAKE_CXX_COMPILER=g++")
@@ -30,21 +32,22 @@ if [ ${CMAKE_VER} \< "3.19" ]; then
         flags+=("-DCMAKE_BUILD_TYPE=Release")
         folder=build
     fi ;
-    ( set -x; cmake -Wno-dev "${flags[@]}" -B $folder -S .; );
 
-    if [ ${build} -eq 1 ]; then
-        ( set -x; cmake "${flags[@]}" --build $folder; )
-    fi;
-    if [ ${test} -eq 1 ]; then
-        ( set -x; cmake "${flags[@]}" --build $folder --target test_all; )
-    fi;
-    exit 0;
-fi
+    ( set -x; cmake "${flags[@]}" -Wno-dev --fresh -S . -B $folder ; );
+else
+    ( set -x; cmake --preset ${preset} -Wno-dev --fresh .; )
+fi;
 
-( set -x; cmake --preset ${preset} -Wno-dev --fresh .; )
 if [ ${build} -eq 1 ]; then
-    ( set -x; cmake --build . --preset ${preset}; )
-fi
-if [ ${test} -eq 1 ]; then
-    ( set -x; cmake --build . --preset test; )
+    args=()
+    if [ ${clean} -eq 1 ]; then
+        args+=(--clean)
+    fi
+    if [ ${test} -eq 1 ]; then
+        args+=(--test)
+    fi
+    if [ "$preset" == "debug" ]; then
+        args+=(--debug)
+    fi
+    ./rebuild "${args[@]}"
 fi

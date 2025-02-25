@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_link_options($<$<CONFIG:RELEASE>:-s>)
 add_link_options($<$<CONFIG:RELEASE>:-Ofast>)
 add_compile_options($<$<CONFIG:RELEASE>:-Ofast>)
@@ -20,7 +21,7 @@ project(mjqm-simulator
 set(Boost_USE_DEBUG_LIBS        OFF)  # ignore debug libs
 set(Boost_USE_RELEASE_LIBS       ON)  # only find release libs
 set(Boost_USE_MULTITHREADED     OFF)  # do not multithread to reduce cache clash
-set(Boost_USE_STATIC_LIBS      ON)  # only find static libs
+set(Boost_USE_STATIC_LIBS        ON)  # only find static libs
 find_package(Boost 1.71 REQUIRED COMPONENTS system thread)
 include_directories(${Boost_INCLUDE_DIR})
 
