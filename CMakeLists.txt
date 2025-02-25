@@ -22,7 +22,7 @@ set(Boost_USE_DEBUG_LIBS        OFF)  # ignore debug libs
 set(Boost_USE_RELEASE_LIBS       ON)  # only find release libs
 set(Boost_USE_MULTITHREADED     OFF)  # do not multithread to reduce cache clash
 set(Boost_USE_STATIC_LIBS        ON)  # only find static libs
-find_package(Boost 1.71 REQUIRED COMPONENTS system thread)
+find_package(Boost 1.71)
 include_directories(${Boost_INCLUDE_DIR})
 
 include_directories(
