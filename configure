@@ -19,7 +19,7 @@ for ARG in $(getopt -l clean,debug,build,help,no-build,test -o 'cdbht' -- "$@");
     esac
 done
 
-( set -x; cmake . --preset ${preset} -Wno-dev --fresh; )
+( set -x; cmake --preset ${preset} -Wno-dev --fresh .; )
 if [ ${build} -eq 1 ]; then
     ( set -x; cmake --build . --preset ${preset}; )
 fi
