@@ -19,6 +19,29 @@ for ARG in $(getopt -l clean,debug,build,help,no-build,test -o 'cdbht' -- "$@");
     esac
 done
 
+CMAKE_VER=$(cmake --version | awk '/version/ {print $3}')
+
+if [ ${CMAKE_VER} \< "3.19" ]; then
+    if "$preset" == "debug"; then
+        export CMAKE_BUILD_TYPE="Debug"
+        folder=build-debug
+    else
+        export CMAKE_BUILD_TYPE="Release"
+        folder=build
+    fi ;
+    export CMAKE_EXPORT_COMPILE_COMMANDS=1 ;
+    export CMAKE_CXX_COMPILER=g++ ;
+    ( set -x; cmake -Wno-dev -B $folder .; );
+
+    if [ ${build} -eq 1 ]; then
+        ( set -x; cmake --build $folder; )
+    fi;
+    if [ ${test} -eq 1 ]; then
+        ( set -x; cmake --build $folder --target test_all; )
+    fi;
+    exit 0;
+fi
+
 ( set -x; cmake --preset ${preset} -Wno-dev --fresh .; )
 if [ ${build} -eq 1 ]; then
     ( set -x; cmake --build . --preset ${preset}; )
