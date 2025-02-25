@@ -12,6 +12,11 @@ std::unique_ptr<Policy> smash_builder(const toml::table& data, const ExperimentC
     return std::make_unique<Smash>(window, conf.cores, conf.classes.size());
 }
 
+std::unique_ptr<Policy> fifo_builder(const toml::table&, const ExperimentConfig& conf) {
+    // FIFO is a special case of Smash with window 1
+    return std::make_unique<Smash>(1, conf.cores, conf.classes.size());
+}
+
 std::unique_ptr<Policy> server_filling_builder(const toml::table&, const ExperimentConfig& conf) {
     return std::make_unique<ServerFilling>(-1, conf.cores, conf.classes.size());
 }

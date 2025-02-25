@@ -1,15 +1,16 @@
 # Running an experiment
 
 After compiling the project, you can run an experiment by executing the `simulator_toml` binary with the name of the configuration file as the only argument.
-The program expects the configuration file to be in the [Inputs](../Inputs) directory, where you can already find some simple configurations.
+
+The program expects the configuration file to be in the `Inputs` directory, where you can already find some simple configurations.
 
 ```sh
 ./simulator_toml my_awesome_experiment
 ```
 
-The program can accept additional parameters that will be discussed [later](#overriding-parameters-from-command-line).
+> The program can accept additional parameters that will be discussed [later](#overriding-parameters-from-command-line).
 
-After reading the configuration file, the program will start the simulation, and print the results to the [Results](../Results) directory.
+After reading the configuration file, the program will start the simulation, and print the results to the `Results` directory.
 Multiple files might be generated, depending on the parameters defining the experiment.
 
 # Configuration file
@@ -23,7 +24,7 @@ To run a set of experiments, there are two main configurations that need to be s
   the distribution of the job inter-arrival times, and number of cores required.
 
 These settings are defined in a single configuration file,
-using the [toml](https://toml.io/en/) format.
+using the toml^[https://toml.io/en/] format.
 
 ## Simulation parameters
 
@@ -32,8 +33,7 @@ identifier = "my_experiment" # optional
 events = 30000000
 repetitions = 40
 cores = 2048
-policy = "smash"
-smash.window = 1
+policy = "fifo"
 ```
 
 - `identifier`: a string that will be used to identify the experiment.
@@ -42,7 +42,6 @@ smash.window = 1
 - `repetitions`: the number of runs to perform.
 - `cores`: the number of cores available in the system.
 - `policy`: the scheduling policy to use. The available policies are described [later](#available-policies).
-  - `smash.window`: in case of the `smash` policy, the window size to use. If omitted, the default value is 1.
 - `generator`: the random number generator to use, optional.
   Only `lecuyer` is supported at the moment, and its seed is hardcoded.
 
@@ -83,32 +82,32 @@ Each job class can override any single value defined here.
 
 All the following examples define the same class with `name` set to `3`.
 
-> ```toml
-> [[class]]
-> cores = 3
-> arrival = { distribution = "exponential", lambda = 0.01 }
-> service = { distribution = "exponential", lambda = 0.01 }
-> ```
+```toml
+[[class]]
+cores = 3
+arrival = { distribution = "exponential", lambda = 0.01 }
+service = { distribution = "exponential", lambda = 0.01 }
+```
 
-> ```toml
-> [[class]]
-> cores = 3
-> arrival.distribution = "exponential"
-> arrival.lambda = 0.01
-> service.distribution = "exponential"
-> service.lambda = 0.01
-> ```
+```toml
+[[class]]
+cores = 3
+arrival.distribution = "exponential"
+arrival.lambda = 0.01
+service.distribution = "exponential"
+service.lambda = 0.01
+```
 
-> ```toml
-> [[class]]
-> cores = 3
-> [arrival]
-> distribution = "exponential"
-> lambda = 0.01
-> [service]
-> distribution = "exponential"
-> lambda = 0.01
-> ```
+```toml
+[[class]]
+cores = 3
+[arrival]
+distribution = "exponential"
+lambda = 0.01
+[service]
+distribution = "exponential"
+lambda = 0.01
+```
 
 ## Pivot values
 
@@ -159,7 +158,7 @@ In addition, if used in the arrival distribution, you can define per each job cl
   If defined for one class, it needs to be defined for every class.
   If their sum is not 1, they will be normalised.
 
-### Frechet
+### Fréchet
 
 - `distribution = "frechet"`
 - `alpha`: the shape parameter.
@@ -178,9 +177,14 @@ Then, you can either define the `s` parameter, or the `mean` parameter.
 - `mean`: the mean of the distribution.
 
 Either the `min`/`max` pair, or `mean` is required.
-If `mean` is defined, the `min` and `max` will be calculated as `0.5 * mean` and `1.5 * mean`.
+If `mean` is defined, the `min` and `max` will be calculated as $0.5 \times \mu$ and $1.5 \times \mu$.
 
 ## Available policies
+
+### FIFO
+- `policy = "fifo"`
+
+> **Note**: The FIFO policy is implemented as [SMASH](#smash) with a window size of 1.
 
 ### SMASH
 - `policy = "smash"`
@@ -204,13 +208,13 @@ If no pivot set is defined in the configuration file, you can consider the set o
 
 For example, if you have the following configuration file:
 
-> ```toml
-> ...
-> [arrival]
-> distribution = "exponential"
-> lambda = 0.01
-> ...
-> ```
+```toml
+...
+[arrival]
+distribution = "exponential"
+lambda = 0.01
+...
+```
 
 You can override the `lambda` parameter from the command line:
 
