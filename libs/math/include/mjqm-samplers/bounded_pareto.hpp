@@ -11,7 +11,6 @@
 #include <string>
 #include <string_view>
 
-#include "RngStream.h"
 #include "mjqm-math/sampler.h"
 
 // Parameters
@@ -22,16 +21,13 @@
 class BoundedPareto : public DistributionSampler {
 public:
     explicit BoundedPareto(const std::string_view& name, double alpha, double l, double h) :
-        DistributionSampler(name), generator(name.data()), l(l), h(h), alpha(alpha) {
+        DistributionSampler(name), l(l), h(h), alpha(alpha) {
         assert(l > 0.);
         assert(h > l);
         assert(alpha > 0.);
     }
 
-private:
-    RngStream generator;
-
-public: // descriptive parameters and statistics
+    // descriptive parameters and statistics
     const double l;
     const double h;
     const double alpha;
@@ -42,17 +38,18 @@ public: // descriptive parameters and statistics
                                        : (pow(l, alpha) / (1 - pow(l / h, alpha)) * alpha / (alpha - 2) *
                                           (1 / pow(l, alpha - 2) - 1 / pow(h, alpha - 2)));
 
-public:
+    // operative methods
     inline double getMean() const override { return mean; }
     inline double getVariance() const override { return variance; }
     inline double sample() override {
-        double u = generator.RandU01();
+        double u = randU01();
         double num = u * pow(h, alpha) - u * pow(l, alpha) - pow(h, alpha);
         double den = pow(h, alpha) * pow(l, alpha);
         double frac = num / den;
         return pow(-frac, -1 / alpha);
     }
 
+    // factory methods
     static std::unique_ptr<DistributionSampler> with_rate(const std::string_view& name, double rate, double alpha) {
         return std::make_unique<BoundedPareto>(name, alpha, (12000.0 / 23999.0) / rate, 12000 / rate);
     }
@@ -65,6 +62,7 @@ public:
         return std::make_unique<BoundedPareto>(name, alpha, l, h);
     }
 
+    // string conversion
     explicit operator std::string() const override {
         return "bounded pareto (alpha=" + std::to_string(alpha) + " ; l=" + std::to_string(l) +
             " ; h=" + std::to_string(h) + " => mean=" + std::to_string(mean) +
