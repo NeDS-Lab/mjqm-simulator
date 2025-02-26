@@ -22,7 +22,7 @@
 class BoundedPareto : public DistributionSampler {
 public:
     explicit BoundedPareto(const std::string_view& name, double alpha, double l, double h) :
-        DistributionSampler(name.data()), generator(name.data()), l(l), h(h), alpha(alpha) {
+        DistributionSampler(name), generator(name.data()), l(l), h(h), alpha(alpha) {
         assert(l > 0.);
         assert(h > l);
         assert(alpha > 0.);

@@ -16,7 +16,7 @@
 class Exponential : public DistributionSampler {
 public:
     explicit Exponential(const std::string_view& name, double mean) :
-        DistributionSampler(name.data()), generator(name.data()), mean(mean), lambda(1 / mean) {}
+        DistributionSampler(name), generator(name.data()), mean(mean), lambda(1 / mean) {}
 
 private:
     RngStream generator;

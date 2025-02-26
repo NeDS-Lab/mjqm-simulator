@@ -27,12 +27,12 @@
 class Frechet : public DistributionSampler {
 public:
     explicit Frechet(const std::string_view& name, const double alpha, const double s = 1., const double m = 0.,
-                     bool = true) : DistributionSampler(name.data()), alpha(alpha), s(s), m(m), generator(name.data()) {
+                     bool = true) : DistributionSampler(name), alpha(alpha), s(s), m(m), generator(name.data()) {
         assert(alpha > 1); // alpha must be greater than 1 for the mean to be finite
     }
     explicit Frechet(const std::string_view& name, const double s_ratio, const double alpha, const double rate,
                      const double m = 0.) :
-        DistributionSampler(name.data()), alpha(alpha), s(s_ratio / rate), m(m), generator(name.data()) {
+        DistributionSampler(name), alpha(alpha), s(s_ratio / rate), m(m), generator(name.data()) {
         assert(alpha > 1); // alpha must be greater than 1 for the mean to be finite
     }
 

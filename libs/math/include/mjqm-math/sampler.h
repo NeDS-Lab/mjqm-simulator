@@ -10,11 +10,13 @@
 #include <string>
 #include <string_view>
 
+/// [interface]
 class DistributionSampler {
 public:
     const std::string name;
 
     explicit DistributionSampler(std::string name) : name(std::move(name)) {}
+    explicit DistributionSampler(const std::string_view& name) : name(name) {}
 
     virtual double sample() = 0;
     virtual double getMean() const = 0;
@@ -32,5 +34,6 @@ public:
     // virtual double min() const = 0;
     // virtual double max() const = 0;
 };
+/// [interface]
 
 #endif // MJQM_SAMPLER_H

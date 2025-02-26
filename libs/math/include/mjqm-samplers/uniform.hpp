@@ -17,7 +17,7 @@
 class Uniform : public DistributionSampler {
 public:
     explicit Uniform(const std::string_view& name, const double min, const double max) :
-        DistributionSampler(name.data()), generator(name.data()), min(min), max(max) {
+        DistributionSampler(name), generator(name.data()), min(min), max(max) {
         assert(min > 0);
     }
 
