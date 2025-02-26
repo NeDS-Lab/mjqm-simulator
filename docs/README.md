@@ -2,19 +2,22 @@
 
 Simulator for Multiserver Job Queuing Model (MJQM)
 
-## Prerequisite
+## Prerequisites
 
 ### C++ toolchain
-We ensure that the standard `g++ > 10` compiler, using the `C++20` standard, can be used to compile the project.
+
+We ensure that the standard `g++` compiler, using the `C++20` standard, can be used to compile the project. Its minimum supported version is the latest in the 10 series.
 
 Depending on your system, different commands can be used to install the required tools.
 
-> [!Ubuntu]
+> **Ubuntu**
+>
 > ```sh
 > sudo apt install build-essential
 > ```
 
-> [!MacOS]
+> **MacOS**
+>
 > ```sh
 > brew install gcc
 > ```
@@ -24,32 +27,39 @@ Depending on your system, different commands can be used to install the required
 > Using the `configure` and `rebuild` scripts, we try to select the correct version.
 
 ### CMake
+
 The project uses the `CMake` build system, we tested it with version `3.16` and higher.
 
-> [!Ubuntu]
+> **Ubuntu**
+>
 > ```sh
 > sudo apt install cmake
 > ```
 
-> [!MacOS]
+> **MacOS**
+>
 > ```sh
 > brew install --cask cmake
 > ```
 
 ### Boost
+
 The project uses the `Boost` library, we tested it with version `1.71` and higher.
 
-> [!Ubuntu]
+> **Ubuntu**
+>
 > ```sh
 > sudo apt install libboost-all-dev
 > ```
 
-> [!MacOS]
+> **MacOS**
+>
 > ```sh
 > brew install boost
 > ```
 
 ### Python3
+
 To run the tests, you need to have `Python3` installed on your system, in addition to the previous requirements.
 
 ## Build
@@ -97,7 +107,3 @@ cmake --build . --preset test
 This will run all the simulation tests for which results are available in the `test/expected` folder.
 
 Their run parameters are configured in the `CMakeLists.txt` file.
-
-## Run
-
-To instructions for running the simulator, please refer to the [Run](./run.md) document.

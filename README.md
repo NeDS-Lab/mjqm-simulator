@@ -1,62 +1,16 @@
 # MJQM simulator
+The simulator for **Multiserver Job Queuing Model (MJQM)** is a powerful tool designed to simulate and analyze multiserver job queuing systems.
+Started by NeDS-Lab at Ca' Foscari University of Venice.
 
-Simulator for Multiserver Job Queuing Model (MJQM)
+## Key Features
 
-## Prerequisite
+- Comprehensive simulation of multiserver job queuing model.
+- Supports various service and arrival time distributions, and scheduling policies.
+- Extensible framework allowing easy customization and enhancement.
+- Detailed performance metrics and visualizations.
 
-1. A working laptop
-2. CMake toolchain
-3. C++ toolchain
+## Getting Started
 
-## Build
+Refer to the [documentation](https://neds-lab.github.io/mjqm-simulator/) for detailed instructions on building, configuring and [running](https://neds-lab.github.io/mjqm-simulator/#/run) simulations.
 
-To prepare and compile the project with `cmake`, use the following command from the project root directory:
-
-```shell
-./configure
-```
-
-That is the same as running:
-
-```shell
-cmake --preset default --fresh
-cmake --build . --preset default
-```
-
-This will create an executable named `<file>` for each `<file>.cpp` in the root directory.
-
-### Build parameters
-You can provide additional parameters to the `configure` script, such as:
-- `--debug` to build with debug symbols
-- `--clean` to remove the cmake directory before configuring the project, effectively doing a _full fresh restart_.
-- `--test` to also run tests.
-- `--no-build` to only configure the project without building it.
-
-### Rebuild
-If you change some code and want to rebuild the project, you can use the `rebuild` script:
-
-```shell
-./rebuild
-```
-
-You can also provide some parameters to the `rebuild` script, such as:
-- `--debug` to rebuild with debug symbols
-- `--clean` to add the `--clean-first` parameter to cmake, that will remove all prebuilt symbols and objects before rebuilding the project, without doing a _full fresh restart_.
-
-## Test
-
-> **Note**: The test suite will be completely reworked soon.
-
-To run the test suite, use the following command after configuration is done:
-
-```shell
-cmake --build . --preset test
-```
-
-This will run all the simulation tests for which results are available in the [test/expected](./test/expected) folder.
-
-Their run parameters are configured in the [CMakeLists.txt](./CMakeLists.txt) file.
-
-## Run
-
-To instructions for running the simulator, please refer to the [run.md](./docs/run.md) document.
+<!-- TBD: License, bibtex/doi references -->
