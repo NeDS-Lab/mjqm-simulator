@@ -10,33 +10,32 @@
 #include <string>
 #include <string_view>
 
-#include "mjqm-math/sampler.h"
+#include <mjqm-math/sampler.h>
 
 class Exponential : public DistributionSampler {
 public:
-    explicit Exponential(const std::string_view& name, double mean) :
-        DistributionSampler(name), mean(mean), lambda(1 / mean) {}
+    explicit Exponential(const std::string_view& name, double lambda) : DistributionSampler(name), lambda(lambda) {}
 
     // descriptive parameters and statistics
-    const double mean;
     const double lambda;
+    const double mean = 1. / lambda;
     const double variance = 1. / pow(lambda, 2);
 
     // operative methods
     inline double getMean() const override { return mean; }
     inline double getVariance() const override { return variance; }
-    inline double sample() override { return -log(randU01()) * mean; }
+    inline double sample() override { return -log(randU01()) / lambda; }
 
     // factory methods
     static std::unique_ptr<DistributionSampler> with_rate(const std::string_view& name, const double rate) {
-        return std::make_unique<Exponential>(name, 1 / rate);
+        return std::make_unique<Exponential>(name, rate);
     }
     static std::unique_ptr<DistributionSampler> with_mean(const std::string_view& name, const double mean) {
-        return std::make_unique<Exponential>(name, mean);
+        return std::make_unique<Exponential>(name, 1. / mean);
     }
 
     std::unique_ptr<DistributionSampler> clone(const std::string_view& name) const override {
-        return std::make_unique<Exponential>(name, mean);
+        return std::make_unique<Exponential>(name, lambda);
     }
 
     // string conversion

@@ -11,8 +11,7 @@
 #include <string>
 #include <string_view>
 
-#include "RngStream.h"
-#include "mjqm-math/sampler.h"
+#include <mjqm-math/sampler.h>
 
 // Parameters
 //  α ∈ ( 0 , ∞ ) shape.

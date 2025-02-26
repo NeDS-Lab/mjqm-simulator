@@ -11,7 +11,7 @@
 #include <string>
 #include <string_view>
 
-#include "mjqm-math/sampler.h"
+#include <mjqm-math/sampler.h>
 
 // Parameters
 // L > 0 location (real)

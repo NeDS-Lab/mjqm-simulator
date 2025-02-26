@@ -11,7 +11,7 @@
 #include <string>
 #include <string_view>
 
-#include "mjqm-math/sampler.h"
+#include <mjqm-math/sampler.h>
 
 class Uniform : public DistributionSampler {
 public:

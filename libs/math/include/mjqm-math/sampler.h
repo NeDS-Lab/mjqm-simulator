@@ -24,10 +24,12 @@ public:
     explicit DistributionSampler(std::string name) : generator(name.data()), name(std::move(name)) {}
     explicit DistributionSampler(const std::string_view& name) : generator(name.data()), name(name) {}
 
+    // operative methods
     virtual double sample() = 0;
     virtual double getMean() const = 0;
     virtual double getVariance() const = 0;
 
+    // factory methods
     virtual std::unique_ptr<DistributionSampler> clone(const std::string_view& name) const = 0;
     inline std::unique_ptr<DistributionSampler> clone() const { return clone(name); }
 
