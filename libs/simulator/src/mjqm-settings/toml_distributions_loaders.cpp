@@ -100,7 +100,7 @@ bool load_exponential(const toml::table& data, const std::string_view& cls, cons
         *distribution = Exponential::with_mean(name, opt_mean.value() / opt_prob.value_or(1.));
         return true;
     }
-    *distribution = Exponential::with_rate(name, opt_lambda.value() * opt_prob.value_or(1.));
+    *distribution = std::make_unique<Exponential>(name, opt_lambda.value() * opt_prob.value_or(1.));
     return true;
 }
 

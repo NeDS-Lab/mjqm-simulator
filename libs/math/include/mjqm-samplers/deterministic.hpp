@@ -9,22 +9,23 @@
 #include <string>
 #include <string_view>
 
-#include "mjqm-math/sampler.h"
+#include <mjqm-math/sampler.h>
 
 class Deterministic : public DistributionSampler {
 public:
-    explicit Deterministic(std::string_view name, const double value) :
-        DistributionSampler(name.data()), value(value) {}
+    explicit Deterministic(const std::string_view& name, const double value) :
+        DistributionSampler(name), value(value) {}
 
-public: // descriptive parameters and statistics
+    // descriptive parameters and statistics
     const double value;
     const double variance = 0;
 
-public:
+    // operative methods
     inline double getMean() const override { return value; }
     inline double getVariance() const override { return variance; }
     inline double sample() override { return value; }
 
+    // factory methods
     static std::unique_ptr<DistributionSampler> with_value(const std::string_view& name, double value) {
         return std::make_unique<Deterministic>(name, value);
     }
@@ -33,6 +34,7 @@ public:
         return std::make_unique<Deterministic>(name.data(), value);
     }
 
+    // string conversion
     explicit operator std::string() const override {
         return "deterministic (mean=" + std::to_string(value) + " => variance=0)";
     }

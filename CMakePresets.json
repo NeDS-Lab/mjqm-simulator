@@ -32,13 +32,11 @@
   "buildPresets": [
     {
       "name": "default",
-      "configurePreset": "default",
-      "jobs": 8
+      "configurePreset": "default"
     },
     {
       "name": "debug",
-      "configurePreset": "debug",
-      "jobs": 8
+      "configurePreset": "debug"
     },
     {
       "name": "test",

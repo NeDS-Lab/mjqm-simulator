@@ -2,16 +2,65 @@
 
 Simulator for Multiserver Job Queuing Model (MJQM)
 
-## Prerequisite
+## Prerequisites
 
-1. C++ toolchain, in particular `g++` with support for the `C++20` standard
-2. CMake toolchain, version `3.16` or higher
-3. Boost library, version `1.71` or higher
-   ```sh
-   # ubuntu-based
-   sudo apt install libboost-all-dev
-   ```
-4. _[optional]_ Python3, for tests
+### C++ toolchain
+
+We ensure that the standard `g++` compiler, using the `C++20` standard, can be used to compile the project. Its minimum supported version is the latest in the 10 series.
+
+Depending on your system, different commands can be used to install the required tools.
+
+> **Ubuntu**
+>
+> ```sh
+> sudo apt install build-essential
+> ```
+
+> **MacOS**
+>
+> ```sh
+> brew install gcc
+> ```
+>
+> This will install the `g++` compiler, but if in the past you run the `xcode-select --install` command, you will find two versions of the compiler installed.
+> To use the standard `gcc` version, you can refer to the `g++-{main-version}` binary.
+> Using the `configure` and `rebuild` scripts, we try to select the correct version.
+
+### CMake
+
+The project uses the `CMake` build system, we tested it with version `3.16` and higher.
+
+> **Ubuntu**
+>
+> ```sh
+> sudo apt install cmake
+> ```
+
+> **MacOS**
+>
+> ```sh
+> brew install --cask cmake
+> ```
+
+### Boost
+
+The project uses the `Boost` library, we tested it with version `1.71` and higher.
+
+> **Ubuntu**
+>
+> ```sh
+> sudo apt install libboost-all-dev
+> ```
+
+> **MacOS**
+>
+> ```sh
+> brew install boost
+> ```
+
+### Python3
+
+To run the tests, you need to have `Python3` installed on your system, in addition to the previous requirements.
 
 ## Build
 
@@ -35,17 +84,19 @@ The additional parameters work as such:
 If you change some code and want to rebuild the project, you can use the `rebuild` script:
 
 ```sh
-./rebuild [--debug] [--clean]
+./rebuild [--debug] [--clean] [--test]
 ```
 
 The additional parameters work as such:
 
 - `--debug` to rebuild with debug symbols (you need to have configured the project with the `--debug` parameter already).
 - `--clean` to add the `--clean-first` parameter to cmake, that will remove all prebuilt symbols and objects before rebuilding the project, without doing a _full fresh restart_.
+- `--test` to also run tests.
 
 ## Test
 
-> **Note**: The test suite will be completely reworked soon.
+> [!Note]
+> The test suite will be completely reworked soon.
 
 To run the test suite, use the following command after configuration is done:
 
@@ -56,7 +107,3 @@ cmake --build . --preset test
 This will run all the simulation tests for which results are available in the `test/expected` folder.
 
 Their run parameters are configured in the `CMakeLists.txt` file.
-
-## Run
-
-To instructions for running the simulator, please refer to the [Run](./run.md) document.

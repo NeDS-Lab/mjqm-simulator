@@ -1,5 +1,13 @@
 
-* [Home](/)
-* [Run](run.md)
-* [Output columns](output_columns.md)
-* [Project structure](structure.md)
+- [Home](/)
+- **Use**
+  - [Run](run.md)
+  - [Output columns](output_columns.md)
+- **Extend**
+  - [Intro](extend/index.md)
+  - [Project structure](extend/structure.md)
+  - [Policies](extend/policies.md)
+  - [Distributions](extend/distributions.md)
+  - [Statistics](extend/statistics.md)
+  - [Output columns](extend/output_columns.md)
+  - [Visualizations](extend/visualizations.md)
