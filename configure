@@ -8,7 +8,7 @@ build=1
 test=0
 configure=1
 
-for ARG in $(getopt -l clean,debug,build,help,no-build,test -o 'cdbht' -- "$@"); do
+for ARG in $(getopt -l clean,debug,build,help,no-build,only-build,test -o 'cdbht' -- "$@"); do
     case "$ARG" in
         --clean|-c) clean=1 ; rm -rf build build-debug ;;
         --debug|-d) preset=debug ;;

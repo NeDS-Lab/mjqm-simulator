@@ -20,26 +20,20 @@ bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, c
     const auto opt_rate = distribution_parameter(data, cls, use, "rate");
     const auto opt_l = distribution_parameter(data, cls, use, "l", "L");
     const auto opt_h = distribution_parameter(data, cls, use, "h", "H");
-    const auto opt_prob = distribution_parameter(data, cls, use, "prob");
-    if (!(opt_alpha.has_value() &&
-          XOR(XOR(opt_mean.has_value(), opt_rate.has_value()), opt_l.has_value() && opt_h.has_value()))) {
+    if (!opt_alpha.has_value() ||
+        !(XOR(XOR(opt_mean.has_value(), opt_rate.has_value()), opt_l.has_value() && opt_h.has_value()))) {
         print_error("Bounded pareto distribution at path "
                     << error_highlight(name) << " must have alpha defined, and either mean, rate or the l/h pair");
         return false;
     }
     const double alpha = opt_alpha.value();
     if (opt_mean.has_value()) {
-        *distribution = BoundedPareto::with_mean(name, opt_mean.value() / opt_prob.value_or(1.), alpha);
+        *distribution = BoundedPareto::with_mean(name, opt_mean.value(), alpha);
         return true;
     }
     if (opt_rate.has_value()) {
-        *distribution = BoundedPareto::with_rate(name, opt_rate.value() * opt_prob.value_or(1.), alpha);
+        *distribution = BoundedPareto::with_rate(name, opt_rate.value(), alpha);
         return true;
-    }
-    if (opt_prob.has_value()) {
-        print_error("Bounded pareto distribution at path " << error_highlight(name)
-                                                           << " must have rate or mean defined when prob is defined");
-        return false;
     }
     if (opt_l.value() <= 0. || opt_h.value() <= opt_l.value() || alpha <= 0.) {
         print_error("Bounded pareto distribution at path " << error_highlight(name)
@@ -55,27 +49,11 @@ bool load_deterministic(const toml::table& data, const std::string_view& cls, co
 ) {
     const auto name = full_name(cls, use);
     const auto opt_value = distribution_parameter(data, cls, use, "value", "mean");
-    const auto opt_rate = distribution_parameter(data, cls, use, "rate");
-    const auto opt_prob = distribution_parameter(data, cls, use, "prob");
-
-    if (!XOR(opt_value.has_value(), opt_rate.has_value())) {
-        print_error("Deterministic distribution at path " << error_highlight(name)
-                                                          << " must have exactly one of value or mean defined");
+    if (!opt_value.has_value()) {
+        print_error("Deterministic distribution at path " << error_highlight(name) << " must have value/mean defined");
         return false;
     }
-    double value;
-    if (opt_value.has_value()) {
-        value = opt_value.value();
-        if (opt_prob.has_value()) {
-            value /= opt_prob.value();
-        }
-    } else {
-        value = opt_rate.value();
-        if (opt_prob.has_value()) {
-            value *= opt_prob.value();
-        }
-        value = 1. / value;
-    }
+    double value = opt_value.value();
     if (value <= 0) {
         print_error("Deterministic distribution at path " << error_highlight(name) << " must have value > 0");
         return false;
@@ -90,7 +68,7 @@ bool load_exponential(const toml::table& data, const std::string_view& cls, cons
     const auto name = full_name(cls, use);
     const auto opt_mean = distribution_parameter(data, cls, use, "mean");
     const auto opt_lambda = distribution_parameter(data, cls, use, "lambda", "rate");
-    const auto opt_prob = distribution_parameter(data, cls, use, "prob");
+    const auto opt_prob = use == ARRIVAL ? distribution_parameter(data, cls, use, "prob") : std::nullopt;
     if (!XOR(opt_mean.has_value(), opt_lambda.has_value())) {
         print_error("Exponential distribution at path " << error_highlight(name)
                                                         << " must have exactly one of mean or lambda/rate defined");
@@ -113,8 +91,7 @@ bool load_frechet(const toml::table& data, const std::string_view& cls, const di
     const auto opt_rate = distribution_parameter(data, cls, use, "rate");
     const auto opt_s = distribution_parameter(data, cls, use, "s");
     const auto m = distribution_parameter(data, cls, use, "m").value_or(0.);
-    const auto opt_prob = distribution_parameter(data, cls, use, "prob");
-    if (!(opt_alpha.has_value() && XOR(XOR(opt_mean.has_value(), opt_s.has_value()), opt_rate.has_value()))) {
+    if (!opt_alpha.has_value() || (XOR(XOR(opt_mean.has_value(), opt_s.has_value()), opt_rate.has_value()))) {
         print_error("Frechet distribution at path "
                     << error_highlight(name)
                     << " must have alpha defined, and either mean, rate or s, while m has default value 0");
@@ -126,17 +103,12 @@ bool load_frechet(const toml::table& data, const std::string_view& cls, const di
     }
     const double alpha = opt_alpha.value();
     if (opt_mean.has_value()) {
-        *distribution = Frechet::with_mean(name, opt_mean.value() / opt_prob.value_or(1.), alpha, m);
+        *distribution = Frechet::with_mean(name, opt_mean.value(), alpha, m);
         return true;
     }
     if (opt_rate.has_value()) {
-        *distribution = Frechet::with_rate(name, opt_rate.value() * opt_prob.value_or(1.), alpha, m);
+        *distribution = Frechet::with_rate(name, opt_rate.value(), alpha, m);
         return true;
-    }
-    if (opt_prob.has_value()) {
-        print_error("Frechet distribution at path " << error_highlight(cls << "." << use)
-                                                    << " must have rate or mean defined when prob is defined");
-        return false;
     }
     if (opt_s.value() < 0) {
         print_error("Frechet distribution at path " << error_highlight(name) << " must have s >= 0");
@@ -170,9 +142,7 @@ bool load_uniform(const toml::table& data, const std::string_view& cls, const di
     const auto opt_mean = distribution_parameter(data, cls, use, "mean");
     const auto opt_min = distribution_parameter(data, cls, use, "min", "a");
     const auto opt_max = distribution_parameter(data, cls, use, "max", "b");
-    const auto opt_rate = distribution_parameter(data, cls, use, "rate");
-    const auto opt_prob = distribution_parameter(data, cls, use, "prob");
-    if (!XOR(XOR(opt_mean.has_value(), opt_rate.has_value()), opt_min.has_value() && opt_max.has_value())) {
+    if (!XOR(opt_mean.has_value(), opt_min.has_value() && opt_max.has_value())) {
         print_error("Uniform distribution at path "
                     << error_highlight(name)
                     << " must have either the pair of a/min and b/max defined, or mean defined");
@@ -183,15 +153,7 @@ bool load_uniform(const toml::table& data, const std::string_view& cls, const di
             print_error("Uniform distribution at path " << error_highlight(name) << " must have mean > 0");
             return false;
         }
-        *distribution = Uniform::with_mean(name, opt_mean.value() / opt_prob.value_or(1.));
-        return true;
-    }
-    if (opt_rate.has_value()) {
-        if (opt_rate.value() <= 0) {
-            print_error("Uniform distribution at path " << error_highlight(name) << " must have rate > 0");
-            return false;
-        }
-        *distribution = Uniform::with_mean(name, 1. / (opt_rate.value() * opt_prob.value_or(1.)));
+        *distribution = Uniform::with_mean(name, opt_mean.value());
         return true;
     }
     if (opt_min.value() <= 0 || opt_min.value() >= opt_max.value()) {
