@@ -21,7 +21,7 @@ bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, c
     const auto opt_l = distribution_parameter(data, cls, use, "l", "L");
     const auto opt_h = distribution_parameter(data, cls, use, "h", "H");
     if (!opt_alpha.has_value() ||
-        !(XOR(XOR(opt_mean.has_value(), opt_rate.has_value()), opt_l.has_value() && opt_h.has_value()))) {
+        !XOR(XOR(opt_mean.has_value(), opt_rate.has_value()), opt_l.has_value() && opt_h.has_value())) {
         print_error("Bounded pareto distribution at path "
                     << error_highlight(name) << " must have alpha defined, and either mean, rate or the l/h pair");
         return false;
@@ -91,14 +91,14 @@ bool load_frechet(const toml::table& data, const std::string_view& cls, const di
     const auto opt_rate = distribution_parameter(data, cls, use, "rate");
     const auto opt_s = distribution_parameter(data, cls, use, "s");
     const auto m = distribution_parameter(data, cls, use, "m").value_or(0.);
-    if (!opt_alpha.has_value() || (XOR(XOR(opt_mean.has_value(), opt_s.has_value()), opt_rate.has_value()))) {
-        print_error("Frechet distribution at path "
+    if (!opt_alpha.has_value() || !XOR(XOR(opt_mean.has_value(), opt_s.has_value()), opt_rate.has_value())) {
+        print_error("Fréchet distribution at path "
                     << error_highlight(name)
                     << " must have alpha defined, and either mean, rate or s, while m has default value 0");
         return false;
     }
     if (opt_alpha.value() <= 1 || m < 0) {
-        print_error("Frechet distribution at path " << error_highlight(name) << " must have alpha > 1 and m >= 0");
+        print_error("Fréchet distribution at path " << error_highlight(name) << " must have alpha > 1 and m >= 0");
         return false;
     }
     const double alpha = opt_alpha.value();
@@ -111,7 +111,7 @@ bool load_frechet(const toml::table& data, const std::string_view& cls, const di
         return true;
     }
     if (opt_s.value() < 0) {
-        print_error("Frechet distribution at path " << error_highlight(name) << " must have s >= 0");
+        print_error("Fréchet distribution at path " << error_highlight(name) << " must have s >= 0");
         return false;
     }
     *distribution = std::make_unique<Frechet>(name, alpha, opt_s.value(), m, true);

@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cmath>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <string_view>
 
@@ -25,15 +26,6 @@
 
 class Frechet : public DistributionSampler {
 public:
-    explicit Frechet(const std::string_view& name, const double alpha, const double s = 1., const double m = 0.,
-                     bool = true) : DistributionSampler(name), alpha(alpha), s(s), m(m) {
-        assert(alpha > 1); // alpha must be greater than 1 for the mean to be finite
-    }
-    explicit Frechet(const std::string_view& name, const double s_ratio, const double alpha, const double rate,
-                     const double m = 0.) : DistributionSampler(name), alpha(alpha), s(s_ratio / rate), m(m) {
-        assert(alpha > 1); // alpha must be greater than 1 for the mean to be finite
-    }
-
     // descriptive parameters and statistics
     const double alpha;
     const double s;
@@ -43,7 +35,7 @@ public:
                                       : std::numeric_limits<double>::infinity();
 
 private:
-    const double exponent = -1 / alpha;
+    const double exponent = -1. / alpha;
 
 public:
     // operative methods
@@ -52,6 +44,15 @@ public:
     inline double sample() override { return s * pow(-log(randU01()), exponent); }
 
     // factory methods
+    explicit Frechet(const std::string_view& name, const double alpha, const double s = 1., const double m = 0.,
+                     bool = true) : DistributionSampler(name), alpha(alpha), s(s), m(m) {
+        assert(alpha > 1); // alpha must be greater than 1 for the mean to be finite
+    }
+    explicit Frechet(const std::string_view& name, const double s_ratio, const double alpha, const double rate,
+                     const double m = 0.) : DistributionSampler(name), alpha(alpha), s(s_ratio / rate), m(m) {
+        assert(alpha > 1); // alpha must be greater than 1 for the mean to be finite
+    }
+
     static std::unique_ptr<DistributionSampler> with_mean(const std::string_view& name, double mean, double alpha,
                                                           double m = 0.) {
         return std::make_unique<Frechet>(name, alpha, mean / tgamma(1 - 1 / alpha), m, true);
@@ -69,8 +70,10 @@ public:
 
     // string conversion
     explicit operator std::string() const override {
-        return "frechet (alpha=" + std::to_string(alpha) + " ; s=" + std::to_string(s) + " ; m=" + std::to_string(m) +
-            " => mean=" + std::to_string(mean) + " ; variance=" + std::to_string(variance) + ")";
+        std::ostringstream oss;
+        oss << "frechet (alpha=" << alpha << " ; s=" << s << " ; m=" << m << " => mean=" << mean
+            << " ; variance=" << variance << ")";
+        return oss.str();
     }
 };
 

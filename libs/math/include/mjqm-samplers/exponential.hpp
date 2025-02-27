@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <string_view>
 
@@ -14,8 +15,6 @@
 
 class Exponential : public DistributionSampler {
 public:
-    explicit Exponential(const std::string_view& name, double lambda) : DistributionSampler(name), lambda(lambda) {}
-
     // descriptive parameters and statistics
     const double lambda;
     const double mean = 1. / lambda;
@@ -26,7 +25,9 @@ public:
     inline double getVariance() const override { return variance; }
     inline double sample() override { return -log(randU01()) / lambda; }
 
-    // factory methods
+    // direct and indirect constructors
+    explicit Exponential(const std::string_view& name, double lambda) : DistributionSampler(name), lambda(lambda) {}
+
     static std::unique_ptr<DistributionSampler> with_rate(const std::string_view& name, const double rate) {
         return std::make_unique<Exponential>(name, rate);
     }
@@ -40,8 +41,9 @@ public:
 
     // string conversion
     explicit operator std::string() const override {
-        return "exponential (lambda=" + std::to_string(lambda) + " => mean=" + std::to_string(mean) +
-            " ; variance=" + std::to_string(variance) + ")";
+        std::ostringstream oss;
+        oss << "exponential (lambda=" << lambda << " => mean=" << mean << " ; variance=" << variance << ")";
+        return oss.str();
     }
 };
 

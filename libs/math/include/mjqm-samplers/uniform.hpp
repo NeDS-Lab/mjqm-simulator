@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cmath>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <string_view>
 
@@ -15,24 +16,28 @@
 
 class Uniform : public DistributionSampler {
 public:
-    explicit Uniform(const std::string_view& name, const double min, const double max) :
-        DistributionSampler(name), min(min), max(max) {
-        assert(min > 0);
-    }
-
     // descriptive parameters and statistics
     const double min;
     const double max;
-    const double diff = max - min;
     const double mean = (min + max) / 2.;
     const double variance = pow(max - min, 2.) / 12.;
 
+private:
+    const double diff = max - min;
+
+public:
     // operative methods
     inline double getMean() const override { return mean; }
     inline double getVariance() const override { return variance; }
     inline double sample() override { return randU01() * diff + min; }
 
     // factory methods
+    explicit Uniform(const std::string_view& name, const double min, const double max) :
+        DistributionSampler(name), min(min), max(max) {
+        assert(min > 0);
+        assert(max > min);
+    }
+
     static std::unique_ptr<DistributionSampler> with_mean(const std::string_view& name, double mean) {
         return std::make_unique<Uniform>(name, .5 * mean, 1.5 * mean);
     }
@@ -43,8 +48,9 @@ public:
 
     // string conversion
     explicit operator std::string() const override {
-        return "uniform (range [" + std::to_string(min) + ", " + std::to_string(max) +
-            ") => mean=" + std::to_string(mean) + " ; variance=" + std::to_string(variance) + ")";
+        std::ostringstream oss;
+        oss << "uniform (range (" << min << ", " << max << ") => mean=" << mean << " ; variance=" << variance << ")";
+        return oss.str();
     }
 };
 

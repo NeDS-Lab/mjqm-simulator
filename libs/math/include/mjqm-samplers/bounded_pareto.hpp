@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cmath>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <string_view>
 
@@ -20,13 +21,6 @@
 
 class BoundedPareto : public DistributionSampler {
 public:
-    explicit BoundedPareto(const std::string_view& name, double alpha, double l, double h) :
-        DistributionSampler(name), l(l), h(h), alpha(alpha) {
-        assert(l > 0.);
-        assert(h > l);
-        assert(alpha > 0.);
-    }
-
     // descriptive parameters and statistics
     const double l;
     const double h;
@@ -49,7 +43,14 @@ public:
         return pow(-frac, -1 / alpha);
     }
 
-    // factory methods
+    // direct and indirect constructors
+    explicit BoundedPareto(const std::string_view& name, double alpha, double l, double h) :
+        DistributionSampler(name), l(l), h(h), alpha(alpha) {
+        assert(l > 0.);
+        assert(h > l);
+        assert(alpha > 0.);
+    }
+
     static std::unique_ptr<DistributionSampler> with_rate(const std::string_view& name, double rate, double alpha) {
         return std::make_unique<BoundedPareto>(name, alpha, (12000.0 / 23999.0) / rate, 12000 / rate);
     }
@@ -64,9 +65,10 @@ public:
 
     // string conversion
     explicit operator std::string() const override {
-        return "bounded pareto (alpha=" + std::to_string(alpha) + " ; l=" + std::to_string(l) +
-            " ; h=" + std::to_string(h) + " => mean=" + std::to_string(mean) +
-            " ; variance=" + std::to_string(variance) + ")";
+        std::ostringstream oss;
+        oss << "bounded pareto (alpha=" << alpha << " ; l=" << l << " ; h=" << h << " => mean=" << mean
+            << " ; variance=" << variance << ")";
+        return oss.str();
     }
 };
 
