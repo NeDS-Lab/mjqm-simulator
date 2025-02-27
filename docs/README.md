@@ -4,59 +4,39 @@ Simulator for Multiserver Job Queuing Model (MJQM)
 
 ## Prerequisites
 
+Depending on your system, different commands can be used to install the required tools. We'll use just Ubuntu and MacOS as examples.
+
 ### C++ toolchain
 
 We ensure that the standard `g++` compiler, using the `C++20` standard, can be used to compile the project. Its minimum supported version is the latest in the 10 series.
 
-Depending on your system, different commands can be used to install the required tools.
+```sh
+sudo apt install build-essential # Ubuntu
+brew install gcc # MacOS
+```
 
-> **Ubuntu**
->
-> ```sh
-> sudo apt install build-essential
-> ```
-
-> **MacOS**
->
-> ```sh
-> brew install gcc
-> ```
->
-> This will install the `g++` compiler, but if in the past you run the `xcode-select --install` command, you will find two versions of the compiler installed.
-> To use the standard `gcc` version, you can refer to the `g++-{main-version}` binary.
-> Using the `configure` and `rebuild` scripts, we try to select the correct version.
+> [!Note]
+  On MacOS, if in the past you run the `xcode-select --install` command, you will find two versions of the compiler installed. \
+  To manually use the standard `gcc` version, you can refer to the `g++-{main-version}` binary. \
+  Using the `configure` and `rebuild` scripts, we try to select the correct version.
 
 ### CMake
 
 The project uses the `CMake` build system, we tested it with version `3.16` and higher.
 
-> **Ubuntu**
->
-> ```sh
-> sudo apt install cmake
-> ```
-
-> **MacOS**
->
-> ```sh
-> brew install --cask cmake
-> ```
+```sh
+sudo apt install cmake # Ubuntu
+brew install --cask cmake # MacOS
+```
 
 ### Boost
 
 The project uses the `Boost` library, we tested it with version `1.71` and higher.
 
-> **Ubuntu**
->
-> ```sh
-> sudo apt install libboost-all-dev
-> ```
-
-> **MacOS**
->
-> ```sh
-> brew install boost
-> ```
+```sh
+sudo apt install libboost-all-dev # Ubuntu
+brew install boost # MacOS
+```
 
 ### Python3
 
