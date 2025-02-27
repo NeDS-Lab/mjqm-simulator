@@ -65,6 +65,10 @@ bool load_frechet(const toml::table& data, const std::string_view& cls, const di
                   std::unique_ptr<DistributionSampler>* distribution // out
 );
 
+bool load_lognormal(const toml::table& data, const std::string_view& cls, const distribution_use& use,
+    std::unique_ptr<DistributionSampler>* distribution // out
+);
+
 bool load_uniform(const toml::table& data, const std::string_view& cls, const distribution_use& use,
                   std::unique_ptr<DistributionSampler>* distribution // out
 );
@@ -74,6 +78,7 @@ inline static std::unordered_map<std::string_view, distribution_loader> distribu
     {"deterministic", load_deterministic},
     {"bounded pareto", load_bounded_pareto},
     {"frechet", load_frechet},
+    {"lognormal", load_lognormal},
     {"uniform", load_uniform},
 };
 

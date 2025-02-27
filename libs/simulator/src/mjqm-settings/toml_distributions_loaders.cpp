@@ -146,6 +146,23 @@ bool load_frechet(const toml::table& data, const std::string_view& cls, const di
     return true;
 }
 
+bool load_lognormal(const toml::table& data, const std::string_view& cls, const distribution_use& use,
+                      std::unique_ptr<DistributionSampler>* distribution // out
+) {
+    const auto name = full_name(cls, use);
+    const auto opt_mean = distribution_parameter(data, cls, use, "mean");
+    const auto opt_lambda = distribution_parameter(data, cls, use, "lambda", "rate");
+    const auto opt_prob = distribution_parameter(data, cls, use, "prob");
+    if (!(opt_mean.has_value())) {
+        print_error("Lognormal distribution at path " << error_highlight(name)
+                                                        << " must have mean defined");
+        return false;
+    } else {
+        *distribution = Lognormal::with_mean(name, opt_mean.value() / opt_prob.value_or(1.));
+        return true;
+    }
+}
+
 bool load_uniform(const toml::table& data, const std::string_view& cls, const distribution_use& use,
                   std::unique_ptr<DistributionSampler>* distribution // out
 ) {
