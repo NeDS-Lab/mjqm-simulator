@@ -15,7 +15,8 @@
 
 class Lognormal : public DistributionSampler {
 public:
-    explicit Lognormal(const std::string_view& name, const double mean) : DistributionSampler(name), mean(mean) {
+    explicit Lognormal(const std::string_view& name, const double mean, const double variance) : 
+        DistributionSampler(name), mean(mean), variance(variance) {
         std::pair<double, double> res = compute_normal_params(mean);
         this->mu = res.first;
         this->sigma = res.second;
@@ -33,7 +34,7 @@ private:
 
 public: // descriptive parameters and statistics
     const double mean;
-    const double variance = pow(0.5 * mean, 2); // Assume stddev is 50% of the mean
+    const double variance;
     double mu;
     double sigma;
 
@@ -56,11 +57,11 @@ public:
     }
 
     static std::unique_ptr<DistributionSampler> with_mean(const std::string_view& name, double mean) {
-        return std::make_unique<Lognormal>(name, mean);
+        return std::make_unique<Lognormal>(name, mean, pow(0.5 * mean, 2)); // Assume stddev is 50% of the mean
     }
 
     std::unique_ptr<DistributionSampler> clone(const std::string_view& name) const override {
-        return std::make_unique<Lognormal>(name, mean);
+        return std::make_unique<Lognormal>(name, mean, pow(0.5 * mean, 2)); // Assume stddev is 50% of the mean
     }
 
     explicit operator std::string() const override {
