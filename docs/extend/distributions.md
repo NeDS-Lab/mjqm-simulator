@@ -155,7 +155,7 @@ public: // direct and indirect constructors
 };
 ```
 
-#### `operator std::string`
+#### String conversion
 
 Finally, we define the `operator std::string` method, which should return a string with the distribution name, its parameters, and the theoretical mean and variance.
 
@@ -174,3 +174,125 @@ public: // string conversion
     }
 };
 ```
+
+#### Result
+
+The final class should look like the one present in the repository at [libs/math/include/mjqm-samplers/exponential.hpp](https://raw.githubusercontent.com/NeDS-Lab/mjqm-simulator/refs/heads/main/libs/math/include/mjqm-samplers/exponential.hpp).
+
+## Make the class available
+
+Now that we have the class defined, we need to make it available to the simulator.
+To do so, we can include it in the `samplers.h` _aggregator_ header, that is the one included where distributions are needed.
+
+```cpp
+// libs/math/include/mjqm-math/samplers.h
+// ...
+#include <mjqm-samplers/exponential.hpp>
+// ...
+```
+
+## Implement the loader
+
+The final piece to support our new distribution is to implement the loader function.
+This function should read the parameters from the TOML configuration file, validate them, and create a new instance of the distribution sampler.
+
+We also need to map the loader to the name to be used in the configuration file.
+
+#### Declare the loader
+
+In the `toml_distributions_loader.h` header, we declare the loader as `load_{distribution_name}` with the same signature as the other loaders (also defined at the top of the header as `distribution_loader` type definition).
+
+Then, we add it to the `distribution_loaders` map at the end of the header, with an all-lowercase, space-separated key.
+
+```cpp
+// libs/settings/include/mjqm-settings/toml_distributions_loader.h
+// ...
+bool load_exponential(const toml::table& data, const std::string_view& cls, const distribution_use& use,
+                      std::unique_ptr<DistributionSampler>* distribution // out
+);
+// ...
+inline static std::unordered_map<std::string, distribution_loader> distribution_loaders = {
+    // ...
+    {"exponential", load_exponential},
+    // ...
+};
+```
+
+> [!Note] It is also a good practice to keep both the declaration and the map element in alphabetical order.
+
+The key in the map will be used in the configuration file as follows:
+
+```toml
+# ...
+arrival.distribution = "exponential"
+# ...
+```
+
+> [!Note] We could let our imaginations run wild and also add an abbreviated name, or the snake_case version, or any other name, but for coherence and readeability of the configuration files, we should stick to the common format.
+
+#### Implement the loader
+
+Finally, we implement the loader function in the `toml_distributions_loader.cpp` file.
+As previously stated, this function should read the parameters from the TOML table, validate them, and create a new instance of the distribution sampler.
+
+As a quick recap, the exponential distribution is defined by the single parameter $\lambda$, but depending on the usecase it could also be defined using the mean $\mu$, and it could also be accompanied by some probability of the class.
+
+We also need to support default values for the parameters.
+So, we could find any of the following configurations in the TOML file for the arrival distribution:
+
+```toml
+arrival.distribution = "exponential"
+# using the rate
+arrival.lambda = 0.1
+arrival.rate = 0.1
+# using the mean
+arrival.mean = 10
+# with additional probability or overrides per class
+[[class]]
+arrival.prob = 0.5
+arrival.rate = 0.2
+```
+
+The same should be supported by the `service` key, with the exclusion of the `prob` key, that only has meaning for the **arrival** distribution.
+
+For the validation part, we do not allow to define both `lambda` and `mean`, as they are either redundant or incoherent.
+Also, we can accept either `lambda` or `rate`, as they have the same meaning, preferring the first one.
+
+Finally, we look for the `prob` configuration only for the arrival distribution configuration.
+
+> [!Note] When all classes define the `prob` configuration, we already noramlised them in a previous step to sum up to 1 (see [normalise_probs in toml_loader.cpp](https://github.com/NeDS-Lab/mjqm-simulator/blob/385d9955a5fec296544d9ed9ce7588c25d865ecf/libs/simulator/src/mjqm-settings/toml_loader.cpp#L104))
+
+To easily (and idiomatically) read the parameters, without worrying either about how the TOML library works, or about default values, we can use the helper function `distribution_parameter` defined in the `toml_distribution_loaders.h` header file.
+```cpp
+// libs/simulator/src/mjqm-settings/toml_distributions_loader.cpp
+// ...
+bool load_exponential(const toml::table& data, const std::string_view& cls, const distribution_use& use, std::unique_ptr<DistributionSampler>* distribution) {
+    const std::string name = full_name(cls, use);
+    const std::optional<double> mean = distribution_parameter(data, cls, use, "mean");
+    const std::optional<double> lambda = distribution_parameter(data, cls, use, "lambda", "rate");
+    const double prob = use == ARRIVAL ? distribution_parameter(data, cls, use, "prob").value_or(1.) : 1.;
+    if (!XOR(mean.has_value(), lambda.has_value())) {
+        print_error("Exponential distribution at path " << error_highlight(name) << " must have exactly one of mean or lambda/rate defined");
+        return false;
+    }
+    if (mean.has_value()) {
+        *distribution = Exponential::with_mean(name, mean.value() / prob);
+        return true;
+    }
+    *distribution = std::make_unique<Exponential>(name, lambda.value() * prob);
+    return true;
+}
+// ...
+```
+
+> [!Note] The `XOR` macro is defined at the top of the file, and it returns `true` if exactly one of the two arguments is `true`.
+
+We should notice (and replicate) some particular behaviours in the code:
+- the `name` variable is built using the `full_name` helper function, that returns the complete TOML path of the distribution for the current class.
+- the `distribution_parameter` method takes one or more keys to look for in the TOML table, and returns the first one found, or `std::nullopt` if none is found.
+- we ignore the `prob` key if the distribution is not an arrival distribution using a default value of 1.
+- the parameters consistency is checked as soon as possible, returning `false` and printing an error if too many or too few values are defined.
+- we use the idiomatic static _constructors_ when building the distribution with non-standard parameters (in this case, using the mean).
+- we use the `std::make_unique` function to build the distribution with the lambda parameter.
+
+> [!Note] If the loader returns `false`, the simulator won't start the experiments, but will try to parse the remaining configuration, printing all the errors found before exiting.
