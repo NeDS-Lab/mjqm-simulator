@@ -263,8 +263,7 @@ Finally, we look for the `prob` configuration only for the arrival distribution 
 
 > [!Note] When all classes define the `prob` configuration, we already normalised them in a previous step to sum up to 1 (see [normalise_probs in toml_loader.cpp](https://github.com/NeDS-Lab/mjqm-simulator/blob/385d9955a5fec296544d9ed9ce7588c25d865ecf/libs/simulator/src/mjqm-settings/toml_loader.cpp#L104))
 
-To easily and idiomatically read the parameters, without worrying either about how the TOML library works, or about default values, we can use the helper function `distribution_parameter` defined in the `toml_distribution_loaders.h` header file.
-<!-- TODO describe what they do -->
+To easily and idiomatically read the parameters, without worrying either about how the TOML library works, or about default values, we can use the helper function `distribution_parameter`: it takes one or more keys to look for in the TOML table, and returns the first one found, or `std::nullopt` if none is found.
 
 ```cpp
 // libs/simulator/src/mjqm-settings/toml_distributions_loader.cpp
@@ -288,11 +287,8 @@ bool load_exponential(const toml::table& data, const std::string_view& cls, cons
 // ...
 ```
 
-> [!Note] The `XOR` macro is defined at the top of the file, and it returns `true` if exactly one of the two arguments is `true`.
-
-We should notice (and replicate) some particular behaviours in the code:
+Some particular behaviours to pay attention to, in order to replicate them:
 - the `name` variable is built using the `full_name` helper function, that returns the complete TOML path of the distribution for the current class.
-- the `distribution_parameter` method takes one or more keys to look for in the TOML table, and returns the first one found, or `std::nullopt` if none is found.
 - we ignore the `prob` key if the distribution is not an arrival distribution using a default value of 1.
 - the parameters consistency is checked as soon as possible, returning `false` and printing an error if too many or too few values are defined.
 - we use the idiomatic static _constructors_ when building the distribution with non-standard parameters (in this case, using the mean).
