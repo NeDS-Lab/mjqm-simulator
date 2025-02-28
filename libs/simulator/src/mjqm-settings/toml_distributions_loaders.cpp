@@ -66,16 +66,16 @@ bool load_exponential(const toml::table& data, const std::string_view& cls, cons
     const std::optional<double> mean = distribution_parameter(data, cls, use, "mean");
     const std::optional<double> lambda = distribution_parameter(data, cls, use, "lambda", "rate");
     const double prob = use == ARRIVAL ? distribution_parameter(data, cls, use, "prob").value_or(1.) : 1.;
-    if (!XOR(mean.has_value(), lambda.has_value())) {
+    if (mean.has_value() == lambda.has_value()) {
         print_error("Exponential distribution at path " << error_highlight(name)
                                                         << " must have exactly one of mean or lambda/rate defined");
         return false;
     }
     if (mean.has_value()) {
         *distribution = Exponential::with_mean(name, mean.value() / prob);
-        return true;
+    } else {
+        *distribution = std::make_unique<Exponential>(name, lambda.value() * prob);
     }
-    *distribution = std::make_unique<Exponential>(name, lambda.value() * prob);
     return true;
 }
 
