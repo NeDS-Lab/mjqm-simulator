@@ -10,8 +10,8 @@
 #include <memory>
 #include <string>
 
-#include <mjqm-math/sampler.h>
 #include <mjqm-policy/policy.h>
+#include <mjqm-samplers/sampler.h>
 #include <mjqm-settings/toml_overrides.h>
 #include <mjqm-settings/toml_utils.h>
 #include <mjqm-simulator/experiment_stats.h>

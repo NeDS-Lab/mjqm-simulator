@@ -13,8 +13,8 @@
 #include <vector>
 
 #include <mjqm-math/random_ecuyer.h>
-#include <mjqm-math/samplers.h>
 #include <mjqm-policy/policies.h>
+#include <mjqm-samplers/samplers.h>
 #include <mjqm-simulator/simulator.h>
 
 inline void read_classes(std::string& filename, std::vector<double>& p, std::vector<unsigned int>& sizes,

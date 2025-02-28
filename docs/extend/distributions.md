@@ -1,8 +1,8 @@
 # Distributions
 
-Distribution implementations ara located in the `math` library, and they are composed of two parts: the sampler and the loader.
+New distribution implementations need two parts: the sampler and the loader.
 
-The sampler is a header-only class that generates random numbers following the distribution.
+The sampler is a header-only class that generates random numbers following the distribution. Its location is in the `mjqm-samplers` group of the `math` group.
 
 The loader is a function to read the distribution parameters from the TOML configuration file and creates the sampler object.
 
@@ -11,7 +11,7 @@ The loader is a function to read the distribution parameters from the TOML confi
 If you want to add a new distribution to the simulator, you need to follow these 4 (high-level) steps:
 
 1. Create a new class in the `mjqm-samplers` lib, that extends the `DistributionSampler` class and implements all required methods.
-2. Add the new distribution to the `mjqm-math/samplers.h` imports.
+2. Add the new distribution to the `mjqm-samplers/samplers.h` imports.
 3. Add the new loader declaration to `mjqm-settings/toml_distributions_loader.h`, including it in the `distribution_loaders` map at the end.
 4. Add the new loader implementation to `mjqm-settings/toml_distributions_loader.cpp`, taking care of validating the parameters and creating the new distribution object.
 
@@ -19,7 +19,7 @@ Let's see an example of how to add a new distribution to the simulator. We'll ta
 
 ## `DistributionSampler` interface
 
-[sampler.h](https://raw.githubusercontent.com/NeDS-Lab/mjqm-simulator/refs/heads/main/libs/math/include/mjqm-math/sampler.h ":include :type=code cpp :fragment=interface")
+[sampler.h](https://raw.githubusercontent.com/NeDS-Lab/mjqm-simulator/refs/heads/main/libs/math/include/mjqm-samplers/sampler.h ":include :type=code cpp :fragment=interface")
 
 The interface expects the following methods to be implemented:
 
@@ -36,15 +36,7 @@ To do so, it offers the following protected methods:
 - `double randU01()` that generates a random number following the uniform distribution between 0 and 1.
 - two constructors, accepting either a `std::string` or a `std::string_view`. For generic purposes we commonly use `const std::string_view& name`, as the RngStreams library will copy its content into a new `std::string`.
 
-### Good practices
-
-To achieve a more cohesive library, there are some good practices to follow when implementing a new distribution:
-
-- The first parameter of the constructor should be the name of the instance, followed by the distribution-specific parameters.
-  - The constructor should expect the actual distribution parameters as arguments, instead of some value(s) to compute them.
-- If some parameter can be computed from the `mean`, `rate`, or other pseudo-parameters, it is recommended to implement a static method `with_{param}` accepting the pseudo-parameters, along with required parameters and the instance name, and returning a new instance of the distribution as `std::unique_ptr<DistributionSampler>`.
-- The theoretical mean and variance should be defined as constants in the class, and computed once.
-- The `operator std::string` should return a format like `distribution_name (param1=val.ue ; param2=val.ue => mean=getMean() ; variance=getVariance())`
+> [!Note] In order to achieve a more cohesive library, we define some good practices to follow when implementing a new distribution. Those will be discussed in each appropriate section using boxes like this one.
 
 ## Create a new class
 
@@ -62,7 +54,7 @@ To avoid name clashes, it's a good practice to use the prefix `MJQM_SAMPLERS_` f
 #ifndef MJQM_SAMPLERS_EXPONENTIAL_H
 #define MJQM_SAMPLERS_EXPONENTIAL_H
 
-#include <mjqm-math/sampler.h>
+#include <mjqm-samplers/sampler.h>
 
 class Exponential : public DistributionSampler {
     // ...
@@ -73,10 +65,12 @@ class Exponential : public DistributionSampler {
 
 #### Fields
 
-We first define the (usually constant) fields we'll hold in the class, adding the theoretical mean and variance.
+We first define the constant fields we'll hold in the class, adding the theoretical mean and variance.
 In the case of the exponential distribution, we only need to store the $\lambda$ parameter, `lambda`.
 
-The mean and variance formulas should be directly computed in their declarations. For readeability, we can use the `pow` function from the `cmath` library to compute the variance.
+> [!Note] Theoretical mean and variance should be declared constants in the class, and computed just once.
+
+We directly write the mean and variance formulas in their declarations. For readeability, we can use the `pow` function from the `cmath` library to compute the variance.
 
 $$
 \mu = \frac{1}{\lambda} \quad \text{and} \quad \sigma^2 = \frac{1}{\lambda^2}
@@ -98,7 +92,7 @@ public: // descriptive parameters and statistics
 
 #### Operative methods
 
-Out of the methods defined in the `DistributionSampler` interface, the `sample` method is the main one that should be implemented by our class, while the mean and variance getters are only required to _force_ us to compute them.
+Out of the methods defined abstract (pure virtual) by the `DistributionSampler` interface, the `sample` method is the main one that we need to implement, while the mean and variance getters are only required to _force_ us to provide them.
 
 All of them _can_ and _should_ be inlined, while only the `sample` method cannot be labeled `const`, as the RNG held by the super-class will change its internal state.
 
@@ -124,11 +118,17 @@ public: // operative methods
 
 #### Constructors
 
-Now, we can define the constructor. As the exponential distribution is defined by the single parameter $\lambda$, we should define the constructor to only receive this parameter (along with the name).
+> [!Note] The constructor requires the actual distribution parameters as arguments, instead of some value(s) to compute them.
 
-As different costructor variants, we can define two idiomatic static methods: `with_rate` and `with_mean`, where the second one computes $\lambda = 1 / \mu$.
+The exponential distribution is defined by the single parameter $\lambda$, so we define the constructor to only receive this parameter (along with the name).
+
+> [!Note] If some parameter can be computed from the `mean`, `rate`, or other pseudo-parameters, it is recommended to implement a static method `with_{param}` accepting the pseudo-parameters, along with other non-computable required parameters and the instance name, and returning a new instance of the distribution as `std::unique_ptr<DistributionSampler>`.
+
+As different costructor variants, we can provide two idiomatic static methods: `with_rate` and `with_mean`, where the second one computes $\lambda = 1 / \mu$.
 
 Also, here we define the `clone` method required by the interface, which should return a new instance of the distribution with the same parameters.
+
+> [!Note] The first parameter of the constructor and constructor-like methods is the [name mentioned above](#distributionsampler-interface), followed by distribution-specific parameters.
 
 ```cpp
 // libs/math/include/mjqm-samplers/exponential.hpp
@@ -157,7 +157,9 @@ public: // direct and indirect constructors
 
 #### String conversion
 
-Finally, we define the `operator std::string` method, which should return a string with the distribution name, its parameters, and the theoretical mean and variance.
+> [!Note] The `operator std::string` should return a format like `distribution_name (param1=val.ue ; param2=val.ue => mean=getMean() ; variance=getVariance())`
+
+Finally, we define the `operator std::string` method, returning all the information about the distribution.
 
 ```cpp
 // libs/math/include/mjqm-samplers/exponential.hpp
@@ -185,7 +187,7 @@ Now that we have the class defined, we need to make it available to the simulato
 To do so, we can include it in the `samplers.h` _aggregator_ header, that is the one included where distributions are needed.
 
 ```cpp
-// libs/math/include/mjqm-math/samplers.h
+// libs/math/include/mjqm-samplers/samplers.h
 // ...
 #include <mjqm-samplers/exponential.hpp>
 // ...

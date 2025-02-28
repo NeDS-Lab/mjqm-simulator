@@ -11,7 +11,7 @@
 #include <string_view>
 #include <unordered_map>
 
-#include <mjqm-math/samplers.h>
+#include <mjqm-samplers/samplers.h>
 #include <mjqm-settings/toml_utils.h>
 
 enum distribution_use { ARRIVAL, SERVICE };
@@ -66,7 +66,7 @@ bool load_frechet(const toml::table& data, const std::string_view& cls, const di
 );
 
 bool load_lognormal(const toml::table& data, const std::string_view& cls, const distribution_use& use,
-    std::unique_ptr<DistributionSampler>* distribution // out
+                    std::unique_ptr<DistributionSampler>* distribution // out
 );
 
 bool load_uniform(const toml::table& data, const std::string_view& cls, const distribution_use& use,

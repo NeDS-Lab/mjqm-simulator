@@ -4,7 +4,7 @@
 
 #include <unordered_map>
 
-#include <mjqm-math/samplers.h>
+#include <mjqm-samplers/samplers.h>
 #include <mjqm-settings/toml_distributions_loaders.h>
 
 #ifndef XOR

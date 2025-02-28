@@ -12,7 +12,7 @@
 #include <string>
 #include <string_view>
 
-#include <mjqm-math/sampler.h>
+#include <mjqm-samplers/sampler.h>
 
 // Parameters
 //  α ∈ ( 0 , ∞ ) shape.

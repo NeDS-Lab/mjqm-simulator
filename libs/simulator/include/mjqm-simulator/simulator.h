@@ -18,8 +18,8 @@
 #include <utility>
 #include <vector>
 
-#include <mjqm-math/sampler.h>
 #include <mjqm-policy/policy.h>
+#include <mjqm-samplers/sampler.h>
 #include <mjqm-simulator/experiment_stats.h>
 
 #if __has_include("toml++/toml.h")
