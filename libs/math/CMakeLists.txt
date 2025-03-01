@@ -4,7 +4,7 @@ add_library(math
 target_link_libraries(math ${Boost_LIBRARIES})
 
 # Include the L'Écuyer RngStreams library
-set(RngStreams_BUILD_SHARED_LIBS OFF CACHE INTERNAL "Use shared libs")
+set(RngStreams_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS} CACHE INTERNAL "Build using shared libraries")
 include(FetchContent)
 FetchContent_Declare(
         RngStreams

@@ -3,12 +3,33 @@ cmake_minimum_required(VERSION 3.16)
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
+option(COMPILE_NATIVE "Build optimizing for the current machine" ON)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-add_link_options($<$<CONFIG:RELEASE>:-s>)
-add_link_options($<$<CONFIG:RELEASE>:-Ofast>)
-add_compile_options($<$<CONFIG:RELEASE>:-Ofast>)
-add_compile_options($<$<CONFIG:RELEASE>:-march=native>)
+
+add_link_options(   -ffinite-math-only -fno-signed-zeros -fno-math-errno)
+add_compile_options(-ffinite-math-only -fno-signed-zeros -fno-math-errno)
+
+if (COMPILE_NATIVE)
+    message(STATUS "Compiling for the current machine")
+    add_link_options(-march=native)
+    add_compile_options(-march=native)
+endif ()
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    message(STATUS "Compiling in Release mode")
+    add_link_options(-s -O3)
+    add_compile_options(-O3)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(STATUS "Compiling in Debug mode")
+    add_link_options(   -O2 -g)
+    add_compile_options(-O2 -g)
+endif()
+
+if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    message(FATAL_ERROR "Only GCC is supported")
+endif()
 
 project(mjqm-simulator
     VERSION 0.1.0
@@ -18,10 +39,18 @@ project(mjqm-simulator
 )
 
 # Include the Boost library
-set(Boost_USE_DEBUG_LIBS        OFF)  # ignore debug libs
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(Boost_USE_DEBUG_LIBS     ON)  # only find debug libs
+else ()
+    set(Boost_USE_DEBUG_LIBS    OFF)  # ignore debug libs
+endif ()
 set(Boost_USE_RELEASE_LIBS       ON)  # only find release libs
-set(Boost_USE_MULTITHREADED     OFF)  # do not multithread to reduce cache clash
-set(Boost_USE_STATIC_LIBS        ON)  # only find static libs
+set(Boost_USE_MULTITHREADED     OFF)  # each thread is reserved for one experiment each
+if (BUILD_SHARED_LIBS)
+    set(Boost_USE_STATIC_LIBS   OFF)  # only find shared libs
+else ()
+    set(Boost_USE_STATIC_LIBS    ON)  # only find static libs
+endif ()
 find_package(Boost 1.71)
 include_directories(${Boost_INCLUDE_DIR})
 
