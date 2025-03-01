@@ -18,7 +18,7 @@
 #include <utility>
 #include <vector>
 
-#include <mjqm-policy/policy.h>
+#include <mjqm-policies/policy.h>
 #include <mjqm-samplers/sampler.h>
 #include <mjqm-simulator/experiment_stats.h>
 

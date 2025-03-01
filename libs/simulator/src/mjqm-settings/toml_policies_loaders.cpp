@@ -2,7 +2,7 @@
 // Created by Marco Ciotola on 04/02/25.
 //
 
-#include <mjqm-policy/policies.h>
+#include <mjqm-policies/policies.h>
 #include <mjqm-settings/toml_loader.h>
 #include <mjqm-settings/toml_policies_loaders.h>
 #include <mjqm-settings/toml_utils.h>

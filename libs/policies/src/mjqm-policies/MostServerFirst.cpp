@@ -2,7 +2,7 @@
 // Created by Marco Ciotola on 21/01/25.
 //
 
-#include <mjqm-policy/MostServerFirst.h>
+#include <mjqm-policies/MostServerFirst.h>
 
 void MostServerFirst::arrival(int c, int size, long int id) {
     state_buf[c]++;

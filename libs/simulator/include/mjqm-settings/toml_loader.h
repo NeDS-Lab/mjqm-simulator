@@ -10,7 +10,7 @@
 #include <memory>
 #include <string>
 
-#include <mjqm-policy/policy.h>
+#include <mjqm-policies/policy.h>
 #include <mjqm-samplers/sampler.h>
 #include <mjqm-settings/toml_overrides.h>
 #include <mjqm-settings/toml_utils.h>

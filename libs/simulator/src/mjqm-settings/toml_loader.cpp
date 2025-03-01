@@ -6,8 +6,8 @@
 #include <string>
 #include <unordered_map>
 
-#include <mjqm-math/random_ecuyer.h>
-#include <mjqm-policy/policies.h>
+#include <mjqm-policies/policies.h>
+#include <mjqm-samplers/random_ecuyer.h>
 #include <mjqm-settings/toml_distributions_loaders.h>
 #include <mjqm-settings/toml_loader.h>
 #include <mjqm-settings/toml_overrides.h>

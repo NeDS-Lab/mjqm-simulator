@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-#include <mjqm-policy/ServerFillingMem.h>
+#include <mjqm-policies/ServerFillingMem.h>
 
 void ServerFillingMem::arrival(int c, int size, long int id) {
     std::tuple<int, int, long int> e(c, size, id);

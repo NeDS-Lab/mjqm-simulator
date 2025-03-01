@@ -12,8 +12,8 @@
 #include <string>
 #include <vector>
 
-#include <mjqm-math/random_ecuyer.h>
-#include <mjqm-policy/policies.h>
+#include <mjqm-policies/policies.h>
+#include <mjqm-samplers/random_ecuyer.h>
 #include <mjqm-samplers/samplers.h>
 #include <mjqm-simulator/simulator.h>
 

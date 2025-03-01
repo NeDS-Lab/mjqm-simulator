@@ -8,27 +8,22 @@ mjqm-simulator
 ├── Inputs
 │   └── {your_and_default_input_files...}
 ├── libs
-│   ├── math
+│   ├── policies
 │   │   ├── include
-│   │   │   ├── mjqm-math
-│   │   │   │   ├── confidence_intervals.h
-│   │   │   │   ├── sampler.h
-│   │   │   │   └── samplers.h
-│   │   │   └── mjqm-samplers
-│   │   │       └── {specific_sampler...}.hpp
-│   │   ├── src
-│   │   │   └── mjqm-math
-│   │   │       └── confidence_intervals.cpp
-│   │   └── CMakeLists.txt
-│   ├── policy
-│   │   ├── include
-│   │   │   └── mjqm-policy
+│   │   │   └── mjqm-policies
 │   │   │       ├── policies.h
 │   │   │       ├── policy.h
 │   │   │       └── {SpecificPolicy...}.h
 │   │   ├── src
-│   │   │   └── mjqm-policy
+│   │   │   └── mjqm-policies
 │   │   │       └── {SpecificPolicy...}.cpp
+│   │   └── CMakeLists.txt
+│   ├── samplers
+│   │   ├── include
+│   │   │   └── mjqm-samplers
+│   │   │       ├── sampler.h
+│   │   │       ├── samplers.h
+│   │   │       └── {specific_sampler...}.hpp
 │   │   └── CMakeLists.txt
 │   ├── simulator
 │   │   ├── include
@@ -55,9 +50,15 @@ mjqm-simulator
 │   │   │       └── experiment_stats.cpp
 │   │   └── CMakeLists.txt
 │   └── utils
-│       └── include
-│           └── mjqm-utils
-│               └── string.hpp
+│       ├── include
+│       │   ├── mjqm-math
+│       │   │   └── confidence_intervals.h
+│       │   └── mjqm-utils
+│       │       └── string.hpp
+│       ├── src
+│       │   └── mjqm-math
+│       │       └── confidence_intervals.cpp
+│       └── CMakeLists.txt
 ├── scripts
 │   ├── convert_conf.py
 │   ├── ensure_same_results.py
@@ -89,15 +90,15 @@ The project is organized in the following way:
         The whole `include/` folder is included in the root `CMakeLists.txt`, so the headers are available to the whole project via names as `mjqm-{logical_module}/...`. This achieves explicit separation of our code from external libraries.
     - `src/`: Contains the source files of the library.
         Usually, each source file should be included in the `CMakeLists.txt` of the library.
-- `libs/math/`: Contains the math code, including the confidence intervals and the samplers.
-    Each sampler has its own header file that directly define the implementation.
-    The `samplers.h` file includes all the samplers headers files for easier inclusion.
-- `libs/policy/`: Contains the specific policies used in the simulator.
+- `libs/policies/`: Contains the specific policies used in the simulator.
     Each policy has its own header and source file. The latter should be included in the `CMakeLists.txt` `policies` target.
     The `policies.h` file includes all the policies headers files for easier inclusion.
+- `libs/samplers/`: Contains the distributions implementation for sampling.
+    Each sampler has its own header file that directly define the implementation.
+    The `samplers.h` file includes all the samplers headers files for easier inclusion.
 - `libs/simulator/`: Contains the actual simulator code and its settings loader.
     For a cleaner organization, the loaders for distributions and policies are separated.
-- `libs/utils/`: Contains some quick header-only utilities.
+- `libs/utils/`: Contains some string and math utilities.
 - `scripts/`: Contains some scripts for solving small tasks running the project.
     - `convert_conf.py`: Converts the configuration files from the two-file logic to the TOML format.
     - `ensure_same_results.py`: Checks if the results of two simulations are the same.

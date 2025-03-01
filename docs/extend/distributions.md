@@ -2,7 +2,7 @@
 
 New distribution implementations need two parts: the sampler and the loader.
 
-The sampler is a header-only class that generates random numbers following the distribution. Its location is in the `mjqm-samplers` group of the `math` group.
+The sampler is a header-only class that generates random numbers following the distribution. Its location is in the `mjqm-samplers` folder of the `samplers` library.
 
 The loader is a function to read the distribution parameters from the TOML^[Read *Tom's Obvious Minimal Language* (TOML) definition at https://toml.io/en/] configuration file and creates the sampler object.
 
@@ -19,7 +19,7 @@ Let's see an example of how to add a new distribution to the simulator. We'll ta
 
 ## `DistributionSampler` interface
 
-[sampler.h](https://raw.githubusercontent.com/NeDS-Lab/mjqm-simulator/refs/heads/main/libs/math/include/mjqm-samplers/sampler.h ":include :type=code cpp :fragment=interface")
+[sampler.h](https://raw.githubusercontent.com/NeDS-Lab/mjqm-simulator/refs/heads/main/libs/samplers/include/mjqm-samplers/sampler.h ":include :type=code cpp :fragment=interface")
 
 The interface expects the following methods to be implemented:
 
@@ -48,7 +48,7 @@ The class will be surrounded by the usual `c++` include guards.
 We can prepare the class skeleton extending the `DistributionSampler` interface.
 
 ```cpp
-// libs/math/include/mjqm-samplers/exponential.hpp
+// libs/samplers/include/mjqm-samplers/exponential.hpp
 #ifndef MJQM_SAMPLERS_EXPONENTIAL_H
 #define MJQM_SAMPLERS_EXPONENTIAL_H
 
@@ -75,7 +75,7 @@ $$
 > [!Note] Declare theoretical mean and variance constant, and compute them just once.
 
 ```cpp
-// libs/math/include/mjqm-samplers/exponential.hpp
+// libs/samplers/include/mjqm-samplers/exponential.hpp
 // ...
 #include <cmath>
 // ...
@@ -101,7 +101,7 @@ X \sim \text{Exp}(\lambda) \quad \text{if} \quad X = -\log(U) / \lambda \quad \t
 $$
 
 ```cpp
-// libs/math/include/mjqm-samplers/exponential.hpp
+// libs/samplers/include/mjqm-samplers/exponential.hpp
 // ...
 #include <cmath>
 // ...
@@ -129,7 +129,7 @@ Also, here we define the `clone` method required by the interface, which returns
 > [!Note] Put as first parameter the [name mentioned above](#distributionsampler-interface) in the constructor and constructor-like methods, followed by distribution-specific parameters.
 
 ```cpp
-// libs/math/include/mjqm-samplers/exponential.hpp
+// libs/samplers/include/mjqm-samplers/exponential.hpp
 // ...
 #include <memory>
 // ...
@@ -159,7 +159,7 @@ Finally, we define the `operator std::string` method, returning all the informat
 > [!Note] Follow the template: `distribution_name (param1=val.ue ; param2=val.ue => mean=get_mean() ; variance=get_variance())`
 
 ```cpp
-// libs/math/include/mjqm-samplers/exponential.hpp
+// libs/samplers/include/mjqm-samplers/exponential.hpp
 // ...
 #include <sstream>
 #include <string>
@@ -176,7 +176,7 @@ public: // string conversion
 
 #### Result
 
-The final class looks like the one present in the repository at [libs/math/include/mjqm-samplers/exponential.hpp](https://raw.githubusercontent.com/NeDS-Lab/mjqm-simulator/refs/heads/main/libs/math/include/mjqm-samplers/exponential.hpp).
+The final class looks like the one present in the repository at [libs/samplers/include/mjqm-samplers/exponential.hpp](https://raw.githubusercontent.com/NeDS-Lab/mjqm-simulator/refs/heads/main/libs/samplers/include/mjqm-samplers/exponential.hpp).
 
 ## Make the class available
 
@@ -184,7 +184,7 @@ Now that we defined the class, we need to make it available to the simulator.
 In order to do so, include it in the `samplers.h` _aggregator_ header, that is the one used where distributions are needed.
 
 ```cpp
-// libs/math/include/mjqm-samplers/samplers.h
+// libs/samplers/include/mjqm-samplers/samplers.h
 // ...
 #include <mjqm-samplers/exponential.hpp>
 // ...

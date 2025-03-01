@@ -5,7 +5,7 @@
 #ifndef SERVERFILLINGMEM_H
 #define SERVERFILLINGMEM_H
 
-#include <mjqm-policy/policy.h>
+#include <mjqm-policies/policy.h>
 
 class ServerFillingMem : public Policy {
 public:

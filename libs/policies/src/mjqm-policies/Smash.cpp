@@ -2,7 +2,7 @@
 // Created by Marco Ciotola on 21/01/25.
 //
 
-#include <mjqm-policy/Smash.h>
+#include <mjqm-policies/Smash.h>
 
 void Smash::arrival(int c, int size, long int id) {
     std::tuple<int, int, long int> e(c, size, id);

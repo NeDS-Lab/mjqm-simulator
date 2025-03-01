@@ -7,7 +7,7 @@
 
 #include <unordered_map>
 
-#include <mjqm-policy/policy.h>
+#include <mjqm-policies/policy.h>
 #include <mjqm-settings/toml_loader.h>
 #include <mjqm-settings/toml_utils.h>
 

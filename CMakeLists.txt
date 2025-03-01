@@ -19,16 +19,12 @@ if (COMPILE_NATIVE)
 endif ()
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     message(STATUS "Compiling in Release mode")
-    add_link_options(-s -O3)
+    add_link_options(-s -O3 -flto)
     add_compile_options(-O3)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(STATUS "Compiling in Debug mode")
-    add_link_options(   -O2 -g)
+    add_link_options(   -O2 -g -flto)
     add_compile_options(-O2 -g)
-endif()
-
-if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    message(FATAL_ERROR "Only GCC is supported")
 endif()
 
 project(mjqm-simulator
@@ -37,6 +33,10 @@ project(mjqm-simulator
     HOMEPAGE_URL "https://github.com/NeDS-Lab/mjqm-simulator"
     LANGUAGES CXX
 )
+
+if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    message(FATAL_ERROR "Only GCC is supported, your compiler is ${CMAKE_CXX_COMPILER_ID}")
+endif()
 
 # Include the Boost library
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -55,21 +55,22 @@ find_package(Boost 1.71)
 include_directories(${Boost_INCLUDE_DIR})
 
 include_directories(
-    libs/math/include
-    libs/policy/include
+    libs/policies/include
+    libs/samplers/include
     libs/simulator/include
     libs/utils/include
 )
 
-add_subdirectory(libs/math)
-add_subdirectory(libs/policy)
+add_subdirectory(libs/policies)
+add_subdirectory(libs/samplers)
 add_subdirectory(libs/simulator)
+add_subdirectory(libs/utils)
 
 add_executable(simulator_smash simulator_smash.cpp)
-target_link_libraries(simulator_smash math policies stats)
+target_link_libraries(simulator_smash math policies stats RngStreams::RngStreams)
 
 add_executable(simulator_toml simulator_toml.cpp)
-target_link_libraries(simulator_toml math policies stats toml_loader)
+target_link_libraries(simulator_toml toml_loader)
 
 add_executable(toml_loader_test toml_loader_test.cpp)
 target_link_libraries(toml_loader_test toml_loader ${Boost_LIBRARIES})
