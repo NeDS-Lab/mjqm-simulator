@@ -130,7 +130,7 @@ You can find more information about the output columns in the [output_columns](o
 
 ### Bounded pareto
 
-- `distribution = "bounded_pareto"`
+- `distribution = "bounded pareto"`
 - `alpha`: the shape parameter.
 - `L`: the lower bound.
 - `H`: the higher bound.

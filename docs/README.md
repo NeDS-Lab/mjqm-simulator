@@ -59,6 +59,8 @@ The additional parameters work as such:
 - `--test` to also run tests.
 - `--no-build` to only configure the project without building it.
 
+> [!Note] To dig more into the details, in the output of the `configure` script you can find the actual commands used to configure and build the project, prepended with `+`.
+
 ### Rebuild
 
 If you change some code and want to rebuild the project, you can use the `rebuild` script:
