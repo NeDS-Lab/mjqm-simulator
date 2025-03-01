@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
     std::ofstream outputFile(out_filename, std::ios::app);
     std::vector<Experiment> ex;
 
-    for (int i = 0; i < arr_rate.size(); i++) {
+    for (size_t i = 0; i < arr_rate.size(); i++) {
         std::vector<double> l;
         for (auto x : p) {
             l.push_back(x * arr_rate[i]);
@@ -62,10 +62,10 @@ int main(int argc, char* argv[]) {
 
     std::vector<std::thread> threads(ex.size());
 
-    for (int i = 0; i < ex.size(); i++) {
+    for (size_t i = 0; i < ex.size(); i++) {
         threads[i] = std::thread(run_simulation, ex[i], n_evs, n_runs, std::ref(experiments_stats[i]));
     }
-    for (int i = 0; i < ex.size(); i++) {
+    for (size_t i = 0; i < ex.size(); i++) {
         threads[i].join();
     }
 
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
         outputFile << "\n";
     }
 
-    for (int i = 0; i < ex.size(); i++) {
+    for (size_t i = 0; i < ex.size(); i++) {
 
         outputFile << arr_rate[i] << ";";
         outputFile << experiments_stats[i] << "\n";

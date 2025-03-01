@@ -30,7 +30,7 @@ void MostServerFirst::flush_buffer() {
     // bool zeros = std::all_of(state_buf, state_buf + state_buf.size(), [](bool elem){ return elem == 0; });
     while (modified && freeservers > 0) {
         modified = false;
-        for (int i = state_buf.size() - 1; i >= 0; --i) {
+        for (long i = state_buf.size() - 1; i >= 0; --i) {
             auto it = stopped_jobs[i].begin();
             while (state_buf[i] != 0 && sizes[i] <= freeservers) {
                 state_buf[i]--;

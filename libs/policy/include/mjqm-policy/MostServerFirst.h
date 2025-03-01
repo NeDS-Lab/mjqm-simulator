@@ -45,7 +45,7 @@ private:
     std::vector<std::list<long int>> stopped_jobs; // vector of list of ids
     std::vector<std::list<long int>> ongoing_jobs; // vector of list of ids
     const std::vector<unsigned int> sizes;
-    int freeservers;
+    unsigned int freeservers;
     int violations_counter;
 
     void flush_buffer() override;

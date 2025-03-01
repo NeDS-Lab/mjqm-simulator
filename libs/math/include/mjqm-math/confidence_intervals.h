@@ -20,8 +20,6 @@ struct Confidence_inter {
     friend Confidence_inter operator+(Confidence_inter const& m, Confidence_inter const& o) {
         return Confidence_inter{m.min + o.min, m.max + o.max, m.mean + o.mean};
     }
-
-    Confidence_inter& operator=(Confidence_inter const& o) = default;
 };
 
 Confidence_inter compute_interval_student(const std::vector<double>& rep, double confidence);

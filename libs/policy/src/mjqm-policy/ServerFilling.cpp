@@ -41,7 +41,7 @@ void ServerFilling::flush_buffer() {
     if (freeservers > 0) {
         auto it = buffer.begin();
 
-        for (int i = 0; i < state_buf.size(); i++) {
+        for (size_t i = 0; i < state_buf.size(); i++) {
             state_buf[i] += state_ser[i];
         }
 

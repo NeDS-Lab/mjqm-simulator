@@ -86,7 +86,7 @@ public:
         for (auto& e : fel)
             e -= simtime;
 
-        for (int i = 0; i < jobs_inservice.size(); ++i) {
+        for (size_t i = 0; i < jobs_inservice.size(); ++i) {
             for (auto job = jobs_inservice[i].begin(); job != jobs_inservice[i].end(); ++job) {
                 jobs_inservice[i][job->first] -= simtime;
             }
@@ -168,7 +168,7 @@ public:
             preemption_avg[i] = ((double)preemption[i]) / (double)completion[i];
         }
 
-        for (int i = 0; i < occupancy_ser.size(); i++)
+        for (size_t i = 0; i < occupancy_ser.size(); i++)
             util += occupancy_ser[i] * sizes[i];
 
         rep_window_size.push_back(std::accumulate(windowSize.begin(), windowSize.end(), 0.0) / simtime);
@@ -301,11 +301,11 @@ public:
         // headers.push_back("Total Queue");
         // headers.push_back("Total Service");
         //
-        // for (int i = 0; i < sizes.size(); ++i) {
+        // for (size_t i = 0; i < sizes.size(); ++i) {
         //     headers.push_back("Fel" + std::to_string(i));
         // }
         //
-        // for (int i = 0; i < sizes.size(); ++i) {
+        // for (size_t i = 0; i < sizes.size(); ++i) {
         //     headers.push_back("Fel" + std::to_string(i + sizes.size()));
         // }
         //
@@ -399,13 +399,13 @@ public:
                     outputFile << k << ";";
                     auto state_buf = policy->get_state_buf();
                     auto state_ser = policy->get_state_ser();
-                    for (int i=0; i<occupancy_buf.size(); i++) {
+                    for (size_t i=0; i<occupancy_buf.size(); i++) {
                         outputFile << state_buf[i] << ";";
                         outputFile << state_ser[i] << ";";
                     }
                     outputFile << std::accumulate(state_buf.begin(), state_buf.end(), 0.0) << ";";
                     outputFile << std::accumulate(state_ser.begin(), state_ser.end(), 0.0) << ";";
-                    for (int i=0; i<fel.size(); i++) {
+                    for (size_t i=0; i<fel.size(); i++) {
                         outputFile << fel[i] << ";";
                     }
                     outputFile << simtime << ";";
@@ -422,7 +422,7 @@ public:
                     outputFile << k << ";";
                     auto state_buf = policy->get_state_buf();
                     auto state_ser = policy->get_state_ser();
-                    for (int i=0; i<occupancy_buf.size(); i++) {
+                    for (size_t i=0; i<occupancy_buf.size(); i++) {
                         outputFile << state_buf[i] << ";";
                         outputFile << state_ser[i] << ";";
                     }
@@ -443,14 +443,14 @@ public:
             std::cout << "Repetition " << std::to_string(rep) << " Done" << std::endl;
             // this->reset_data();
             /*auto sb = policy->get_state_buf();
-            for (int i = 0; i<sb.size(); ++i) {
+            for (size_t i = 0; i<sb.size(); ++i) {
                 std::cout << sb[i] << ", ";
             }
             std::cout << std::endl;*/
             // std::ofstream outputFile(out_filename, std::ios::app);
             // outputFile << rep << ";";
             // auto state_buf = policy->get_state_buf();
-            // for (int i = 0; i < occupancy_buf.size(); i++) {
+            // for (size_t i = 0; i < occupancy_buf.size(); i++) {
             //     outputFile << state_buf[i] << ";";
             //     outputFile << occupancy_buf[i] << ";";
             // }
@@ -479,7 +479,7 @@ public:
             }
             outFree << lambda << ";";
 
-            for (int i = 0; i <= rep_free_servers_distro.size(); i++) {
+            for (size_t i = 0; i <= rep_free_servers_distro.size(); i++) {
 
                     outFree << rep_free_servers_distro[i] << ";";
 
@@ -642,7 +642,7 @@ private:
                 }
 
                 long int fastest_job_id;
-                double fastest_job_fel = std::numeric_limits<double>::infinity();
+                double fastest_job_fel = std::numeric_limits<double>::max();
                 for (auto job_id = ongoing_jobs[i].begin(); job_id != ongoing_jobs[i].end(); ++job_id) {
                     if (!jobs_inservice[i].contains(*job_id)) { // If they are NOT already in service
                         if (jobs_preempted[i].contains(*job_id)) { // See if they were preempted: resume them
@@ -672,7 +672,7 @@ private:
                 }
 
                 if (jobs_inservice[i].empty()) { // If no jobs in service for a given class
-                    fel[i] = std::numeric_limits<double>::infinity();
+                    fel[i] = std::numeric_limits<double>::max();
                 } else {
                     fel[i] = fastest_job_fel;
                     job_fel[i] = fastest_job_id;
@@ -783,9 +783,9 @@ private:
                 }
 
                 if (jobs_inservice[i].empty()) { // If no jobs in service for a given class
-                    fel[i] = std::numeric_limits<double>::infinity();
+                    fel[i] = std::numeric_limits<double>::max();
                 } else if (fel[i] <= simtime) {
-                    fel[i] = std::numeric_limits<double>::infinity();
+                    fel[i] = std::numeric_limits<double>::max();
                     for (auto& job : jobs_inservice[i]) {
                         if (job.second < fel[i]) {
                             fel[i] = job.second;

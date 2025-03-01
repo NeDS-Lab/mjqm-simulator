@@ -77,7 +77,7 @@ void ServerFillingMem::printBuffer() {
 }
 void ServerFillingMem::flush_buffer() {
     if (freeservers > 0) {
-        for (int i = 0; i < state_buf.size(); ++i) {
+        for (size_t i = 0; i < state_buf.size(); ++i) {
             state_buf[i] += state_ser[i];
         }
 

@@ -14,14 +14,14 @@ Confidence_inter compute_interval_student(const std::vector<double>& rep, const 
     double mean = 0.0;
     double stdv = 0.0;
 
-    for (int i = 0; i < rep.size(); i++)
+    for (size_t i = 0; i < rep.size(); i++)
         mean += rep[i];
     mean /= static_cast<double>(rep.size());
 
-    for (int i = 0; i < rep.size(); i++)
-        stdv += std::pow(rep[i] - mean, 2);
+    for (size_t i = 0; i < rep.size(); i++)
+        stdv += pow(rep[i] - mean, 2);
 
-    stdv = std::sqrt(stdv);
+    stdv = sqrt(stdv);
     if (rep.size() > 1)
         stdv /= static_cast<double>(rep.size()) - 1;
     else
@@ -29,7 +29,7 @@ Confidence_inter compute_interval_student(const std::vector<double>& rep, const 
 
     const boost::math::students_t dist(static_cast<double>(rep.size()) - 1);
     const double t = boost::math::quantile(boost::math::complement(dist, confidence / 2.0));
-    const double delta = t * stdv / std::sqrt(static_cast<double>(rep.size()));
+    const double delta = t * stdv / sqrt(static_cast<double>(rep.size()));
 
     return Confidence_inter{mean - delta, mean + delta, mean};
 }
@@ -39,14 +39,14 @@ Confidence_inter compute_interval_class_student(const std::vector<std::vector<do
     double mean = 0.0;
     double stdv = 0.0;
 
-    for (int i = 0; i < rep.size(); i++)
+    for (size_t i = 0; i < rep.size(); i++)
         mean += rep[i][cl];
     mean /= static_cast<double>(rep.size());
 
-    for (int i = 0; i < rep.size(); i++)
-        stdv += std::pow(rep[i][cl] - mean, 2);
+    for (size_t i = 0; i < rep.size(); i++)
+        stdv += pow(rep[i][cl] - mean, 2);
 
-    stdv = std::sqrt(stdv);
+    stdv = sqrt(stdv);
     if (rep.size() > 1)
         stdv /= static_cast<double>(rep.size()) - 1;
     else
@@ -54,7 +54,7 @@ Confidence_inter compute_interval_class_student(const std::vector<std::vector<do
 
     const boost::math::students_t dist(static_cast<double>(rep.size()) - 1);
     const double t = boost::math::quantile(boost::math::complement(dist, confidence / 2.0));
-    const double delta = t * stdv / std::sqrt(static_cast<double>(rep.size()));
+    const double delta = t * stdv / sqrt(static_cast<double>(rep.size()));
 
     return Confidence_inter{mean - delta, mean + delta, mean};
 }
@@ -65,14 +65,14 @@ Confidence_inter compute_interval_class_chi(const std::vector<std::vector<double
     double mean = 0.0;
     double stdv = 0.0;
 
-    for (int i = 0; i < rep.size(); i++)
+    for (size_t i = 0; i < rep.size(); i++)
         mean += rep[i][cl];
     mean /= static_cast<double>(rep.size());
 
-    for (int i = 0; i < rep.size(); i++)
-        stdv += std::pow(rep[i][cl] - mean, 2);
+    for (size_t i = 0; i < rep.size(); i++)
+        stdv += pow(rep[i][cl] - mean, 2);
 
-    stdv = std::sqrt(stdv);
+    stdv = sqrt(stdv);
     if (rep.size() > 1)
         stdv /= static_cast<double>(rep.size()) - 1;
     else
@@ -81,8 +81,8 @@ Confidence_inter compute_interval_class_chi(const std::vector<std::vector<double
     const boost::math::chi_squared dist(static_cast<double>(rep.size()) - 1);
     const double t_right = boost::math::quantile(boost::math::complement(dist, confidence / 2.0));
     const double t_left = boost::math::quantile(boost::math::complement(dist, (1.0 - confidence) / 2.0));
-    const double delta_right = std::sqrt(stdv * (static_cast<double>(rep.size()) - 1) / t_right);
-    const double delta_left = std::sqrt(stdv * (static_cast<double>(rep.size()) - 1) / t_left);
+    const double delta_right = sqrt(stdv * (static_cast<double>(rep.size()) - 1) / t_right);
+    const double delta_left = sqrt(stdv * (static_cast<double>(rep.size()) - 1) / t_left);
 
     return Confidence_inter{mean - delta_left, mean + delta_right, mean};
 }

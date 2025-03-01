@@ -29,11 +29,9 @@ public:
     virtual bool fit_jobs(std::unordered_map<long int, double> holdTime, double simTime) = 0;
     virtual bool prio_big() = 0;
     virtual int get_state_ser_small() = 0;
-    virtual ~Policy() = 0;
+    virtual ~Policy() = default;
     virtual std::unique_ptr<Policy> clone() const = 0;
     explicit virtual operator std::string() const = 0;
 };
-
-inline Policy::~Policy() = default;
 
 #endif // INTERFACE_H

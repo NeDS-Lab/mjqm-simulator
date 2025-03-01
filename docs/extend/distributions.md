@@ -263,7 +263,7 @@ Finally, we look for the `prob` configuration only for the arrival distribution 
 
 > [!Note] When all classes define the `prob` configuration, we already normalised them in a previous step to sum up to 1 (see [normalise_probs in toml_loader.cpp](https://github.com/NeDS-Lab/mjqm-simulator/blob/385d9955a5fec296544d9ed9ce7588c25d865ecf/libs/simulator/src/mjqm-settings/toml_loader.cpp#L104))
 
-To easily and idiomatically read the parameters, without worrying either about how the TOML library works, or about default values, we can use the helper function `distribution_parameter`: it takes one or more keys to look for in the TOML table, and returns the first one found, or `std::nullopt` if none is found.
+To easily and idiomatically read the parameters, without worrying either about how the TOML library works, or about default values, we can use the helper function `distribution_parameter`: it takes one or more keys to look for in the configuration, and returns the first one found, or `std::nullopt` if none is found.
 
 ```cpp
 // libs/simulator/src/mjqm-settings/toml_distributions_loader.cpp

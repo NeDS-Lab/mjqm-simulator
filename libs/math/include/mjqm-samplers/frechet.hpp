@@ -30,9 +30,9 @@ public:
     const double alpha;
     const double s;
     const double m;
-    const double mean = alpha > 1 ? m + (s * tgamma(1 - 1 / alpha)) : std::numeric_limits<double>::infinity();
+    const double mean = alpha > 1 ? m + (s * tgamma(1 - 1 / alpha)) : std::numeric_limits<double>::max();
     const double variance = alpha > 2 ? pow(s, 2) * (tgamma(1 - 2 / alpha) - pow(tgamma(1 - 1 / alpha), 2))
-                                      : std::numeric_limits<double>::infinity();
+                                      : std::numeric_limits<double>::max();
 
 private:
     const double exponent = -1. / alpha;

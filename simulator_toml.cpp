@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
             out_file << "\n";
         }
     }
-    for (int i = 0; i < experiments->size(); ++i) {
+    for (size_t i = 0; i < experiments->size(); ++i) {
         boost::asio::post(pool, [&conf = experiments->at(i).second] { run_simulation(conf); });
     }
     pool.join();

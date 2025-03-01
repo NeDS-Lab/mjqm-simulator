@@ -39,7 +39,7 @@ inline void read_classes(std::string& filename, std::vector<double>& p, std::vec
         content.push_back(row);
     }
 
-    for (int i = 0; i < content.size(); i++) {
+    for (size_t i = 0; i < content.size(); i++) {
         content[i][0].erase(content[i][0].begin());
         content[i][2].pop_back();
 
