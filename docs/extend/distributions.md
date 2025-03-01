@@ -35,7 +35,8 @@ The interface offers the following protected method to be used by the implementi
 
 - `double randU01()` that generates a random number following the uniform distribution between 0 and 1.
 
-> [!Note] In order to achieve a more cohesive library, we define some good practices to follow when implementing a new distribution. Those will be discussed in each appropriate section using boxes like this one.
+> [!Note]
+  In order to achieve a more cohesive library, we define some good practices to follow when implementing a new distribution. Those will be discussed in each appropriate section using boxes like this one.
 
 ## Create a new class
 
@@ -43,7 +44,8 @@ As we are in a header-only library (`.hpp` extension), we need to define the cla
 This also allows the compiler to inline the methods and optimize binary.
 The class will be surrounded by the usual `c++` include guards.
 
-> [!Note] To avoid name clashes, use the `MJQM_SAMPLERS_` prefix for the include guards.
+> [!Note]
+  To avoid name clashes, use the `MJQM_SAMPLERS_` prefix for the include guards.
 
 We can prepare the class skeleton extending the `DistributionSampler` interface.
 
@@ -72,7 +74,8 @@ $$
 \mu = \frac{1}{\lambda} \quad \text{and} \quad \sigma^2 = \frac{1}{\lambda^2}
 $$
 
-> [!Note] Declare theoretical mean and variance constant, and compute them just once.
+> [!Note]
+  Declare theoretical mean and variance constant, and compute them just once.
 
 ```cpp
 // libs/samplers/include/mjqm-samplers/exponential.hpp
@@ -92,7 +95,8 @@ public: // descriptive parameters and statistics
 
 Out of the methods defined abstract (pure virtual) by the `DistributionSampler` interface, the `sample` method is the main one that we need to implement, while the mean and variance getters are only required to provide them _by design_.
 
-> [!Note] Inline all these methods in order to hint the compiler they could be optimised.
+> [!Note]
+  Inline all these methods in order to hint the compiler they could be optimised.
 
 For sampling, we want to employ the `randU01()` method provided by the interface as random uniform 0-1 variable, so we use the formula
 
@@ -118,15 +122,18 @@ public: // operative methods
 
 The exponential distribution is defined by the single parameter $\lambda$, so we define the constructor to only receive this parameter (along with the name).
 
-> [!Note] Only put the actual distribution parameters as constructor arguments, instead of some value(s) to compute them.
+> [!Note]
+  Only put the actual distribution parameters as constructor arguments, instead of some value(s) to compute them.
 
 As different costructor variants, we can provide two idiomatic static methods: `with_rate` and `with_mean`, where the second one computes $\lambda = 1 / \mu$.
 
-> [!Note] If some parameter can be computed from the `mean`, `rate`, or other pseudo-parameters, implement a static method `with_{param}` accepting the pseudo-parameters, along with other non-computable required parameters and the instance name. Return a new instance of the distribution as `std::unique_ptr<DistributionSampler>`.
+> [!Note]
+  If some parameter can be computed from the `mean`, `rate`, or other pseudo-parameters, implement a static method `with_{param}` accepting the pseudo-parameters, along with other non-computable required parameters and the instance name. Return a new instance of the distribution as `std::unique_ptr<DistributionSampler>`.
 
 Also, here we define the `clone` method required by the interface, which returns a new instance of the distribution with the same parameters.
 
-> [!Note] Put as first parameter the [name mentioned above](#distributionsampler-interface) in the constructor and constructor-like methods, followed by distribution-specific parameters.
+> [!Note]
+  Put as first parameter the [name mentioned above](#distributionsampler-interface) in the constructor and constructor-like methods, followed by distribution-specific parameters.
 
 ```cpp
 // libs/samplers/include/mjqm-samplers/exponential.hpp
@@ -156,7 +163,8 @@ public: // direct and indirect constructors
 
 Finally, we define the `operator std::string` method, returning all the information about the distribution.
 
-> [!Note] Follow the template: `distribution_name (param1=val.ue ; param2=val.ue => mean=get_mean() ; variance=get_variance())`
+> [!Note]
+  Follow the template: `distribution_name (param1=val.ue ; param2=val.ue => mean=get_mean() ; variance=get_variance())`
 
 ```cpp
 // libs/samplers/include/mjqm-samplers/exponential.hpp
@@ -217,7 +225,8 @@ inline static std::unordered_map<std::string, distribution_loader> distribution_
 };
 ```
 
-> [!Note] Keep both the loader declaration and the map element in alphabetical order.
+> [!Note]
+  Keep both the loader declaration and the map element in alphabetical order.
 
 The key in the map will be used in the configuration file as follows:
 
@@ -227,7 +236,8 @@ arrival.distribution = "exponential"
 # ...
 ```
 
-> [!Note] As the key for the map, use the lowercase, space-separated name of the distribution without accents.
+> [!Note]
+  As the key for the map, use the lowercase, space-separated name of the distribution without accents.
 
 #### Implement the loader
 
@@ -259,7 +269,8 @@ Moreover, we can accept either `lambda` or `rate`, as they have the same meaning
 
 Finally, we look for the `prob` configuration only for the arrival distribution configuration.
 
-> [!Note] When all classes define the `prob` configuration, we already normalised them in a previous step to sum up to 1 (see [normalise_probs in toml_loader.cpp](https://github.com/NeDS-Lab/mjqm-simulator/blob/385d9955a5fec296544d9ed9ce7588c25d865ecf/libs/simulator/src/mjqm-settings/toml_loader.cpp#L104))
+> [!Note]
+  When all classes define the `prob` configuration, we already normalised them in a previous step to sum up to 1 (see [normalise_probs in toml_loader.cpp](https://github.com/NeDS-Lab/mjqm-simulator/blob/385d9955a5fec296544d9ed9ce7588c25d865ecf/libs/simulator/src/mjqm-settings/toml_loader.cpp#L104))
 
 To easily and idiomatically read the parameters, without worrying either about how the TOML library works, or about default values, we can use the helper function `distribution_parameter`: it takes one or more keys to look for in the configuration, and returns the first one found, or `std::nullopt` if none is found.
 
@@ -292,4 +303,5 @@ Some particular behaviours to pay attention to, in order to replicate them:
 - we use the idiomatic static _constructors_ when building the distribution with non-standard parameters (in this case, using the mean).
 - we use the `std::make_unique` function to build the distribution with the lambda parameter.
 
-> [!Note] When our loader returns `false`, the simulator won't start the experiments, but will try to parse the remaining configuration, printing all the errors found before exiting.
+> [!Note]
+  When our loader returns `false`, the simulator won't start the experiments, but will try to parse the remaining configuration, printing all the errors found before exiting.

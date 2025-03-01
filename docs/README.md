@@ -59,7 +59,8 @@ The additional parameters work as such:
 - `--test` to also run tests.
 - `--no-build` to only configure the project without building it.
 
-> [!Note] To dig more into the details, in the output of the `configure` script you can find the actual commands used to configure and build the project, prepended with `+`.
+> [!Note]
+  To dig more into the details, in the output of the `configure` script you can find the actual commands used to configure and build the project, prepended with `+`.
 
 ### Rebuild
 
@@ -78,7 +79,7 @@ The additional parameters work as such:
 ## Test
 
 > [!Note]
-> The test suite will be completely reworked soon.
+  The test suite will be completely reworked soon.
 
 To run the test suite, use the following command after configuration is done:
 
