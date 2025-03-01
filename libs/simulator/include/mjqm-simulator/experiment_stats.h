@@ -23,8 +23,10 @@ public:
     CONTENT value;
     bool visible = true;
 
-    Stat(const std::string& name, bool has_confidence_interval) :
-        name{name}, has_confidence_interval{has_confidence_interval} {}
+    Stat(std::string name, bool has_confidence_interval) :
+        name{std::move(name)}, has_confidence_interval{has_confidence_interval} {}
+    Stat(const std::string& class_name, const std::string& stat_name, bool has_confidence_interval) :
+        Stat{"T" + class_name + " " + stat_name, has_confidence_interval} {}
 
     void add_headers(std::vector<std::string>& headers) const {
         if (!visible) {
@@ -63,11 +65,11 @@ public:
     Stat<bool> warnings; // out: warning for class stability
 
     explicit ClassStats(const std::string& name) :
-        name{name}, occupancy_buf{"T" + name + " Queue", true}, occupancy_ser{"T" + name + " Service", true},
-        occupancy_system{"T" + name + " System", true}, wait_time{"T" + name + " Waiting", true},
-        wait_time_var{"T" + name + " Waiting Variance", true}, throughput{"T" + name + " Throughput", true},
-        resp_time{"T" + name + " RespTime", true}, resp_time_var{"T" + name + " RespTime Variance", true},
-        preemption_avg{"T" + name + " Preemption", true}, warnings{"T" + name + " Stability Check", false} {}
+        name{name}, occupancy_buf{name, "Queue", true}, occupancy_ser{name, "Service", true},
+        occupancy_system{name, "System", true}, wait_time{name, "Waiting", true},
+        wait_time_var{name, "Waiting Variance", true}, throughput{name, "Throughput", true},
+        resp_time{name, "RespTime", true}, resp_time_var{name, "RespTime Variance", true},
+        preemption_avg{name, "Preemption", true}, warnings{name, "Stability Check", false} {}
 
     void add_headers(std::vector<std::string>& headers) const {
         occupancy_buf.add_headers(headers);

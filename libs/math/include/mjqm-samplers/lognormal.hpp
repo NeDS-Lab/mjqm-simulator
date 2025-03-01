@@ -9,13 +9,12 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <string_view>
 
 #include <mjqm-samplers/sampler.h>
 
 class Lognormal : public DistributionSampler {
 public:
-    explicit Lognormal(const std::string_view& name, const double mean, const double variance) : 
+    explicit Lognormal(const std::string& name, const double mean, const double variance) :
         DistributionSampler(name), mean(mean), variance(variance) {
         std::pair<double, double> res = compute_normal_params(mean);
         this->mu = res.first;
@@ -39,8 +38,8 @@ public: // descriptive parameters and statistics
     double sigma;
 
 public:
-    inline double getMean() const override { return mean; }
-    inline double getVariance() const override { return variance; }
+    inline double get_mean() const override { return mean; }
+    inline double get_variance() const override { return variance; }
     inline double sample() override {
         double u, v, s;
         do {
@@ -56,11 +55,11 @@ public:
         return std::exp(mu + sigma * z);
     }
 
-    static std::unique_ptr<DistributionSampler> with_mean(const std::string_view& name, double mean) {
+    static std::unique_ptr<DistributionSampler> with_mean(const std::string& name, double mean) {
         return std::make_unique<Lognormal>(name, mean, pow(0.5 * mean, 2)); // Assume stddev is 50% of the mean
     }
 
-    std::unique_ptr<DistributionSampler> clone(const std::string_view& name) const override {
+    std::unique_ptr<DistributionSampler> clone(const std::string& name) const override {
         return std::make_unique<Lognormal>(name, mean, pow(0.5 * mean, 2)); // Assume stddev is 50% of the mean
     }
 

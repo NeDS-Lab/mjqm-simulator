@@ -10,7 +10,6 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <string_view>
 
 #include <mjqm-samplers/sampler.h>
 
@@ -33,8 +32,8 @@ public:
                                           (1 / pow(l, alpha - 2) - 1 / pow(h, alpha - 2)));
 
     // operative methods
-    inline double getMean() const override { return mean; }
-    inline double getVariance() const override { return variance; }
+    inline double get_mean() const override { return mean; }
+    inline double get_variance() const override { return variance; }
     inline double sample() override {
         double u = randU01();
         double num = u * pow(h, alpha) - u * pow(l, alpha) - pow(h, alpha);
@@ -44,22 +43,22 @@ public:
     }
 
     // direct and indirect constructors
-    explicit BoundedPareto(const std::string_view& name, double alpha, double l, double h) :
+    explicit BoundedPareto(const std::string& name, double alpha, double l, double h) :
         DistributionSampler(name), l(l), h(h), alpha(alpha) {
         assert(l > 0.);
         assert(h > l);
         assert(alpha > 0.);
     }
 
-    static std::unique_ptr<DistributionSampler> with_rate(const std::string_view& name, double rate, double alpha) {
+    static std::unique_ptr<DistributionSampler> with_rate(const std::string& name, double rate, double alpha) {
         return std::make_unique<BoundedPareto>(name, alpha, (12000.0 / 23999.0) / rate, 12000 / rate);
     }
 
-    static std::unique_ptr<DistributionSampler> with_mean(const std::string_view& name, double mean, double alpha) {
+    static std::unique_ptr<DistributionSampler> with_mean(const std::string& name, double mean, double alpha) {
         return std::make_unique<BoundedPareto>(name, alpha, (12000.0 / 23999.0) * mean, 12000 * mean);
     }
 
-    std::unique_ptr<DistributionSampler> clone(const std::string_view& name) const override {
+    std::unique_ptr<DistributionSampler> clone(const std::string& name) const override {
         return std::make_unique<BoundedPareto>(name, alpha, l, h);
     }
 

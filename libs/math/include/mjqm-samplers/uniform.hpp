@@ -10,7 +10,6 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <string_view>
 
 #include <mjqm-samplers/sampler.h>
 
@@ -27,22 +26,22 @@ private:
 
 public:
     // operative methods
-    inline double getMean() const override { return mean; }
-    inline double getVariance() const override { return variance; }
+    inline double get_mean() const override { return mean; }
+    inline double get_variance() const override { return variance; }
     inline double sample() override { return randU01() * diff + min; }
 
     // factory methods
-    explicit Uniform(const std::string_view& name, const double min, const double max) :
+    explicit Uniform(const std::string& name, const double min, const double max) :
         DistributionSampler(name), min(min), max(max) {
         assert(min > 0);
         assert(max > min);
     }
 
-    static std::unique_ptr<DistributionSampler> with_mean(const std::string_view& name, double mean) {
+    static std::unique_ptr<DistributionSampler> with_mean(const std::string& name, double mean) {
         return std::make_unique<Uniform>(name, .5 * mean, 1.5 * mean);
     }
 
-    std::unique_ptr<DistributionSampler> clone(const std::string_view& name) const override {
+    std::unique_ptr<DistributionSampler> clone(const std::string& name) const override {
         return std::make_unique<Uniform>(name, min, max);
     }
 

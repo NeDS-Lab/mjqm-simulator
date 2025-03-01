@@ -26,15 +26,14 @@ The interface expects the following methods to be implemented:
 - a constructor that forwards the name of the distribution instance to the interface
   (the name is generated based on the job class during the loading from the TOML file)
 - `double sample()` that generates a random number following the distribution
-- `double getMean() const` that returns the theoretical mean of the distribution
-- `double getVariance() const` that returns the theoretical variance of the distribution
+- `double get_mean() const` that returns the theoretical mean of the distribution
+- `double get_variance() const` that returns the theoretical variance of the distribution
 - `explicit operator std::string() const` that returns the name of the distribution, along with its parameters and its theoretical mean and variance.
-- `std::unique_ptr<DistributionSampler> clone(const std::string_view& name) const` that builds a new instance of the distribution with the same parameters.
+- `std::unique_ptr<DistributionSampler> clone(const std::string& name) const` that builds a new instance of the distribution with the same parameters.
 
-The interface offers the following protected methods to be used by the implementing classes:
+The interface offers the following protected method to be used by the implementing classes:
 
 - `double randU01()` that generates a random number following the uniform distribution between 0 and 1.
-- two constructors, accepting either a `std::string` or a `std::string_view`. For generic purposes we commonly use `const std::string_view& name`, as the RngStreams library will copy its content into a new `std::string`.
 
 > [!Note] In order to achieve a more cohesive library, we define some good practices to follow when implementing a new distribution. Those will be discussed in each appropriate section using boxes like this one.
 
@@ -108,8 +107,8 @@ $$
 // ...
 class Exponential : public DistributionSampler {
 public: // operative methods
-    inline double getMean() const override { return mean; }
-    inline double getVariance() const override { return variance; }
+    inline double get_mean() const override { return mean; }
+    inline double get_variance() const override { return variance; }
     inline double sample() override { return -log(randU01()) / lambda; }
     // ...
 };
@@ -133,21 +132,20 @@ Also, here we define the `clone` method required by the interface, which returns
 // libs/math/include/mjqm-samplers/exponential.hpp
 // ...
 #include <memory>
-#include <string_view>
 // ...
 class Exponential : public DistributionSampler {
 public: // direct and indirect constructors
-    explicit Exponential(const std::string_view& name, double lambda) :
+    explicit Exponential(const std::string& name, double lambda) :
     DistributionSampler(name), lambda(lambda) {}
 
-    static std::unique_ptr<DistributionSampler> with_rate(const std::string_view& name, const double rate) {
+    static std::unique_ptr<DistributionSampler> with_rate(const std::string& name, const double rate) {
         return std::make_unique<Exponential>(name, rate);
     }
-    static std::unique_ptr<DistributionSampler> with_mean(const std::string_view& name, const double mean) {
+    static std::unique_ptr<DistributionSampler> with_mean(const std::string& name, const double mean) {
         return std::make_unique<Exponential>(name, 1. / mean);
     }
 
-    std::unique_ptr<DistributionSampler> clone(const std::string_view& name) const override {
+    std::unique_ptr<DistributionSampler> clone(const std::string& name) const override {
         return std::make_unique<Exponential>(name, lambda);
     }
     // ...
@@ -158,7 +156,7 @@ public: // direct and indirect constructors
 
 Finally, we define the `operator std::string` method, returning all the information about the distribution.
 
-> [!Note] Follow the template: `distribution_name (param1=val.ue ; param2=val.ue => mean=getMean() ; variance=getVariance())`
+> [!Note] Follow the template: `distribution_name (param1=val.ue ; param2=val.ue => mean=get_mean() ; variance=get_variance())`
 
 ```cpp
 // libs/math/include/mjqm-samplers/exponential.hpp

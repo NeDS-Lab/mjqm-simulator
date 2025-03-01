@@ -8,7 +8,6 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <string_view>
 
 #include <mjqm-samplers/sampler.h>
 
@@ -19,19 +18,18 @@ public:
     const double variance = 0;
 
     // operative methods
-    inline double getMean() const override { return value; }
-    inline double getVariance() const override { return variance; }
+    inline double get_mean() const override { return value; }
+    inline double get_variance() const override { return variance; }
     inline double sample() override { return value; }
 
     // direct and indirect constructors
-    explicit Deterministic(const std::string_view& name, const double value) :
-        DistributionSampler(name), value(value) {}
+    explicit Deterministic(const std::string& name, const double value) : DistributionSampler(name), value(value) {}
 
-    static std::unique_ptr<DistributionSampler> with_value(const std::string_view& name, double value) {
+    static std::unique_ptr<DistributionSampler> with_value(const std::string& name, double value) {
         return std::make_unique<Deterministic>(name, value);
     }
 
-    std::unique_ptr<DistributionSampler> clone(const std::string_view& name) const override {
+    std::unique_ptr<DistributionSampler> clone(const std::string& name) const override {
         return std::make_unique<Deterministic>(name.data(), value);
     }
 

@@ -10,7 +10,6 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <string_view>
 
 #include <mjqm-samplers/sampler.h>
 
@@ -39,32 +38,32 @@ private:
 
 public:
     // operative methods
-    inline double getMean() const override { return mean; }
-    inline double getVariance() const override { return variance; }
+    inline double get_mean() const override { return mean; }
+    inline double get_variance() const override { return variance; }
     inline double sample() override { return s * pow(-log(randU01()), exponent); }
 
     // factory methods
-    explicit Frechet(const std::string_view& name, const double alpha, const double s = 1., const double m = 0.,
+    explicit Frechet(const std::string& name, const double alpha, const double s = 1., const double m = 0.,
                      bool = true) : DistributionSampler(name), alpha(alpha), s(s), m(m) {
         assert(alpha > 1); // alpha must be greater than 1 for the mean to be finite
     }
-    explicit Frechet(const std::string_view& name, const double s_ratio, const double alpha, const double rate,
+    explicit Frechet(const std::string& name, const double s_ratio, const double alpha, const double rate,
                      const double m = 0.) : DistributionSampler(name), alpha(alpha), s(s_ratio / rate), m(m) {
         assert(alpha > 1); // alpha must be greater than 1 for the mean to be finite
     }
 
-    static std::unique_ptr<DistributionSampler> with_mean(const std::string_view& name, double mean, double alpha,
+    static std::unique_ptr<DistributionSampler> with_mean(const std::string& name, double mean, double alpha,
                                                           double m = 0.) {
         return std::make_unique<Frechet>(name, alpha, mean / tgamma(1 - 1 / alpha), m, true);
     }
 
     // frechet::with_rate emulates the double division for u[i] in the original code (1/(1/u[i]))
-    static std::unique_ptr<DistributionSampler> with_rate(const std::string_view& name, double rate, double alpha,
+    static std::unique_ptr<DistributionSampler> with_rate(const std::string& name, double rate, double alpha,
                                                           double m = 0.) {
         return std::make_unique<Frechet>(name, 1 / tgammaf(1 - 1 / alpha), alpha, rate, m);
     }
 
-    std::unique_ptr<DistributionSampler> clone(const std::string_view& name) const override {
+    std::unique_ptr<DistributionSampler> clone(const std::string& name) const override {
         return std::make_unique<Frechet>(name, alpha, s, m, true);
     }
 
