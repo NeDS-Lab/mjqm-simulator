@@ -18,6 +18,7 @@
 #include <utility>
 #include <vector>
 
+#include <mjqm-math/confidence_intervals.h>
 #include <mjqm-policies/policy.h>
 #include <mjqm-samplers/sampler.h>
 #include <mjqm-simulator/experiment_stats.h>
@@ -494,13 +495,14 @@ public:
             ClassStats& res = stats_prepared ? stats.class_stats.at(i) : stats.class_stats.emplace_back(class_names[i]);
             res.occupancy_buf = compute_interval_class_student(rep_occupancy_buf, i, confidence);
             res.occupancy_ser = compute_interval_class_student(rep_occupancy_ser, i, confidence);
+            res.occupancy_system = res.occupancy_buf + res.occupancy_ser;
             res.throughput = compute_interval_class_student(rep_th, i, confidence);
             res.wait_time = compute_interval_class_student(rep_wait, i, confidence);
             res.wait_time_var = compute_interval_class_student(rep_wait_var, i, confidence);
             res.resp_time = compute_interval_class_student(rep_resp, i, confidence);
             res.resp_time_var = compute_interval_class_student(rep_resp_var, i, confidence);
             res.preemption_avg = compute_interval_class_student(rep_preemption, i, confidence);
-            res.warnings = 1.0 - res.throughput.value.mean / l[i] > 0.05;
+            res.warnings = 1.0 - std::get<Confidence_inter>(res.throughput.value).mean / l[i] > 0.05;
         }
         stats.wasted = compute_interval_student(rep_waste, confidence);
         stats.violations = compute_interval_student(rep_viol, confidence);

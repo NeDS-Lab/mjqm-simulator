@@ -128,39 +128,23 @@ bool from_toml(toml::table& data, ExperimentConfig& conf) {
                 continue;
             }
             auto column_str = column.value<std::string>().value();
-            if (column_str == "*") {
-                ok = conf.stats.show_computed_columns() && ok;
-                continue;
-            }
-            if (column_str == "-*") {
-                ok = conf.stats.hide_computed_columns() && ok;
+            if (column_str == "*" || column_str == "-*") {
+                conf.stats.set_computed_columns_visibility(column_str == "*");
                 continue;
             }
             if (column_str.ends_with("]")) {
                 if (column_str.ends_with("[*]")) {
-                    if (column_str.starts_with("-")) {
-                        conf.stats.hide_class_column(column_str.substr(1, column_str.size() - 4));
-                    } else {
-                        conf.stats.show_class_column(column_str.substr(0, column_str.size() - 4));
-                    }
+                    conf.stats.set_class_column_visibility(column_str.substr(0, column_str.size() - 4));
                     continue;
                 }
                 if (auto class_start_at = column_str.find("[")) {
                     auto class_name = column_str.substr(class_start_at + 1, column_str.size() - class_start_at - 2);
-                    if (column_str.starts_with("-")) {
-                        conf.stats.hide_class_column(column_str.substr(1, class_start_at - 1), class_name);
-                    } else {
-                        conf.stats.show_class_column(column_str.substr(0, class_start_at - 1), class_name);
-                    }
+                    conf.stats.set_class_column_visibility(column_str.substr(0, class_start_at - 1), class_name);
                     continue;
                 }
                 print_error("Column " << error_highlight(column_str) << " badly defined");
             }
-            if (column_str.starts_with("-")) {
-                conf.stats.hide_column(column_str.substr(1));
-                continue;
-            }
-            conf.stats.show_column(column_str);
+            conf.stats.set_column_visibility(column_str);
         }
     }
 
