@@ -14,7 +14,7 @@ struct Confidence_inter {
     double mean;
 
     friend std::ostream& operator<<(std::ostream& os, Confidence_inter const& m) {
-        return os << m.mean << ";" << "[" << m.min << ", " << m.max << "]" << ";";
+        return os << m.mean << ";" << "[" << m.min << ", " << m.max << "]";
     }
 
     friend Confidence_inter operator+(Confidence_inter const& m, Confidence_inter const& o) {

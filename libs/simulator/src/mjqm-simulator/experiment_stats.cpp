@@ -11,26 +11,23 @@
 
 // ****** Stat
 // *** visitor
-VariantStat Stat::visit_value(const std::function<Confidence_inter(Confidence_inter const&)>& confidence_inter,
-                              const std::function<bool(bool const&)>& _bool,
-                              const std::function<double(double const&)>& _double,
-                              const std::function<long(long const&)>& _long,
-                              const std::function<std::string(std::string const&)>& _string) const {
-    return std::visit(
+void Stat::visit_value(const std::function<void(Confidence_inter const&)>& _confint,
+                       const std::function<void(bool const&)>& _bool, const std::function<void(double const&)>& _double,
+                       const std::function<void(long const&)>& _long,
+                       const std::function<void(std::string const&)>& _string) const {
+    std::visit(
         [&](auto&& value) {
             using T = std::decay_t<decltype(value)>;
             if constexpr (std::is_same_v<T, Confidence_inter>) {
-                return VariantStat(confidence_inter(value));
+                _confint(value);
             } else if constexpr (std::is_same_v<T, bool>) {
-                return VariantStat(_bool(value));
+                _bool(value);
             } else if constexpr (std::is_same_v<T, double>) {
-                return VariantStat(_double(value));
+                _double(value);
             } else if constexpr (std::is_same_v<T, long>) {
-                return VariantStat(_long(value));
+                _long(value);
             } else if constexpr (std::is_same_v<T, std::string>) {
-                return VariantStat(_string(value));
-            } else {
-                return VariantStat("N/A");
+                _string(value);
             }
         },
         this->value);
@@ -55,37 +52,21 @@ std::ostream& operator<<(std::ostream& os, const Stat& m) {
     if (!m.visible) {
         return os;
     }
-    m.visit_value(
-        [&os](const Confidence_inter& value) {
-            os << value;
-            return value;
-        },
-        [&os](const bool& value) {
-            os << value;
-            return value;
-        },
-        [&os](const double& value) {
-            os << value;
-            return value;
-        },
-        [&os](const long& value) {
-            os << value;
-            return value;
-        },
-        [&os](const std::string& value) {
-            os << value;
-            return value;
-        });
-    return os;
+    m.visit_value([&os](const Confidence_inter& value) { os << value; }, [&os](const bool& value) { os << value; },
+                  [&os](const double& value) { os << value; }, [&os](const long& value) { os << value; },
+                  [&os](const std::string& value) { os << value; });
+    return os << ";";
 }
 
 // *** operators
 VariantStat Stat::operator+(Stat const& that) const {
-    return visit_value([&that](Confidence_inter const& c) { return c + std::get<Confidence_inter>(that.value); },
-                       [&that](bool const& b) { return b || std::get<bool>(that.value); },
-                       [&that](double const& d) { return d + std::get<double>(that.value); },
-                       [&that](long const& l) { return l + std::get<long>(that.value); },
-                       [&that](std::string const& s) { return s + std::get<std::string>(that.value); });
+    VariantStat v = "N/A";
+    visit_value([&](Confidence_inter const& c) { v = c + std::get<Confidence_inter>(that.value); },
+                [&](bool const& b) { v = b || std::get<bool>(that.value); },
+                [&](double const& d) { v = d + std::get<double>(that.value); },
+                [&](long const& l) { v = l + std::get<long>(that.value); },
+                [&](std::string const& s) { v = s + std::get<std::string>(that.value); });
+    return v;
 }
 Stat& Stat::operator=(VariantStat const& value) {
     this->value = value;
@@ -125,9 +106,6 @@ void ExperimentStats::edit_all_stats(const std::function<void(Stat&)>& editor) {
     for (auto& cv : custom_values) {
         editor(cv);
     }
-    for (auto& cs : class_stats) {
-        cs.edit_stats(editor);
-    }
     edit_computed_stats(editor);
 }
 void ExperimentStats::visit_all_stats(const std::function<void(const Stat&)>& visitor) const {
@@ -136,9 +114,6 @@ void ExperimentStats::visit_all_stats(const std::function<void(const Stat&)>& vi
     }
     for (auto& cv : custom_values) {
         visitor(cv);
-    }
-    for (auto& cs : class_stats) {
-        cs.visit_stats(visitor);
     }
     visit_computed_stats(visitor);
 }

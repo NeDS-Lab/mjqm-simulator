@@ -18,8 +18,10 @@
 typedef std::variant<Confidence_inter, bool, double, long, std::string> VariantStat;
 
 class Stat {
-public:
+private:
     std::string prefix;
+
+public:
     const std::string name;
     const bool has_confidence_interval;
     VariantStat value;
@@ -28,35 +30,67 @@ public:
     Stat(std::string name, bool has_confidence_interval) :
         name{std::move(name)}, has_confidence_interval{has_confidence_interval} {}
 
-    VariantStat visit_value(const std::function<Confidence_inter(Confidence_inter const&)>& confidence_inter,
-                            const std::function<bool(bool const&)>& _bool,
-                            const std::function<double(double const&)>& _double,
-                            const std::function<long(long const&)>& _long,
-                            const std::function<std::string(std::string const&)>& _string) const;
+    void visit_value(const std::function<void(Confidence_inter const&)>&, const std::function<void(bool const&)>&,
+                     const std::function<void(double const&)>&, const std::function<void(long const&)>&,
+                     const std::function<void(std::string const&)>&) const;
 
+    void prefix_with(std::string prefix) { this->prefix = std::move(prefix); }
     void add_headers(std::vector<std::string>& headers) const;
+    virtual void finalise() {}
     VariantStat operator+(Stat const& that) const;
     Stat& operator=(VariantStat const& value);
+    virtual void clear() { value = "N/A"; }
 };
 std::ostream& operator<<(std::ostream& os, const Stat& m);
+
+class CollectedStat : public Stat {
+private:
+    std::vector<double> repetition_values;
+
+public:
+    CollectedStat(std::string name, bool has_confidence_interval) : Stat(std::move(name), has_confidence_interval) {}
+    void collect(double value) {
+        if (visible) {
+            repetition_values.push_back(value);
+        }
+    }
+    void finalise() override {
+        if (!visible || repetition_values.empty()) {
+            value = Confidence_inter{0, 0, 0};
+        } else {
+            value = compute_interval_student(repetition_values, 0.05);
+        }
+    }
+    CollectedStat& operator=(VariantStat const& value) {
+        this->value = value;
+        return *this;
+    }
+    void clear() override {
+        repetition_values.clear();
+        Stat::clear();
+    }
+};
 
 class ClassStats {
 public:
     const std::string name;
-    Stat occupancy_buf{"Queue", true};
-    Stat occupancy_ser{"Service", true};
-    Stat occupancy_system{"System", true};
-    Stat wait_time{"Waiting", true};
-    Stat wait_time_var{"Waiting Variance", true};
-    Stat throughput{"Throughput", true};
-    Stat resp_time{"RespTime", true};
-    Stat resp_time_var{"RespTime Variance", true};
-    Stat preemption_avg{"Preemption", true};
+    CollectedStat occupancy_buf{"Queue", true};
+    CollectedStat occupancy_ser{"Service", true};
+    CollectedStat occupancy_system{"System", true};
+    CollectedStat wait_time{"Waiting", true};
+    CollectedStat wait_time_var{"Waiting Variance", true};
+    CollectedStat throughput{"Throughput", true};
+    CollectedStat resp_time{"RespTime", true};
+    CollectedStat resp_time_var{"RespTime Variance", true};
+    CollectedStat preemption_avg{"Preemption", true};
+    CollectedStat seq_avg_len{"Sequence Length", true};
+    CollectedStat seq_avg_dur{"Sequence Duration", true};
+    CollectedStat seq_amount{"Sequence Amount", true};
     Stat warnings{"Stability Check", false};
-    Stat arrival_rate{"Arrival Rate", false};
+    Stat lambda{"lambda", false};
 
     explicit ClassStats(const std::string& name) : name{name} {
-        edit_stats([name](Stat& s) { s.prefix = "T" + name; });
+        edit_stats([name](Stat& s) { s.prefix_with("T" + name); });
     }
 
     // visitors
@@ -70,8 +104,11 @@ public:
         editor(resp_time);
         editor(resp_time_var);
         editor(preemption_avg);
+        editor(seq_avg_len);
+        editor(seq_avg_dur);
+        editor(seq_amount);
         editor(warnings);
-        editor(arrival_rate);
+        editor(lambda);
     }
 
     void visit_stats(const std::function<void(const Stat&)>& visitor) const {
@@ -84,8 +121,11 @@ public:
         visitor(resp_time);
         visitor(resp_time_var);
         visitor(preemption_avg);
+        visitor(seq_avg_len);
+        visitor(seq_avg_dur);
+        visitor(seq_amount);
         visitor(warnings);
-        visitor(arrival_rate);
+        visitor(lambda);
     }
 
     // outputs
@@ -103,25 +143,19 @@ class ExperimentStats {
 
 public:
     std::vector<ClassStats> class_stats{};
-    Stat wasted{"Wasted Servers", true};
-    Stat utilisation{"Utilisation", true};
-    Stat occupancy_tot{"Queue Total", true};
-    Stat wait_tot{"WaitTime Total", true};
-    Stat wait_var_tot{"WaitTime Variance", true};
-    Stat resp_tot{"RespTime Total", true};
-    Stat resp_var_tot{"RespTime Variance", true};
-    Stat window_size{"Window Size", true};
-    Stat violations{"FIFO Violations", true};
-    Stat timings_tot{"Run Duration", true};
-    Stat big_seq_avg_len{"Big Sequence Length", true};
-    Stat small_seq_avg_len{"Small Sequence Length", true};
-    Stat big_seq_avg_dur{"Big Sequence Duration", true};
-    Stat small_seq_avg_dur{"Small Sequence Duration", true};
-    Stat big_seq_amount{"Big Sequence Amount", true};
-    Stat small_seq_amount{"Small Sequence Amount", true};
-    Stat phase_two_dur{"Phase Two Duration", true};
-    Stat phase_three_dur{"Phase Three Duration", true};
-    Stat arrival_rate{"Arrival Rate Total", false};
+    CollectedStat wasted{"Wasted Servers", true};
+    CollectedStat utilisation{"Utilisation", true};
+    CollectedStat occupancy_tot{"Queue Total", true};
+    CollectedStat wait_tot{"WaitTime Total", true};
+    CollectedStat wait_var_tot{"WaitTime Variance", true};
+    CollectedStat resp_tot{"RespTime Total", true};
+    CollectedStat resp_var_tot{"RespTime Variance", true};
+    CollectedStat window_size{"Window Size", true};
+    CollectedStat violations{"FIFO Violations", true};
+    CollectedStat timings_tot{"Run Duration", true};
+    CollectedStat phase_two_dur{"Phase Two Duration", true};
+    CollectedStat phase_three_dur{"Phase Three Duration", true};
+    Stat lambda{"lambda", false};
 
     // visitors
     void edit_computed_stats(const std::function<void(Stat&)>& editor) {
@@ -135,15 +169,12 @@ public:
         editor(window_size);
         editor(violations);
         editor(timings_tot);
-        editor(big_seq_avg_len);
-        editor(small_seq_avg_len);
-        editor(big_seq_avg_dur);
-        editor(small_seq_avg_dur);
-        editor(big_seq_amount);
-        editor(small_seq_amount);
         editor(phase_two_dur);
         editor(phase_three_dur);
-        editor(arrival_rate);
+        editor(lambda);
+        for (auto& cs : class_stats) {
+            cs.edit_stats(editor);
+        }
     }
 
     void visit_computed_stats(const std::function<void(const Stat&)>& visitor) const {
@@ -157,18 +188,22 @@ public:
         visitor(window_size);
         visitor(violations);
         visitor(timings_tot);
-        visitor(big_seq_avg_len);
-        visitor(small_seq_avg_len);
-        visitor(big_seq_avg_dur);
-        visitor(small_seq_avg_dur);
-        visitor(big_seq_amount);
-        visitor(small_seq_amount);
         visitor(phase_two_dur);
         visitor(phase_three_dur);
-        visitor(arrival_rate);
+        visitor(lambda);
+        for (auto& cs : class_stats) {
+            cs.visit_stats(visitor);
+        }
     }
     void edit_all_stats(const std::function<void(Stat&)>& editor);
     void visit_all_stats(const std::function<void(const Stat&)>& visitor) const;
+
+    void collect_class_stat(const std::function<CollectedStat&(ClassStats&)>& selector,
+                            const std::vector<double>& values) {
+        for (size_t i = 0; i < class_stats.size(); ++i) {
+            selector(class_stats[i]).collect(values[i]);
+        }
+    }
 
     // outputs
     friend std::ostream& operator<<(std::ostream& os, ExperimentStats const& m);
@@ -178,15 +213,13 @@ public:
     // add elements
     ClassStats& add_class(const std::string& name) { return std::ref(class_stats.emplace_back(name)); }
 
-    template <typename VAL_TYPE>
-    bool add_pivot_column(const std::string& name, const VAL_TYPE& value) {
+    bool add_pivot_column(const std::string& name, const VariantStat& value) {
         pivot_values.emplace_back(name, false);
         pivot_values.back() = value;
         return true;
     }
 
-    template <typename VAL_TYPE>
-    bool add_custom_column(const std::string& name, const VAL_TYPE& value) {
+    bool add_custom_column(const std::string& name, const VariantStat& value) {
         custom_values.emplace_back(name, false);
         custom_values.back() = value;
         return true;

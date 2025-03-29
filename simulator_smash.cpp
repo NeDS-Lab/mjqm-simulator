@@ -16,7 +16,7 @@
 void run_simulation(Experiment e, unsigned long events, unsigned int repetitions,
                     ExperimentStats& stats // out
 ) {
-    Simulator sim(e.l, e.u, e.s, e.w, e.n, e.sm, e.logf);
+    Simulator sim(e.l, e.u, e.s, e.w, e.n, e.sm, e.logf, stats);
     sim.reset_simulation();
     sim.reset_statistics();
 

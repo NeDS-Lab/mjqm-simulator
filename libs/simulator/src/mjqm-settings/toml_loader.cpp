@@ -159,7 +159,7 @@ void from_toml(const std::unique_ptr<std::vector<std::pair<bool, ExperimentConfi
         auto& [success, config] = experiments->emplace_back();
         for (const auto& [key, value] : override) {
             overwrite_value(overridden_data, key, value);
-            config.stats.add_custom_column(key, value);
+            config.stats.add_pivot_column(key, value);
         }
         success = from_toml(overridden_data, config);
     }
@@ -198,9 +198,9 @@ from_toml(const std::string_view filename, const std::vector<std::multimap<std::
     return from_toml(data, overrides);
 }
 
-Simulator::Simulator(const ExperimentConfig& conf) : nclasses(static_cast<int>(conf.classes.size())) {
+Simulator::Simulator(ExperimentConfig& conf) : nclasses(static_cast<int>(conf.classes.size())) {
     this->n = static_cast<int>(conf.cores);
-    this->w = conf.policy->get_w(); // TODO should transform all branches that need it here
+    this->w = conf.policy->get_w(); // TODO should transform all branches that need it here into methods of the policies
     this->rep_free_servers_distro = std::vector<double>(conf.cores + 1);
     this->fel.resize(nclasses * 2);
     this->job_fel.resize(nclasses * 2);
@@ -214,6 +214,7 @@ Simulator::Simulator(const ExperimentConfig& conf) : nclasses(static_cast<int>(c
     this->debugMode = false;
     // this->logfile_name = std::move(logfile_name);
     this->policy = conf.policy->clone();
+    this->stats = &conf.stats;
 
     occupancy_buf.resize(nclasses);
     occupancy_ser.resize(nclasses);
@@ -233,7 +234,11 @@ Simulator::Simulator(const ExperimentConfig& conf) : nclasses(static_cast<int>(c
 
     auto lock = std::lock_guard(RNG_STREAMS_GENERATION_LOCK);
     RngStream::SetPackageSeed(MJQM_RANDOM_ECUYER_SEED);
+    bool class_stats_missing = this->stats->class_stats.empty();
     for (const auto& cls : conf.classes) {
+        if (class_stats_missing) {
+            conf.stats.add_class(cls.name);
+        }
         sizes.push_back(cls.cores);
         class_names.push_back(cls.name);
         arr_time_samplers.push_back(cls.arrival_sampler->clone());
@@ -243,5 +248,5 @@ Simulator::Simulator(const ExperimentConfig& conf) : nclasses(static_cast<int>(c
     }
     // for debugging purposes, all simulations should print the same state of the RNG,
     // unless some distribution is deterministic only in some of them
-    RngStream(("After Last " + conf.output_filename()).data()).WriteStateFull();
+    // RngStream(("After Last " + conf.output_filename()).data()).WriteStateFull();
 }

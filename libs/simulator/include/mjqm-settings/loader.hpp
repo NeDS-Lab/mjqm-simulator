@@ -127,13 +127,19 @@ inline void from_argv(char** argv, std::vector<double>& p, std::vector<unsigned 
 
 inline Simulator::Simulator(const std::vector<double>& l, const std::vector<double>& u,
                             const std::vector<unsigned int>& sizes, int w, int servers, int sampling_method,
-                            std::string logfile_name) : nclasses(static_cast<int>(sizes.size())) {
+                            std::string logfile_name, ExperimentStats& stats) :
+    nclasses(static_cast<int>(sizes.size())) {
     this->l = l;
     this->u = u;
     this->n = servers;
     this->sizes = sizes;
+    this->stats = &stats;
+    bool class_stats_missing = stats.class_stats.empty();
     for (const unsigned int size : sizes) {
         this->class_names.push_back(std::to_string(size));
+        if (class_stats_missing) {
+            stats.add_class(std::to_string(size));
+        }
     }
     this->w = w;
     this->rep_free_servers_distro = std::vector<double>(servers + 1);
@@ -219,7 +225,7 @@ inline Simulator::Simulator(const std::vector<double>& l, const std::vector<doub
 
     // for debugging purposes, all simulations should print the same state of the RNG,
     // unless some distribution is deterministic only in some of them
-    RngStream("After Last").WriteStateFull();
+    // RngStream("After Last").WriteStateFull();
 }
 
 #endif // LOADER_H
