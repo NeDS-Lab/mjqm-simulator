@@ -10,7 +10,7 @@
 #include <mjqm-math/mean_var.h>
 
 template <typename InputIterator>
-std::pair<double, double> mean_var(InputIterator _first, InputIterator _last, double __init, size_t size) {
+std::pair<double, double> mean_var(InputIterator _first, InputIterator _last, double _init, double size) {
     double mean = 0;
     double var = 0;
 
@@ -24,9 +24,9 @@ std::pair<double, double> mean_var(InputIterator _first, InputIterator _last, do
 }
 
 std::pair<double, double> mean_var(const std::vector<double>& values) {
-    return mean_var(values.begin(), values.end(), 0.0, values.size());
+    return mean_var(values.begin(), values.end(), 0.0, static_cast<double>(values.size()));
 }
 
 std::pair<double, double> mean_var(const std::list<double>& values) {
-    return mean_var(values.begin(), values.end(), 0.0, values.size());
+    return mean_var(values.begin(), values.end(), 0.0, static_cast<double>(values.size()));
 }

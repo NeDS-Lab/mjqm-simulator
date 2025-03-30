@@ -24,8 +24,6 @@ struct Confidence_inter {
 
 Confidence_inter compute_interval_student(const std::vector<double>& rep, double confidence);
 
-Confidence_inter compute_interval_class_student(const std::vector<std::vector<double>>& rep, int cl, double confidence);
-
-Confidence_inter compute_interval_class_chi(const std::vector<std::vector<double>>& rep, int cl, double confidence);
+Confidence_inter compute_interval_chi(const std::vector<double>& rep, double confidence);
 
 #endif // MJQM_MATH_CONFIDENCE_INTERVALS_H
