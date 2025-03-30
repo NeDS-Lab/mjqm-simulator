@@ -204,6 +204,7 @@ public:
             selector(class_stats[i]).collect(values[i]);
         }
     }
+    ClassStats& for_class(const size_t& i) { return std::ref(class_stats[i]); }
 
     // outputs
     friend std::ostream& operator<<(std::ostream& os, ExperimentStats const& m);

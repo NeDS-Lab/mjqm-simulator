@@ -220,16 +220,10 @@ Simulator::Simulator(ExperimentConfig& conf) : nclasses(static_cast<int>(conf.cl
     occupancy_ser.resize(nclasses);
     completion.resize(nclasses);
     preemption.resize(nclasses);
-    throughput.resize(nclasses);
-    waitingTime.resize(nclasses);
-    waitingTimeVar.resize(nclasses);
     rawWaitingTime.resize(nclasses);
     rawResponseTime.resize(nclasses);
-    responseTime.resize(nclasses);
-    responseTimeVar.resize(nclasses);
     waste = 0;
     viol = 0;
-    util = 0;
     occ = 0;
 
     auto lock = std::lock_guard(RNG_STREAMS_GENERATION_LOCK);

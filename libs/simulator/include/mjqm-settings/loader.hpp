@@ -172,16 +172,10 @@ inline Simulator::Simulator(const std::vector<double>& l, const std::vector<doub
     occupancy_ser.resize(sizes.size());
     completion.resize(sizes.size());
     preemption.resize(sizes.size());
-    throughput.resize(sizes.size());
-    waitingTime.resize(sizes.size());
-    waitingTimeVar.resize(sizes.size());
     rawWaitingTime.resize(sizes.size());
     rawResponseTime.resize(sizes.size());
-    responseTime.resize(sizes.size());
-    responseTimeVar.resize(sizes.size());
     waste = 0;
     viol = 0;
-    util = 0;
     occ = 0;
 
     auto lock = std::lock_guard(RNG_STREAMS_GENERATION_LOCK);

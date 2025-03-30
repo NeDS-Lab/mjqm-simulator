@@ -7,7 +7,6 @@
 
 #include <algorithm>
 #include <chrono>
-#include <cmath>
 #include <ctime>
 #include <iostream>
 #include <limits>
@@ -19,6 +18,7 @@
 #include <vector>
 
 #include <mjqm-math/confidence_intervals.h>
+#include <mjqm-math/mean_var.h>
 #include <mjqm-policies/policy.h>
 #include <mjqm-samplers/sampler.h>
 #include <mjqm-simulator/experiment_stats.h>
@@ -87,7 +87,6 @@ public:
         policy->reset_completion(simtime);
 
         simtime = 0.0;
-        util = 0.0;
         waste = 0.0;
         viol = 0.0;
         occ = 0.0;
@@ -103,115 +102,62 @@ public:
             totq += x;
         }
 
-        stats->collect_class_stat([](ClassStats& cs) { return std::ref(cs.occupancy_buf); }, occupancy_buf);
-
         double tots = 0.0;
         for (auto& x : occupancy_ser) {
             x /= simtime;
             tots += x;
         }
-        stats->collect_class_stat([](ClassStats& cs) { return std::ref(cs.occupancy_ser); }, occupancy_ser);
-        std::vector<double> occupancy_system;
-        occupancy_system.resize(nclasses);
-        for (int i = 0; i < nclasses; i++) {
-            occupancy_system[i] = occupancy_buf[i] + occupancy_ser[i];
-        }
-        stats->collect_class_stat([](ClassStats& cs) { return std::ref(cs.occupancy_system); }, occupancy_system);
-
-        for (int i = 0; i < nclasses; i++)
-            throughput[i] = completion[i] / simtime;
-        stats->collect_class_stat([](ClassStats& cs) { return std::ref(cs.throughput); }, throughput);
 
         double totx = 0.0;
+        double utilisation = 0.0;
         std::list<double> totRawWaitingTime;
         std::list<double> totRawResponseTime;
-        std::vector<double> preemption_avg;
-        std::vector<double> avg_seq_len;
-        std::vector<double> avg_seq_dur;
-        preemption_avg.resize(nclasses);
         for (int i = 0; i < nclasses; i++) {
-            // waitingTime[i] = occupancy_buf[i] / throughput[i];
-            double mean_wt =
-                std::accumulate(rawWaitingTime[i].begin(), rawWaitingTime[i].end(), 0.0) / rawWaitingTime[i].size();
-            waitingTime[i] = mean_wt;
+            ClassStats& class_stats = stats->for_class(i);
 
-            double tot_diff = 0.0;
-            for (auto& rawWt : rawWaitingTime[i]) {
-                tot_diff += pow(rawWt - mean_wt, 2);
-            }
-            waitingTimeVar[i] = tot_diff / rawWaitingTime[i].size();
+            class_stats.occupancy_buf.collect(occupancy_buf[i]);
+            class_stats.occupancy_ser.collect(occupancy_ser[i]);
+            class_stats.occupancy_system.collect(occupancy_buf[i] + occupancy_ser[i]);
+            class_stats.throughput.collect(completion[i] / simtime);
+            utilisation += occupancy_ser[i] * sizes[i];
+
+            // waitingTime[i] = occupancy_buf[i] / throughput[i];
+            auto wt_mean_var = mean_var(rawWaitingTime[i]);
+            class_stats.wait_time.collect(wt_mean_var.first);
+            class_stats.wait_time_var.collect(wt_mean_var.second);
 
             // responseTime[i] = (occupancy_buf[i]+occupancy_ser[i]) / throughput[i];
-            double mean_rt =
-                std::accumulate(rawResponseTime[i].begin(), rawResponseTime[i].end(), 0.0) / rawResponseTime[i].size();
-            responseTime[i] = mean_rt;
+            auto rt_mean_var = mean_var(rawResponseTime[i]);
+            class_stats.resp_time.collect(rt_mean_var.first);
+            class_stats.resp_time_var.collect(rt_mean_var.second);
 
-            tot_diff = 0.0;
-            for (auto& rawRt : rawResponseTime[i]) {
-                tot_diff += pow(rawRt - mean_rt, 2);
-            }
-            responseTimeVar[i] = tot_diff / rawResponseTime[i].size();
-
-            totx += throughput[i];
             totRawWaitingTime.insert(totRawWaitingTime.end(), rawWaitingTime[i].begin(), rawWaitingTime[i].end());
             totRawResponseTime.insert(totRawResponseTime.end(), rawResponseTime[i].begin(), rawResponseTime[i].end());
 
-            preemption_avg[i] = ((double)preemption[i]) / (double)completion[i];
+            class_stats.preemption_avg.collect(((double)preemption[i]) / (double)completion[i]);
 
-            avg_seq_len.push_back((tot_job_seq[i] * 1.0) / job_seq_amount[i]);
-            avg_seq_dur.push_back((tot_job_seq_dur[i] * 1.0) / job_seq_amount[i]);
+            class_stats.seq_avg_len.collect((tot_job_seq[i] * 1.0) / job_seq_amount[i]);
+            class_stats.seq_avg_dur.collect((tot_job_seq_dur[i] * 1.0) / job_seq_amount[i]);
+            class_stats.seq_amount.collect(job_seq_amount[i]);
         }
 
-        for (size_t i = 0; i < occupancy_ser.size(); i++)
-            util += occupancy_ser[i] * sizes[i];
-
         stats->window_size.collect(std::accumulate(windowSize.begin(), windowSize.end(), 0.0) / simtime);
-        stats->collect_class_stat([](ClassStats& cs) { return std::ref(cs.preemption_avg); }, preemption_avg);
-        stats->collect_class_stat([](ClassStats& cs) { return std::ref(cs.wait_time); }, waitingTime);
-        stats->collect_class_stat([](ClassStats& cs) { return std::ref(cs.wait_time_var); }, waitingTimeVar);
-        stats->collect_class_stat([](ClassStats& cs) { return std::ref(cs.resp_time); }, responseTime);
-        stats->collect_class_stat([](ClassStats& cs) { return std::ref(cs.resp_time_var); }, responseTimeVar);
-        stats->collect_class_stat([](ClassStats& cs) { return std::ref(cs.seq_avg_len); }, avg_seq_len);
-        stats->collect_class_stat([](ClassStats& cs) { return std::ref(cs.seq_avg_dur); }, avg_seq_dur);
-        stats->collect_class_stat([](ClassStats& cs) { return std::ref(cs.seq_amount); }, job_seq_amount);
 
         stats->wasted.collect(waste / simtime);
         stats->violations.collect(viol / simtime);
-        stats->utilisation.collect(util / n);
+        stats->utilisation.collect(utilisation / n);
         stats->occupancy_tot.collect(totq);
 
-        double mean_wt =
-            std::accumulate(totRawWaitingTime.begin(), totRawWaitingTime.end(), 0.0) / totRawWaitingTime.size();
-        stats->wait_tot.collect(mean_wt);
-        double tot_diff = 0.0;
-        for (auto& rawWt : totRawWaitingTime) {
-            tot_diff += pow(rawWt - mean_wt, 2);
-        }
-        stats->wait_var_tot.collect(tot_diff / totRawWaitingTime.size());
+        auto wt_mean_var = mean_var(totRawWaitingTime);
+        stats->wait_tot.collect(wt_mean_var.first);
+        stats->wait_var_tot.collect(wt_mean_var.second);
 
-        // rep_tot_resp.push_back((totq+tots)/totx);
-        double mean_rt =
-            std::accumulate(totRawResponseTime.begin(), totRawResponseTime.end(), 0.0) / totRawResponseTime.size();
-        stats->resp_tot.collect(mean_rt);
+        auto rt_mean_var = mean_var(totRawResponseTime);
+        stats->resp_tot.collect(rt_mean_var.first);
+        stats->resp_var_tot.collect(rt_mean_var.second);
 
-        tot_diff = 0.0;
-        for (auto& rawRt : totRawResponseTime) {
-            tot_diff += pow(rawRt - mean_rt, 2);
-        }
-        stats->resp_var_tot.collect(tot_diff / totRawResponseTime.size());
-
-        rep_phase_two_duration.push_back((phase_two_duration * 1.0) / job_seq_amount[0]);
-        rep_phase_three_duration.push_back((phase_three_duration * 1.0) / job_seq_amount[0]);
-
-        /*std::cout << phase_two_duration << std::endl;
-        std::cout << phase_three_duration << std::endl;
-        std::cout << phase_two_duration+phase_three_duration << std::endl;
-        std::cout << tot_job_seq_dur[0] << std::endl;
-        std::cout << "-------------------------------------" << std::endl;*/
-
-        // rep_big_sequences.push_back(avg_seq_len);
-        // rep_seq_amount.push_back(seq_amount);
-        // rep_seq_max_len.push_back(max_seq_len);
+        stats->phase_two_dur.collect((phase_two_duration * 1.0) / job_seq_amount[0]);
+        stats->phase_three_dur.collect((phase_three_duration * 1.0) / job_seq_amount[0]);
     }
 
     void simulate(unsigned long nevents, unsigned int repetitions = 1) {
@@ -224,9 +170,6 @@ public:
             tot_lambda += lambda;
         }
         stats->lambda = tot_lambda;
-
-        rep_phase_two_duration.clear();
-        rep_phase_three_duration.clear();
 
         // std::string out_filename = "Results/logfile_N" + std::to_string(n) + "_" + std::to_string(tot_lambda) + "_W"
         // +
@@ -452,11 +395,8 @@ public:
         stats.edit_all_stats([](Stat& s) { s.finalise(); });
         for (int i = 0; i < nclasses; ++i) {
             ClassStats& res = stats.class_stats.at(i);
-            res.occupancy_system = res.occupancy_buf + res.occupancy_ser;
             res.warnings = 1.0 - std::get<Confidence_inter>(res.throughput.value).mean / l[i] > 0.05;
         }
-        stats.phase_two_dur = compute_interval_student(rep_phase_two_duration, confidence);
-        stats.phase_three_dur = compute_interval_student(rep_phase_three_duration, confidence);
     }
 
 private:
@@ -479,17 +419,11 @@ private:
     // overall statistics
     std::vector<double> rep_free_servers_distro;
 
-    std::vector<double> rep_phase_two_duration;
-    std::vector<double> rep_phase_three_duration;
-
     // statistics for single run
     std::vector<double> occupancy_buf;
     std::vector<double> occupancy_ser;
     std::vector<unsigned long> completion;
     std::vector<unsigned long> preemption;
-    std::vector<double> throughput;
-    std::vector<double> waitingTime;
-    std::vector<double> waitingTimeVar;
 
     std::unordered_map<long int, double> arrTime;
     std::unordered_map<long int, double> waitTime;
@@ -499,12 +433,8 @@ private:
 
     std::list<double> windowSize;
 
-    std::vector<double> responseTime;
-    std::vector<double> responseTimeVar;
-
     double waste = 0.0;
     double viol = 0.0;
-    double util = 0.0;
     double occ = 0.0;
 
     std::vector<double> curr_job_seq;
