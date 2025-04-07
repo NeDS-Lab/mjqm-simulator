@@ -1,0 +1,17 @@
+[project]
+name = "mjqm-simulator"
+version = "0.1.0"
+description = "Simulator for Multiserver Job Queuing Model (MJQM)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "matplotlib>=3.10.1",
+    "numpy>=2.2.4",
+    "pandas>=2.2.3",
+    "scipy>=1.15.2",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.11.2",
+]

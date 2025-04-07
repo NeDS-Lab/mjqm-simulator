@@ -1,8 +1,7 @@
+import math
 import os
 import sys
 from pathlib import Path
-
-import math
 
 os.environ.setdefault("PRINT_SPEEDUP", "0")
 print_speedup = os.environ.get("PRINT_SPEEDUP") == "1"
@@ -84,15 +83,17 @@ def compare_results(data1, data2):
                     key_header = True
                 print(f"\t{change:+05.2f}% {column} ({prev} -> {curr})")
                 if "Stability Check" not in column:
-                    print(f"\t\t{data2[key][column + ' ConfInt']}",
-                          f"-> {data1[key][column + ' ConfInt']}")
+                    print(
+                        f"\t\t{data2[key][column + ' ConfInt']}",
+                        f"-> {data1[key][column + ' ConfInt']}",
+                    )
         if print_speedup and duration_diff:
             if not key_header:
                 print(f"{columns2[0]}: {key}")
             print(
                 f"\t{duration_diff}",
                 f"({data2[key]['Run Duration']}",
-                f"-> {data1[key]['Run Duration']})"
+                f"-> {data1[key]['Run Duration']})",
             )
     if not different:
         print("Data is the same")

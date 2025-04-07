@@ -77,3 +77,10 @@ ui_*.h
 
 # Generated docs
 docs/generated/
+
+# Python
+.venv/
+.ruff_cache/
+
+# NodeJS
+node_modules/

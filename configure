@@ -25,6 +25,17 @@ done
 CMAKE_VER=$(cmake --version | awk '/version/ {print $3}')
 
 if [ ${configure} -eq 1 ]; then
+    # python environment with uv
+    if [ -f "$HOME/.local/bin/env" ]; then
+        source $HOME/.local/bin/env
+    fi
+    command -v uv || {
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        source $HOME/.local/bin/env
+    }
+    uv sync --no-cache --link-mode=copy
+
+    # configuration variabiles for cmake
     CXX=$(scripts/select-g++.sh)
     flags=("-DCMAKE_EXPORT_COMPILE_COMMANDS=YES" "-DCMAKE_CXX_COMPILER=${CXX}")
     if [ "$preset" == "debug" ]; then
@@ -35,6 +46,7 @@ if [ ${configure} -eq 1 ]; then
         folder=build
     fi ;
 
+    # run cmake setup
     if [ ${CMAKE_VER} \< "3.19" ]; then
         ( set -x; cmake "${flags[@]}" -Wno-dev --fresh -S . -B $folder ; );
     else
