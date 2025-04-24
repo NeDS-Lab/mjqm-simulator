@@ -7,32 +7,7 @@
 
 #include <mjqm-simulator/experiment_stats.h>
 
-#include "mjqm-math/confidence_intervals.h"
-
 // ****** Stat
-// *** visitor
-void Stat::visit_value(const std::function<void(Confidence_inter const&)>& _confint,
-                       const std::function<void(bool const&)>& _bool, const std::function<void(double const&)>& _double,
-                       const std::function<void(long const&)>& _long,
-                       const std::function<void(std::string const&)>& _string) const {
-    std::visit(
-        [&](auto&& value) {
-            using T = std::decay_t<decltype(value)>;
-            if constexpr (std::is_same_v<T, Confidence_inter>) {
-                _confint(value);
-            } else if constexpr (std::is_same_v<T, bool>) {
-                _bool(value);
-            } else if constexpr (std::is_same_v<T, double>) {
-                _double(value);
-            } else if constexpr (std::is_same_v<T, long>) {
-                _long(value);
-            } else if constexpr (std::is_same_v<T, std::string>) {
-                _string(value);
-            }
-        },
-        this->value);
-}
-
 // *** outputs
 void Stat::add_headers(std::vector<std::string>& headers) const {
     if (!visible) {
@@ -52,20 +27,23 @@ std::ostream& operator<<(std::ostream& os, const Stat& m) {
     if (!m.visible) {
         return os;
     }
-    m.visit_value([&os](const Confidence_inter& value) { os << value; }, [&os](const bool& value) { os << value; },
-                  [&os](const double& value) { os << value; }, [&os](const long& value) { os << value; },
-                  [&os](const std::string& value) { os << value; });
+    std::visit([&](auto&& value) { os << value; }, m.value);
     return os << ";";
 }
 
 // *** operators
 VariantStat Stat::operator+(Stat const& that) const {
     VariantStat v = "N/A";
-    visit_value([&](Confidence_inter const& c) { v = c + std::get<Confidence_inter>(that.value); },
-                [&](bool const& b) { v = b || std::get<bool>(that.value); },
-                [&](double const& d) { v = d + std::get<double>(that.value); },
-                [&](long const& l) { v = l + std::get<long>(that.value); },
-                [&](std::string const& s) { v = s + std::get<std::string>(that.value); });
+    std::visit(
+        [&](auto&& value) {
+            using T = std::decay_t<decltype(value)>;
+            if constexpr (std::is_same_v<T, bool>) {
+                v = value || std::get<bool>(that.value);
+            } else {
+                v = value + std::get<T>(that.value);
+            }
+        },
+        this->value);
     return v;
 }
 Stat& Stat::operator=(VariantStat const& value) {

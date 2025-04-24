@@ -8,7 +8,7 @@
 #include <mjqm-settings/toml_utils.h>
 
 std::unique_ptr<Policy> smash_builder(const toml::table& data, const ExperimentConfig& conf) {
-    const auto window = data.at_path("smash.window").value<unsigned int>().value_or(1);
+    const auto window = data.at_path("policy.window").value<unsigned int>().value_or(2);
     return std::make_unique<Smash>(window, conf.cores, conf.classes.size());
 }
 

@@ -70,8 +70,8 @@ struct ExperimentConfig {
 bool from_toml(toml::table& data, ExperimentConfig& conf);
 bool from_toml(std::string_view filename, ExperimentConfig& conf);
 std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
-from_toml(const toml::table& data, const std::vector<std::multimap<std::string, std::string>>& overrides = {});
+from_toml(const toml::table& data, const std::vector<std::multimap<std::string, ConfigValue>>& overrides = {});
 std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
-from_toml(const std::string_view filename, const std::vector<std::multimap<std::string, std::string>>& overrides = {});
+from_toml(const std::string_view filename, const std::vector<std::multimap<std::string, ConfigValue>>& overrides = {});
 
 #endif // TOML_LOADER_H

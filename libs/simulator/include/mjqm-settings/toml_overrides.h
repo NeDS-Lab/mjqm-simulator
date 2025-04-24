@@ -7,21 +7,28 @@
 
 #include <map>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include <mjqm-settings/toml_utils.h>
 
-std::vector<std::multimap<std::string, std::string>> parse_overrides_from_args(int argc, char* argv[],
+typedef std::variant<bool, double, long, std::string, toml::table> ConfigValue;
+std::ostream& operator<<(std::ostream& os, const ConfigValue& variant);
+
+template <typename T>
+constexpr bool is_override_value = (toml::is_string<T> || toml::is_number<T> || toml::is_boolean<T>);
+
+std::vector<std::multimap<std::string, ConfigValue>> parse_overrides_from_args(int argc, char* argv[],
                                                                                int start_from = 2);
-std::multimap<std::string, std::string> parse_overrides_from_pivot(const toml::table& table);
-std::multimap<std::string, std::string> merge_overrides(const std::multimap<std::string, std::string>& base,
-                                                        const std::multimap<std::string, std::string>& higher_priority);
+std::multimap<std::string, ConfigValue> parse_overrides_from_pivot(const toml::table& table);
+std::multimap<std::string, ConfigValue> merge_overrides(const std::multimap<std::string, ConfigValue>& base,
+                                                        const std::multimap<std::string, ConfigValue>& higher_priority);
 
 class toml_overrides {
-    std::vector<std::vector<std::pair<std::string, std::string>>> overrides;
+    std::vector<std::vector<std::pair<std::string, ConfigValue>>> overrides;
 
 public:
-    explicit toml_overrides(const std::multimap<std::string, std::string>& overrides);
+    explicit toml_overrides(const std::multimap<std::string, ConfigValue>& overrides);
 
     size_t size() const;
 
@@ -29,10 +36,10 @@ public:
         using self_type = iterator;
         using iterator_category = std::forward_iterator_tag;
         using difference_type = std::size_t;
-        using value_type = std::vector<std::pair<std::string, std::string>>;
+        using value_type = std::vector<std::pair<std::string, ConfigValue>>;
 
         std::vector<size_t> state;
-        const std::vector<std::vector<std::pair<std::string, std::string>>> data;
+        const std::vector<std::vector<std::pair<std::string, ConfigValue>>> data;
 
     public:
         explicit iterator(const toml_overrides& data) : state(data.overrides.size() + 1, 0), data(data.overrides) {}

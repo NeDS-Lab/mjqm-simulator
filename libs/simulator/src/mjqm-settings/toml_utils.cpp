@@ -13,8 +13,23 @@ void overwrite_value(toml::table& data, const toml::path& path, const VALUE_TYPE
 template void overwrite_value(toml::table&, const toml::path&, const double&);
 template void overwrite_value(toml::table&, const toml::path&, const long&);
 template void overwrite_value(toml::table&, const toml::path&, const bool&);
+template void overwrite_value(toml::table&, const toml::path&, const toml::table&);
 
-toml::node_type interpreted_node_type(toml::node_view<toml::node>& node, const std::string& value) {
+toml::node_type interpreted_node_type(const toml::node_view<toml::node>& node) {
+    if (node.is_boolean()) {
+        return toml::node_type::boolean;
+    } else if (node.is_integer()) {
+        return toml::node_type::integer;
+    } else if (node.is_floating_point()) {
+        return toml::node_type::floating_point;
+    } else if (node.is_string()) {
+        return toml::node_type::string;
+    } else {
+        return toml::node_type::none;
+    }
+}
+
+toml::node_type interpreted_node_type(const toml::node_view<toml::node>& node, const std::string& value) {
     if (!node) {
         if (value == "true" || value == "false") {
             return toml::node_type::boolean;
@@ -25,18 +40,7 @@ toml::node_type interpreted_node_type(toml::node_view<toml::node>& node, const s
         }
         return toml::node_type::string;
     }
-    if (node.is_boolean()) {
-        return toml::node_type::boolean;
-    } else if (node.is_integer()) {
-        return toml::node_type::integer;
-    } else if (node.is_floating_point()) {
-        return toml::node_type::floating_point;
-    } else if (node.is_string()) {
-        return toml::node_type::string;
-    } else {
-        print_error("Unsupported type for key " << value);
-        return toml::node_type::none;
-    }
+    return interpreted_node_type(node);
 }
 
 template <>
@@ -64,6 +68,7 @@ template void overwrite_value(toml::table&, const std::string_view&, const std::
 template void overwrite_value(toml::table&, const std::string_view&, const double&);
 template void overwrite_value(toml::table&, const std::string_view&, const long&);
 template void overwrite_value(toml::table&, const std::string_view&, const bool&);
+template void overwrite_value(toml::table&, const std::string_view&, const toml::table&);
 template <>
 void overwrite_value(toml::table& data, const std::string_view& key, const std::string_view& value) {
     overwrite_value(data, key, std::string(value));

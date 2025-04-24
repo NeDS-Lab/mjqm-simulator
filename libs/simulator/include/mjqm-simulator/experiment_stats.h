@@ -30,10 +30,6 @@ public:
     Stat(std::string name, bool has_confidence_interval) :
         name{std::move(name)}, has_confidence_interval{has_confidence_interval} {}
 
-    void visit_value(const std::function<void(Confidence_inter const&)>&, const std::function<void(bool const&)>&,
-                     const std::function<void(double const&)>&, const std::function<void(long const&)>&,
-                     const std::function<void(std::string const&)>&) const;
-
     void prefix_with(std::string prefix) { this->prefix = std::move(prefix); }
     void add_headers(std::vector<std::string>& headers) const;
     virtual void finalise() {}

@@ -5,6 +5,7 @@
 #include <ranges>
 #include <string>
 #include <unordered_map>
+#include <variant>
 
 #include <mjqm-policies/policies.h>
 #include <mjqm-samplers/random_ecuyer.h>
@@ -93,7 +94,9 @@ bool from_toml(toml::table& data, ExperimentConfig& conf) {
     ok = ok && load_into(data, "events", conf.events);
     ok = ok && load_into(data, "repetitions", conf.repetitions);
     ok = ok && load_into(data, "cores", conf.cores);
-    ok = ok && load_into(data, "policy", conf.policy_name, "smash"s);
+    conf.policy_name =
+        either_optional(data.at_path("policy").value<std::string>(), data.at_path("policy.name").value<std::string>())
+            .value_or("smash"s);
     ok = ok && load_into(data, "generator", conf.generator, "lecuyer"s);
     if (conf.generator != "lecuyer") {
         print_error("Unsupported generator " << error_highlight(conf.generator));
@@ -152,21 +155,35 @@ bool from_toml(toml::table& data, ExperimentConfig& conf) {
 }
 
 void from_toml(const std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>& experiments,
-               const toml::table& data, const std::multimap<std::string, std::string>& overrides = {}) {
+               const toml::table& data, const std::multimap<std::string, ConfigValue>& overrides = {}) {
     toml_overrides arguments_overrides(overrides);
     for (const auto override : arguments_overrides) {
         toml::table overridden_data(data);
         auto& [success, config] = experiments->emplace_back();
         for (const auto& [key, value] : override) {
-            overwrite_value(overridden_data, key, value);
-            config.stats.add_pivot_column(key, value);
+            std::visit(
+                [&](auto&& value) {
+                    using T = std::decay_t<decltype(value)>;
+                    overwrite_value<T>(overridden_data, key, value);
+                    if constexpr (toml::is_table<T>) {
+                        static_cast<toml::table>(value).for_each([&](auto&& key, auto&& val) {
+                            using T = std::decay_t<decltype(val)>;
+                            if constexpr (is_override_value<T>) {
+                                config.stats.add_pivot_column(std::string(key), val.get());
+                            }
+                        });
+                    } else {
+                        config.stats.add_pivot_column(key, value);
+                    }
+                },
+                value);
         }
         success = from_toml(overridden_data, config);
     }
 }
 
 std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
-from_toml(const toml::table& data, const std::vector<std::multimap<std::string, std::string>>& arguments_overrides) {
+from_toml(const toml::table& data, const std::vector<std::multimap<std::string, ConfigValue>>& arguments_overrides) {
     auto experiments = std::make_unique<std::vector<std::pair<bool, ExperimentConfig>>>();
     if (auto vars = data.at_path("pivot").as_array()) {
         for (auto& var : *vars) {
@@ -193,7 +210,7 @@ from_toml(const toml::table& data, const std::vector<std::multimap<std::string, 
 }
 
 std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
-from_toml(const std::string_view filename, const std::vector<std::multimap<std::string, std::string>>& overrides) {
+from_toml(const std::string_view filename, const std::vector<std::multimap<std::string, ConfigValue>>& overrides) {
     toml::table data = toml::parse_file(filename);
     return from_toml(data, overrides);
 }

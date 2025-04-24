@@ -42,6 +42,15 @@ service.distribution = "exponential"
 {classes}
 
 [[pivot]]
+policy = [
+    "fifo",
+    "back filling",
+    "server filling memoryful",
+    "most server first",
+    { name = "smash", window = 2 },
+    { name = "smash", window = 5 },
+    { name = "smash", window = 10 },
+]
 arrival.rate = {rates}
 """,
         file=out,
