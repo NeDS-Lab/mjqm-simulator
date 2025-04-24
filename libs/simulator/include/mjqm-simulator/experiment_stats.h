@@ -155,6 +155,7 @@ public:
     CollectedStat timings_tot{"Run Duration", true};
     CollectedStat phase_two_dur{"Phase Two Duration", true};
     CollectedStat phase_three_dur{"Phase Three Duration", true};
+    Stat warnings{"Stability Check", false};
     Stat lambda{"lambda", false};
 
     // visitors
@@ -171,6 +172,7 @@ public:
         editor(timings_tot);
         editor(phase_two_dur);
         editor(phase_three_dur);
+        editor(warnings);
         editor(lambda);
         for (auto& cs : class_stats) {
             cs.edit_stats(editor);
@@ -190,6 +192,7 @@ public:
         visitor(timings_tot);
         visitor(phase_two_dur);
         visitor(phase_three_dur);
+        visitor(warnings);
         visitor(lambda);
         for (auto& cs : class_stats) {
             cs.visit_stats(visitor);

@@ -393,10 +393,14 @@ public:
 
     void produce_statistics(ExperimentStats& stats, const double confidence = 0.05) const {
         stats.edit_all_stats([](Stat& s) { s.finalise(); });
+        bool any_warning = false;
         for (int i = 0; i < nclasses; ++i) {
             ClassStats& res = stats.class_stats.at(i);
-            res.warnings = 1.0 - std::get<Confidence_inter>(res.throughput.value).mean / l[i] > 0.05;
+            bool warning = 1.0 - std::get<Confidence_inter>(res.throughput.value).mean / l[i] > 0.05;
+            res.warnings = warning;
+            any_warning = any_warning || warning;
         }
+        stats.warnings = any_warning;
     }
 
 private:
