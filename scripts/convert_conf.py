@@ -21,14 +21,14 @@ if __name__ == "__main__":
             out = Path(out).open("w")
     else:
         out = (Path("Inputs") / (name + ".toml")).open("w")
-    classes = Path("Inputs") / (name + ".txt")
-    rates = Path("Inputs") / ("arrRate_" + name + ".txt")
-    classes = classes.read_text().splitlines()
+    classes_file = Path("Inputs") / (name + ".txt")
+    rates = classes_file.parent / ("arrRate_" + classes_file.stem + ".txt")
+    classes = classes_file.read_text().splitlines()
     rates = rates.read_text().strip()
     classes = [c.strip("()").split(",") for c in classes]
     classes = "".join([class_def(c) for c in classes])
     print(
-        f"""identifier = "{name}"
+        f"""identifier = "{classes_file.stem}"
 events = 100000
 repetitions = 10
 cores = 50
