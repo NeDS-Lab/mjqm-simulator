@@ -78,10 +78,10 @@ public:
     CollectedStat occupancy_ser{"Service", true};
     CollectedStat occupancy_system{"System", true};
     CollectedStat wait_time{"Waiting", true};
-    CollectedStat wait_time_var{"Waiting Variance", true};
+    CollectedStat wait_time_var{"Waiting Variance", false};
     CollectedStat throughput{"Throughput", true};
     CollectedStat resp_time{"RespTime", true};
-    CollectedStat resp_time_var{"RespTime Variance", true};
+    CollectedStat resp_time_var{"RespTime Variance", false};
     CollectedStat preemption_avg{"Preemption", true};
     CollectedStat seq_avg_len{"Sequence Length", true};
     CollectedStat seq_avg_dur{"Sequence Duration", true};
@@ -147,9 +147,9 @@ public:
     CollectedStat utilisation{"Utilisation", true};
     CollectedStat occupancy_tot{"Queue Total", true};
     CollectedStat wait_tot{"WaitTime Total", true};
-    CollectedStat wait_var_tot{"WaitTime Variance", true};
+    CollectedStat wait_var_tot{"WaitTime Variance", false};
     CollectedStat resp_tot{"RespTime Total", true};
-    CollectedStat resp_var_tot{"RespTime Variance", true};
+    CollectedStat resp_var_tot{"RespTime Variance", false};
     CollectedStat window_size{"Window Size", true};
     CollectedStat violations{"FIFO Violations", true};
     CollectedStat timings_tot{"Run Duration", true};
