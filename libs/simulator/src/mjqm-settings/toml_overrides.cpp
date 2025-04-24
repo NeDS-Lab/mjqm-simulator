@@ -85,8 +85,12 @@ std::multimap<std::string, ConfigValue> parse_overrides_from_pivot(const toml::t
                                 overrides.emplace(subpath, val.get());
                             } else if constexpr (toml::is_table<T>) {
                                 overrides.emplace(subpath, val);
+                            } else {
+                                print_error("Unsupported type for one element of pivot key " << subpath);
                             }
                         });
+                    } else {
+                        print_error("Unsupported type for pivot key " << subpath);
                     }
                 });
             }
