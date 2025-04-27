@@ -2,8 +2,8 @@
 // Created by Marco Ciotola on 21/01/25.
 //
 
-#ifndef INTERFACE_H
-#define INTERFACE_H
+#ifndef MJQM_POLICY_H
+#define MJQM_POLICY_H
 
 #include <list>
 #include <memory>
@@ -34,4 +34,4 @@ public:
     explicit virtual operator std::string() const = 0;
 };
 
-#endif // INTERFACE_H
+#endif // MJQM_POLICY_H

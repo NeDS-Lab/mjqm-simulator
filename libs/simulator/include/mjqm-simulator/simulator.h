@@ -95,20 +95,17 @@ public:
         phase_three_duration = 0;
     }
 
-    void collect_run_statistics(double tot_seq_len, double seq_amount) {
+    void collect_run_statistics() {
         double totq = 0.0;
         for (auto& x : occupancy_buf) {
             x /= simtime;
             totq += x;
         }
 
-        double tots = 0.0;
         for (auto& x : occupancy_ser) {
             x /= simtime;
-            tots += x;
         }
 
-        double totx = 0.0;
         double utilisation = 0.0;
         std::list<double> totRawWaitingTime;
         std::list<double> totRawResponseTime;
@@ -118,7 +115,7 @@ public:
             class_stats.occupancy_buf.collect(occupancy_buf[i]);
             class_stats.occupancy_ser.collect(occupancy_ser[i]);
             class_stats.occupancy_system.collect(occupancy_buf[i] + occupancy_ser[i]);
-            class_stats.throughput.collect(completion[i] / simtime);
+            class_stats.throughput.collect((double)completion[i] / simtime);
             utilisation += occupancy_ser[i] * sizes[i];
 
             // waitingTime[i] = occupancy_buf[i] / throughput[i];
@@ -134,7 +131,7 @@ public:
             totRawWaitingTime.insert(totRawWaitingTime.end(), rawWaitingTime[i].begin(), rawWaitingTime[i].end());
             totRawResponseTime.insert(totRawResponseTime.end(), rawResponseTime[i].begin(), rawResponseTime[i].end());
 
-            class_stats.preemption_avg.collect(((double)preemption[i]) / (double)completion[i]);
+            class_stats.preemption_avg.collect((double)preemption[i] / (double)completion[i]);
 
             class_stats.seq_avg_len.collect((tot_job_seq[i] * 1.0) / job_seq_amount[i]);
             class_stats.seq_avg_dur.collect((tot_job_seq_dur[i] * 1.0) / job_seq_amount[i]);
@@ -227,22 +224,16 @@ public:
         //     outputFile.close();
         // }
 
-        for (int rep = 0; rep < repetitions; rep++) {
-
+        for (unsigned int rep = 0; rep < repetitions; rep++) {
             /*int buf_size = std::reduce(policy->get_state_buf().begin(), policy->get_state_buf().end());
             if (buf_size > 180000000) {
                 break;
             }*/
 
-            double current_seq_len = 0.0;
-            double tot_seq_len = 0.0;
-            double seq_amount = 0.0;
-            double max_seq_len = 0.0;
-
             auto start = std::chrono::high_resolution_clock::now();
             reset_statistics();
 
-            for (unsigned long int k = 0; k < nevents; k++) {
+            for (unsigned long k = 0; k < nevents; k++) {
                 auto itmin = std::min_element(fel.begin(), fel.end());
                 // std::cout << *itmin << std::endl;
                 int pos = std::distance(fel.begin(), itmin);
@@ -337,7 +328,7 @@ public:
                 }*/
             }
 
-            collect_run_statistics(tot_seq_len, seq_amount);
+            collect_run_statistics();
 
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
@@ -473,42 +464,42 @@ private:
                     fel[i + nclasses] = arr_time_samplers[i]->sample() + simtime;
                 }
 
-                for (auto job_id = stopped_jobs[i].begin(); job_id != stopped_jobs[i].end(); ++job_id) {
-                    if (jobs_inservice[i].contains(*job_id)) { // If they are currently being served: stop them
-                        jobs_preempted[i][*job_id] =
-                            jobs_inservice[i][*job_id] - simtime; // Save the remaining service time
-                        jobs_inservice[i].erase(*job_id);
-                        arrTime[*job_id] = simtime;
+                for (auto job_id : stopped_jobs[i]) {
+                    if (jobs_inservice[i].contains(job_id)) { // If they are currently being served: stop them
+                        jobs_preempted[i][job_id] =
+                            jobs_inservice[i][job_id] - simtime; // Save the remaining service time
+                        jobs_inservice[i].erase(job_id);
+                        arrTime[job_id] = simtime;
                         preemption[i]++;
                     }
                 }
 
                 long int fastest_job_id;
                 double fastest_job_fel = std::numeric_limits<double>::max();
-                for (auto job_id = ongoing_jobs[i].begin(); job_id != ongoing_jobs[i].end(); ++job_id) {
-                    if (!jobs_inservice[i].contains(*job_id)) { // If they are NOT already in service
-                        if (jobs_preempted[i].contains(*job_id)) { // See if they were preempted: resume them
-                            jobs_inservice[i][*job_id] = jobs_preempted[i][*job_id] + simtime;
-                            jobs_preempted[i].erase(*job_id);
-                            waitTime[*job_id] = simtime - arrTime[*job_id] + waitTime[*job_id];
+                for (auto job_id : ongoing_jobs[i]) {
+                    if (!jobs_inservice[i].contains(job_id)) { // If they are NOT already in service
+                        if (jobs_preempted[i].contains(job_id)) { // See if they were preempted: resume them
+                            jobs_inservice[i][job_id] = jobs_preempted[i][job_id] + simtime;
+                            jobs_preempted[i].erase(job_id);
+                            waitTime[job_id] = simtime - arrTime[job_id] + waitTime[job_id];
                         } else { // or they are just new jobs about to be served for the first time: add them with new
                                  // service time
                             double sampled = ser_time_samplers[i]->sample();
-                            jobs_inservice[i][*job_id] = sampled + simtime;
-                            // rawWaitingTime[i].push_back(simtime-arrTime[*job_id]);
+                            jobs_inservice[i][job_id] = sampled + simtime;
+                            // rawWaitingTime[i].push_back(simtime-arrTime[job_id]);
                             // arrTime.erase(*job_id); //update waitingTime
-                            waitTime[*job_id] = simtime - arrTime[*job_id];
-                            holdTime[*job_id] = sampled;
+                            waitTime[job_id] = simtime - arrTime[job_id];
+                            holdTime[job_id] = sampled;
                         }
 
-                        if (jobs_inservice[i][*job_id] < fastest_job_fel) {
-                            fastest_job_id = *job_id;
-                            fastest_job_fel = jobs_inservice[i][*job_id];
+                        if (jobs_inservice[i][job_id] < fastest_job_fel) {
+                            fastest_job_id = job_id;
+                            fastest_job_fel = jobs_inservice[i][job_id];
                         }
                     } else { // They are already in service
-                        if (jobs_inservice[i][*job_id] < fastest_job_fel) {
-                            fastest_job_id = *job_id;
-                            fastest_job_fel = jobs_inservice[i][*job_id];
+                        if (jobs_inservice[i][job_id] < fastest_job_fel) {
+                            fastest_job_id = job_id;
+                            fastest_job_fel = jobs_inservice[i][job_id];
                         }
                     }
                 }

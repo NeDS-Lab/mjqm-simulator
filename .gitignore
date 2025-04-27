@@ -82,6 +82,7 @@ docs/generated/
 # Python
 .venv/
 .ruff_cache/
+.spyproject/
 
 # NodeJS
 node_modules/

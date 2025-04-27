@@ -26,6 +26,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(STATUS "Compiling in Debug mode")
     add_link_options(   -g)
     add_compile_options(-g)
+    add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter)
 endif()
 
 project(mjqm-simulator
