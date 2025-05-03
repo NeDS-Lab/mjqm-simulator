@@ -229,7 +229,6 @@ Simulator::Simulator(ExperimentConfig& conf) : nclasses(static_cast<int>(conf.cl
     this->tot_job_seq_dur.resize(nclasses);
     this->job_seq_amount.resize(nclasses);
     this->debugMode = false;
-    // this->logfile_name = std::move(logfile_name);
     this->policy = conf.policy->clone();
     this->stats = &conf.stats;
 
@@ -255,7 +254,6 @@ Simulator::Simulator(ExperimentConfig& conf) : nclasses(static_cast<int>(conf.cl
         arr_time_samplers.push_back(cls.arrival_sampler->clone());
         ser_time_samplers.push_back(cls.service_sampler->clone());
         l.push_back(1. / cls.arrival_sampler->get_mean());
-        u.push_back(cls.service_sampler->get_mean());
     }
     // for debugging purposes, all simulations should print the same state of the RNG,
     // unless some distribution is deterministic only in some of them

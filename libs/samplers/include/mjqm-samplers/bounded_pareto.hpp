@@ -58,6 +58,10 @@ public:
         return std::make_unique<BoundedPareto>(name, alpha, (12000.0 / 23999.0) * mean, 12000 * mean);
     }
 
+    static std::unique_ptr<DistributionSampler> with_range(const std::string& name, double alpha, double l, double h) {
+        return std::make_unique<BoundedPareto>(name, alpha, l, h);
+    }
+
     std::unique_ptr<DistributionSampler> clone(const std::string& name) const override {
         return std::make_unique<BoundedPareto>(name, alpha, l, h);
     }

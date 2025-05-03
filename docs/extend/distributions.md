@@ -2,9 +2,9 @@
 
 New distribution implementations need two parts: the sampler and the loader.
 
-The sampler is a header-only class that generates random numbers following the distribution. Its location is in the `mjqm-samplers` folder of the `samplers` library.
+The sampler is a header-only class that generates random numbers following the distribution. It needs to be located in the [`mjqm-samplers`](https://github.com/NeDS-Lab/mjqm-simulator/tree/main/libs/samplers/include/mjqm-samplers) folder of the `samplers` library.
 
-The loader is a function to read the distribution parameters from the TOML^[Read *Tom's Obvious Minimal Language* (TOML) definition at https://toml.io/en/] configuration file and creates the sampler object.
+The loader is a function to read the distribution parameters from the TOML^[Read *Tom's Obvious Minimal Language* (TOML) definition at https://toml.io/en/] configuration file and creates the sampler object. It is split into two parts: the declaration in `mjqm-settings/toml_distributions_loader.h` and the implementation in `mjqm-settings/toml_distributions_loader.cpp`. Additionally, the loader needs to be added to the `distribution_loaders` map at the end of the header file.
 
 # Adding a new distribution
 
@@ -209,7 +209,7 @@ We also need to map the loader to the name to be used in the configuration file.
 
 In the `toml_distributions_loader.h` header, we declare the loader as `load_{distribution_name}` with the same signature as the other loaders (also defined at the top of the header as `distribution_loader` type definition).
 
-Then, we add it to the `distribution_loaders` map at the end of the header, with an all-lowercase, space-separated key.
+Then, we add it to the `distribution_loaders` map at the end of the header, with an all-lowercase, space-separated key without accents.
 
 ```cpp
 // libs/settings/include/mjqm-settings/toml_distributions_loader.h
@@ -226,7 +226,7 @@ inline static std::unordered_map<std::string, distribution_loader> distribution_
 ```
 
 > [!Note]
-  Keep both the loader declaration and the map element in alphabetical order.
+  Keep both the loader declaration and the map element in alphabetical order for consistency.
 
 The key in the map will be used in the configuration file as follows:
 
@@ -235,9 +235,6 @@ The key in the map will be used in the configuration file as follows:
 arrival.distribution = "exponential"
 # ...
 ```
-
-> [!Note]
-  As the key for the map, use the lowercase, space-separated name of the distribution without accents.
 
 #### Implement the loader
 
@@ -289,7 +286,7 @@ bool load_exponential(const toml::table& data, const std::string_view& cls, cons
     if (mean.has_value()) {
         *distribution = Exponential::with_mean(name, mean.value() / prob);
     } else {
-        *distribution = std::make_unique<Exponential>(name, lambda.value() * prob);
+        *distribution = Exponential::with_rate(name, lambda.value() * prob);
     }
     return true;
 }
@@ -300,8 +297,7 @@ Some particular behaviours to pay attention to, in order to replicate them:
 - the `name` variable is built using the `full_name` helper function, that returns the complete TOML path of the distribution for the current class.
 - we ignore the `prob` key if the distribution is not an arrival distribution using a default value of 1.
 - the parameters consistency is checked as soon as possible, returning `false` and printing an error if too many or too few values are defined.
-- we use the idiomatic static _constructors_ when building the distribution with non-standard parameters (in this case, using the mean).
-- we use the `std::make_unique` function to build the distribution with the lambda parameter.
+- we use the idiomatic static _constructors_ when building the distribution.
 
 > [!Note]
   When our loader returns `false`, the simulator won't start the experiments, but will try to parse the remaining configuration, printing all the errors found before exiting.

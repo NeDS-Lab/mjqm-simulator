@@ -41,6 +41,10 @@ public:
         return std::make_unique<Uniform>(name, .5 * mean, 1.5 * mean);
     }
 
+    static std::unique_ptr<DistributionSampler> with_range(const std::string& name, double min, double max) {
+        return std::make_unique<Uniform>(name, min, max);
+    }
+
     std::unique_ptr<DistributionSampler> clone(const std::string& name) const override {
         return std::make_unique<Uniform>(name, min, max);
     }

@@ -42,6 +42,8 @@ brew install boost # MacOS
 
 To run the tests, you need to have `Python3` installed on your system, in addition to the previous requirements.
 
+We recommend using `uv` as a Python package manager, for which we provide the pyproject.toml configuration file.
+
 ## Build
 
 To prepare and compile the project with `cmake`, use the following command from the project root directory:
@@ -51,6 +53,7 @@ To prepare and compile the project with `cmake`, use the following command from 
 ```
 
 This will create an executable named `<file>` for each configured `<file>.cpp` in the root directory.
+It will also prepare the Python environment with `uv`, installing it for the current user if missing.
 
 The additional parameters work as such:
 
@@ -60,7 +63,7 @@ The additional parameters work as such:
 - `--no-build` to only configure the project without building it.
 
 > [!Note]
-  To dig more into the details, in the output of the `configure` script you can find the actual commands used to configure and build the project, prepended with `+`.
+  To dig deeper into the details, in the output of the `configure` script you can find the actual commands used to configure and build the project, prepended with `+`.
 
 ### Rebuild
 

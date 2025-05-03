@@ -130,7 +130,6 @@ inline Simulator::Simulator(const std::vector<double>& l, const std::vector<doub
                             std::string logfile_name, ExperimentStats& stats) :
     nclasses(static_cast<int>(sizes.size())) {
     this->l = l;
-    this->u = u;
     this->n = servers;
     this->sizes = sizes;
     this->stats = &stats;

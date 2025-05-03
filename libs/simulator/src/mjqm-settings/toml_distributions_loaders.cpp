@@ -7,6 +7,8 @@
 #include <mjqm-samplers/samplers.h>
 #include <mjqm-settings/toml_distributions_loaders.h>
 
+#include "mjqm-samplers/frechet.hpp"
+
 #ifndef XOR
 #define XOR(a, b) (!(a) != !(b))
 #endif // XOR
@@ -38,7 +40,7 @@ bool load_bounded_pareto(const toml::table& data, const std::string_view& cls, c
                                                            << " must have l > 0 and h > l and alpha > 0");
         return false;
     }
-    *distribution = std::make_unique<BoundedPareto>(name, alpha.value(), l.value(), h.value());
+    *distribution = BoundedPareto::with_range(name, alpha.value(), l.value(), h.value());
     return true;
 }
 
@@ -74,7 +76,7 @@ bool load_exponential(const toml::table& data, const std::string_view& cls, cons
     if (mean.has_value()) {
         *distribution = Exponential::with_mean(name, mean.value() / prob);
     } else {
-        *distribution = std::make_unique<Exponential>(name, lambda.value() * prob);
+        *distribution = Exponential::with_rate(name, lambda.value() * prob);
     }
     return true;
 }
@@ -110,7 +112,7 @@ bool load_frechet(const toml::table& data, const std::string_view& cls, const di
         print_error("Fréchet distribution at path " << error_highlight(name) << " must have s >= 0");
         return false;
     }
-    *distribution = std::make_unique<Frechet>(name, alpha.value(), s.value(), m, true);
+    *distribution = Frechet::with(name, alpha.value(), s.value(), m);
     return true;
 }
 
@@ -152,7 +154,7 @@ bool load_uniform(const toml::table& data, const std::string_view& cls, const di
         print_error("Uniform distribution at path " << error_highlight(name) << " must have 0 < min < max");
         return false;
     }
-    *distribution = std::make_unique<Uniform>(name, min.value(), max.value());
+    *distribution = Uniform::with_range(name, min.value(), max.value());
     return true;
 }
 

@@ -63,6 +63,11 @@ public:
         return std::make_unique<Frechet>(name, 1 / tgammaf(1 - 1 / alpha), alpha, rate, m);
     }
 
+    static std::unique_ptr<DistributionSampler> with(const std::string& name, double alpha, double s = 1.,
+                                                     double m = 0.) {
+        return std::make_unique<Frechet>(name, alpha, s, m, true);
+    }
+
     std::unique_ptr<DistributionSampler> clone(const std::string& name) const override {
         return std::make_unique<Frechet>(name, alpha, s, m, true);
     }

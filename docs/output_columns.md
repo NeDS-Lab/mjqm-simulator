@@ -22,7 +22,7 @@ If you want to exclude one or more columns, you can use the `-` prefix, and that
 ```toml
 [output]
 columns = [
-  # include the configuration value for each class (if the value is not explicit, the default is used)
+  # include the configuration value for each class (when the value is not explicit and the default is available, the latter is used)
   "cores[*]",
   "arrival.prob[*]",
   "service.mean[*]",

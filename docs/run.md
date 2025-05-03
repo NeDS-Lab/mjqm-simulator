@@ -187,11 +187,11 @@ If `mean` is defined, the `min` and `max` will be calculated as $0.5 \times \mu$
 > **Note**: The FIFO policy is implemented as [SMASH](#smash) with a window size of 1.
 
 ### SMASH
-- `policy = "smash"`
-- `smash.window`: the window size. Default is 1.
+- `policy.name = "smash"`
+- `policy.window`: the window size. Default is 1.
 
 ### Server filling
-- `policy = "server filling"` or `policy = "server filling memoryful"` for the memoryful version.
+- `policy = "server filling memoryful"`.
 
 ### Back filling
 - `policy = "back filling"`

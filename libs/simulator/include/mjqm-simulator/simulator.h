@@ -398,7 +398,6 @@ private:
     ExperimentStats* stats;
     const int nclasses;
     std::vector<double> l;
-    std::vector<double> u;
     std::vector<std::unique_ptr<DistributionSampler>> ser_time_samplers;
     std::vector<std::unique_ptr<DistributionSampler>> arr_time_samplers;
     std::vector<unsigned int> sizes;
