@@ -6,7 +6,7 @@ Created on Sun Jan  7 16:21:22 2024
 @author: dilettaolliaro
 """
 
-import os.path
+from pathlib import Path
 import re
 
 import matplotlib
@@ -27,7 +27,7 @@ policies_labels = [
     "First-In First-Out",
     "Most Server First",
     "Server Filling",
-    "BackFilling",
+    "Back Filling",
 ]
 policies = dict(zip(policies_keys, policies_labels))
 
@@ -196,41 +196,12 @@ elif cell == "cellA":
         st = styles[0]
 
 
-filenames = []
-labels = []
 folder = cell
 folder = "253970"
 folder = f"Results/{folder}"
-
-for w in range(len(wins)):
-    s = (
-        f"{folder}/overLambdas-nClasses{nClasses}-N{n}-Win{wins[w]}-Exponential-"
-        + cell
-        + "_"
-        + "Sorted_"
-        + str(n)
-        + ".csv"
-    )
-    if os.path.isfile(s):
-        filenames.append(s)
-    else:
-        print("File is missing:", s)
-
+dir = Path(folder)
+filenames = list(dir.glob("*.csv"))
 dfs = []
-lambdas = [[] for file in filenames]
-respTimes_tot = [[] for file in filenames]
-respTimes_big = [[] for file in filenames]
-respTimes_small = [[] for file in filenames]
-waitTimes_tot = [[] for file in filenames]
-waitTimes_big = [[] for file in filenames]
-waitTimes_small = [[] for file in filenames]
-wasted_servers = [[] for file in filenames]
-Ps = [[] for file in filenames]
-serTimes = [[] for file in filenames]
-index_asyms_comp = []
-
-utils = [[] for file in filenames]
-actual_util = []
 
 
 def row_label(row, win):
@@ -245,83 +216,30 @@ def row_label(row, win):
         return policies[row["policy"]]
 
 
-for f in range(len(filenames)):
-    with open(filenames[f]) as csv_file:
-        df = pd.read_csv(filenames[f], delimiter=";")
-        df["label"] = df.apply(row_label, axis=1, args=(wins[f],))
-        labels.append(df["label"][0])
-        Ts = set()
-        actual_check = False
-        stability_columns = []
-        for column in df.columns:
-            if "policy" == column:
-                df[column] = df[column].astype(policies_dtype)
-            elif "Stability Check" in column:
-                df[column] = df[column].map(stability_check_mapping).astype(bool)
-                if "Stability Check" == column:
-                    actual_check = True
-                else:
-                    stability_columns.append(column)
-            if match := re.match(r"T(?P<T>\d+)", column):
-                Ts.add(int(match.group("T")))
-        if not actual_check:
-            df["Stability Check"] = df[stability_columns].all(axis=1)
-
-        df["Arrival Rate Increase"] = df["arrival.rate"].rolling(window=2).sem()
-        df["Utilisation Increase"] = df["Utilisation"].rolling(window=2).sem()
-        df["Utilisation Increase Ratio"] = (
-            df["Utilisation Increase"] / df["Arrival Rate Increase"]
-        )
-        df["Utilisation Increase Ratio Divergence"] = (
-            df["Utilisation Increase Ratio"]
-            .rolling(window=2)
-            .apply(lambda x: abs(1.0 - x.iloc[1] / x.iloc[0]))
-        )
-        print(df.head())
-
-        Ts = sorted(list(Ts))
-
-        for index, row in df.iterrows():
-            lambdas[f].append(row["arrival.rate"])
-
-            # arrival.prob
-            Ps[f] = [row[f"T{T} lambda"] / row["arrival.rate"] for T in Ts]
-
-            # service.mean
-            curr_serTimes = [row[f"T{T} RespTime"] - row[f"T{T} Waiting"] for T in Ts]
-            if serTimes[f]:
-                for T in range(len(Ts)):
-                    if serTimes[f][T] < 0 and curr_serTimes[T] > 0:
-                        serTimes[f][T] = curr_serTimes[T]
+for f in filenames:
+    df = pd.read_csv(f, delimiter=";")
+    win = None
+    if match := re.match(r"Win(?P<win>-?\d+)", f.stem):
+        win = int(match.group("win"))
+    df["label"] = df.apply(row_label, axis=1, args=(win,))
+    actual_check = False
+    stability_columns = []
+    for column in df.columns:
+        if "policy" == column:
+            df[column] = df[column].astype(policies_dtype)
+        elif "Stability Check" in column:
+            df[column] = df[column].map(stability_check_mapping).astype(bool)
+            if "Stability Check" == column:
+                actual_check = True
             else:
-                serTimes[f] = curr_serTimes
+                stability_columns.append(column)
+    if not actual_check:
+        df["Stability Check"] = df[stability_columns].all(axis=1)
 
-            respTimes_tot[f].append(row["RespTime Total"])
-            respTimes_big[f].append(row[f"T{max(Ts)} RespTime"])
-            respTimes_small[f].append(row[f"T{min(Ts)} RespTime"])
-            waitTimes_big[f].append(row[f"T{max(Ts)} Waiting"])
-            waitTimes_small[f].append(row[f"T{min(Ts)} Waiting"])
-            waitTimes_tot[f].append(row["WaitTime Total"])
-            wasted_servers[f].append(row["Wasted Servers"])
-            if (
-                not row["Stability Check"]
-                or row["Utilisation Increase Ratio Divergence"] > 0.01
-            ):
-                if len(index_asyms_comp) - 1 < f:
-                    index_asyms_comp.append(index - 1)
-                else:
-                    index_asyms_comp[-1] = min(index_asyms_comp[-1], index - 1)
+    dfs.append(df)
 
-        if len(index_asyms_comp) - 1 < f:
-            index_asyms_comp.append(len(df["arrival.rate"]) - 1)
+df = None
 
-        dfs.append(df)
-        df = None
-
-computed_asymptotes = [
-    float(dfs[i]["arrival.rate"][x]) for i, x in enumerate(index_asyms_comp)
-]
-asymptotes = computed_asymptotes
 defined_asymptotes = [
     float(dfs[i]["arrival.rate"][min(i, len(dfs[i]["arrival.rate"]) - 1)])
     for i, x in enumerate(index_asyms)
@@ -358,22 +276,24 @@ dfs.sort_values(
 )
 dfs.set_index(idx, drop=False, inplace=True)
 exp = dfs.index.names.difference(["arrival.rate"])
-dfs["Arrival Rate Increase"] = dfs.groupby(level=exp)["arrival.rate"].transform(
+if len(exp) == 1:
+    exp = exp[0]
+arr_rate_increase = dfs.groupby(level=exp)["arrival.rate"].transform(
     lambda x: x.rolling(2).sem()
 )
-dfs["Utilisation Increase"] = dfs.groupby(level=exp)["Utilisation"].transform(
+util_increase = dfs.groupby(level=exp)["Utilisation"].transform(
     lambda x: x.rolling(2).sem()
 )
-dfs["Utilisation Increase Ratio"] = (
-    dfs["Utilisation Increase"] / dfs["Arrival Rate Increase"]
+util_increase_ratio = arr_rate_increase / util_increase
+util_increase_ratio.name = "Utilisation Increase Ratio"
+dfs = pd.concat([dfs, util_increase_ratio], axis=1)
+divergence = dfs.groupby(level=exp)["Utilisation Increase Ratio"].transform(
+    lambda x: x.rolling(2).apply(lambda x: abs(1.0 - x.iloc[1] / x.iloc[0]))
 )
-dfs["Utilisation Increase Ratio Divergence"] = dfs.groupby(level=exp)[
-    "Utilisation Increase Ratio"
-].transform(lambda x: x.rolling(2).apply(lambda x: abs(1.0 - x.iloc[1] / x.iloc[0])))
-dfs = dfs.copy()
-dfs["stable"] = dfs["Stability Check"] & (
-    dfs["Utilisation Increase Ratio Divergence"].fillna(0) < 0.01
-)
+stable = dfs["Stability Check"] & (divergence.fillna(0) < 0.01)
+stable.name = "stable"
+dfs = pd.concat([dfs, stable], axis=1)
+
 asymptotes = dfs.groupby(level=exp).apply(
     lambda x: x["arrival.rate"]
     .shift(
@@ -383,12 +303,16 @@ asymptotes = dfs.groupby(level=exp).apply(
     .min()  # keep the maximum (known) arrival rate where the system is still stable
 )
 
-lims = index_asyms_comp
-for f in range(len(filenames)):
+actual_util = pd.Series(pd.NA, index=asymptotes.index)
+for idx, df_select in dfs.groupby(level=exp):
     summ_util = 0
+    asymptote = asymptotes[idx]
+    asymp_row = df_select.loc[idx, asymptote]
+    Ps = [asymp_row[f"T{T} lambda"] / asymp_row["arrival.rate"] for T in Ts]
+    serTimes = [asymp_row[f"T{T} RespTime"] - asymp_row[f"T{T} Waiting"] for T in Ts]
     for t in range(len(Ts)):
-        summ_util += asymptotes[f] * Ps[f][t] * serTimes[f][t] * Ts[t] * (1 / n)
-    actual_util.append(summ_util * 100.0)
+        summ_util += asymptote * Ps[t] * serTimes[t] * Ts[t] * (1 / n)
+    actual_util[idx] = summ_util * 100.0
 
 ############################### TOTAL RESPONSE TIME ##########################################
 
@@ -400,27 +324,27 @@ matplotlib.rcParams["xtick.major.pad"] = 8
 matplotlib.rcParams["ytick.major.pad"] = 8
 fix, ax = plt.subplots(figsize=tuplesize)
 
-for f in range(len(filenames)):
-    x_data = lambdas[f][: lims[f] + 1]
-    y_data = respTimes_tot[f][: lims[f] + 1]
+i = 0
+for idx, df_select in dfs.groupby(level=exp):
+    f, i = i, i + 1
+    x_data = df_select["arrival.rate"][df_select["stable"]]
+    y_data = df_select["RespTime Total"][df_select["stable"]]
     y_interp = savgol_filter(y_data, 3, 2)
 
     ax.scatter(x_data, y_data, color=cols[f], marker=markers[f], s=marker_size)
-    ax.plot(x_data, y_interp, color=cols[f], label=labels[f], ls=st, lw=line_size)
+    ax.plot(x_data, y_interp, color=cols[f], label=str(idx), ls=st, lw=line_size)
 
-    # ax.plot(lambdas[f][:lims[f]+1], respTimes_tot[f][:lims[f]+1], color = cols[f], label = labels[f], ls = st, marker = markers[f], lw = line_size, markersize = marker_size)
-    # ax.plot(lambdas[f][lims[f]:], respTimes_tot[f][lims[f]:], color = cols[f], ls = st, marker = markers[f], lw = line_size, markersize = marker_size, mfc='k')
     if (cell == "cellA" and wins[f] != 0) or cell == "cellB":
         plt.text(
             x=xs[f],
             y=ys_resp[f],
-            s=f"{actual_util[f]:.1f}\\%",
+            s=f"{actual_util[idx]:.1f}\\%",
             rotation=0,
             c=cols[f],
             fontsize=tick_size,
             weight="extra bold",
         )
-        plt.axvline(x=asymptotes[f], color=cols[f], linestyle="dotted", lw=asym_size)
+        plt.axvline(x=asymptotes[idx], color=cols[f], linestyle="dotted", lw=asym_size)
 
 ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
 ax.set_ylabel("Avg. Response Time $\\quad[$s$]$", fontsize=label_size)
@@ -447,27 +371,27 @@ plt.rc("text", usetex=True)
 matplotlib.rcParams["font.size"] = fsize
 fix, ax = plt.subplots(figsize=tuplesize)
 
-for f in range(len(filenames)):
-    x_data = lambdas[f][: lims[f] + 1]
-    y_data = respTimes_small[f][: lims[f] + 1]
+i = 0
+for idx, df_select in dfs.groupby(level=exp):
+    f, i = i, i + 1
+    x_data = df_select["arrival.rate"][df_select["stable"]]
+    y_data = df_select[f"T{min(Ts)} RespTime"][df_select["stable"]]
     y_interp = savgol_filter(y_data, 3, 2)
 
     ax.scatter(x_data, y_data, color=cols[f], marker=markers[f], s=marker_size)
-    ax.plot(x_data, y_interp, color=cols[f], label=labels[f], ls=st, lw=line_size)
+    ax.plot(x_data, y_interp, color=cols[f], label=str(idx), ls=st, lw=line_size)
 
-    # ax.plot(lambdas[f][:lims[f]+1], respTimes_small[f][:lims[f]+1], color = cols[f], label = labels[f], ls = st, marker = markers[f], lw = line_size, markersize = marker_size)
-    # ax.plot(lambdas[f][lims[f]:], respTimes_small[f][lims[f]:], color = cols[f], ls = st, marker = markers[f], lw = line_size, markersize = marker_size, mfc='k')
     if (cell == "cellA" and wins[f] != 0) or cell == "cellB":
         plt.text(
             x=xs[f],
             y=ys_resp[f],
-            s=f"{actual_util[f]:.1f}\\%",
+            s=f"{actual_util[idx]:.1f}\\%",
             rotation=0,
             c=cols[f],
             fontsize=tick_size,
             weight="extra bold",
         )
-        plt.axvline(x=asymptotes[f], color=cols[f], linestyle="dotted", lw=asym_size)
+        plt.axvline(x=asymptotes[idx], color=cols[f], linestyle="dotted", lw=asym_size)
 
 ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
 ax.set_ylabel("Avg. Response Time $\\quad[$s$]$", fontsize=label_size)
@@ -497,27 +421,27 @@ plt.rc("text", usetex=True)
 matplotlib.rcParams["font.size"] = fsize
 fix, ax = plt.subplots(figsize=tuplesize)
 
-for f in range(len(filenames)):
-    x_data = lambdas[f][: lims[f] + 1]
-    y_data = respTimes_big[f][: lims[f] + 1]
+i = 0
+for idx, df_select in dfs.groupby(level=exp):
+    f, i = i, i + 1
+    x_data = df_select["arrival.rate"][df_select["stable"]]
+    y_data = df_select[f"T{max(Ts)} RespTime"][df_select["stable"]]
     y_interp = savgol_filter(y_data, 3, 2)
 
     ax.scatter(x_data, y_data, color=cols[f], marker=markers[f], s=marker_size)
-    ax.plot(x_data, y_interp, color=cols[f], label=labels[f], ls=st, lw=line_size)
+    ax.plot(x_data, y_interp, color=cols[f], label=str(idx), ls=st, lw=line_size)
 
-    # ax.plot(lambdas[f][:lims[f]+1], respTimes_big[f][:lims[f]+1], color = cols[f], label = labels[f], ls = st, marker = markers[f], lw = line_size, markersize = marker_size)
-    # ax.plot(lambdas[f][lims[f]:], respTimes_big[f][lims[f]:], color = cols[f], ls = st, marker = markers[f], lw = line_size, markersize = marker_size, mfc='k')
     if (cell == "cellA" and wins[f] != 0) or cell == "cellB":
         plt.text(
             x=xs[f],
             y=ys_bigResp[f],
-            s=f"{actual_util[f]:.1f}\\%",
+            s=f"{actual_util[idx]:.1f}\\%",
             rotation=0,
             c=cols[f],
             fontsize=tick_size,
             weight="extra bold",
         )
-        plt.axvline(x=asymptotes[f], color=cols[f], linestyle="dotted", lw=asym_size)
+        plt.axvline(x=asymptotes[idx], color=cols[f], linestyle="dotted", lw=asym_size)
 
 ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
 ax.set_ylabel("Avg. Response Time $\\quad[$s$]$", fontsize=label_size)
@@ -548,18 +472,18 @@ plt.rc("text", usetex=True)
 matplotlib.rcParams["font.size"] = fsize
 fix, ax = plt.subplots(figsize=tuplesize)
 
-for f in range(len(filenames)):
-    x_data = lambdas[f][: lims[f] + 1]
-    y_data = waitTimes_tot[f][: lims[f] + 1]
+i = 0
+for idx, df_select in dfs.groupby(level=exp):
+    f, i = i, i + 1
+    x_data = df_select["arrival.rate"][df_select["stable"]]
+    y_data = df_select["WaitTime Total"][df_select["stable"]]
     y_interp = savgol_filter(y_data, 3, 2)
 
     ax.scatter(x_data, y_data, color=cols[f], marker=markers[f], s=marker_size)
-    ax.plot(x_data, y_interp, color=cols[f], label=labels[f], ls=st, lw=line_size)
+    ax.plot(x_data, y_interp, color=cols[f], label=str(idx), ls=st, lw=line_size)
 
-    # ax.plot(lambdas[f][:lims[f]+1], waitTimes_tot[f][:lims[f]+1], color = cols[f], label = labels[f], ls = st, marker = markers[f], lw = line_size, markersize = marker_size)
-    # ax.plot(lambdas[f][lims[f]:], waitTimes_tot[f][lims[f]:], color = cols[f], ls = st, marker = markers[f], lw = line_size, markersize = marker_size, mfc='k')
     if (cell == "cellA" and wins[f] != 0) or cell == "cellB":
-        plt.axvline(x=asymptotes[f], color=cols[f], linestyle="dotted", lw=asym_size)
+        plt.axvline(x=asymptotes[idx], color=cols[f], linestyle="dotted", lw=asym_size)
 
 ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
 ax.set_ylabel("Avg. Waiting Time $\\quad[$s$]$", fontsize=label_size)
@@ -587,21 +511,20 @@ plt.rc("text", usetex=True)
 matplotlib.rcParams["font.size"] = fsize
 fix, ax = plt.subplots(figsize=tuplesize)
 
-for f in range(len(filenames)):
-    x_data = lambdas[f][: lims[f] + 1]
-    y_data = waitTimes_small[f][: lims[f] + 1]
+i = 0
+for idx, df_select in dfs.groupby(level=exp):
+    f, i = i, i + 1
+    x_data = df_select["arrival.rate"][df_select["stable"]]
+    y_data = df_select[f"T{min(Ts)} Waiting"][df_select["stable"]]
     y_interp = savgol_filter(y_data, 3, 2)
 
     ax.scatter(x_data, y_data, color=cols[f], marker=markers[f], s=marker_size)
-    ax.plot(x_data, y_interp, color=cols[f], label=labels[f], ls=st, lw=line_size)
+    ax.plot(x_data, y_interp, color=cols[f], label=str(idx), ls=st, lw=line_size)
 
-    # ax.plot(lambdas[f][:lims[f]+1], waitTimes_small[f][:lims[f]+1], color = cols[f], label = labels[f], ls = st, marker = markers[f], lw = line_size, markersize = marker_size)
-    # ax.plot(lambdas[f][lims[f]:], waitTimes_small[f][lims[f]:], color = cols[f], ls = st, marker = markers[f], lw = line_size, markersize = marker_size, mfc='k')
-
-    # util = round(actual_util[f]*100, 1)
+    # util = round(actual_util[idx]*100, 1)
     # plt.text(x = xs[f], y = ys[f], s = f'{util}\%' , rotation=0, c = cols[f], fontsize = tick_size, weight= 'extra bold')
     if (cell == "cellA" and wins[f] != 0) or cell == "cellB":
-        plt.axvline(x=asymptotes[f], color=cols[f], linestyle="dotted", lw=asym_size)
+        plt.axvline(x=asymptotes[idx], color=cols[f], linestyle="dotted", lw=asym_size)
 
 ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
 ax.set_ylabel("Avg. Waiting Time $\\quad[$s$]$", fontsize=label_size)
@@ -633,21 +556,20 @@ plt.rc("text", usetex=True)
 matplotlib.rcParams["font.size"] = fsize
 fix, ax = plt.subplots(figsize=tuplesize)
 
-for f in range(len(filenames)):
-    x_data = lambdas[f][: lims[f] + 1]
-    y_data = waitTimes_big[f][: lims[f] + 1]
+i = 0
+for idx, df_select in dfs.groupby(level=exp):
+    f, i = i, i + 1
+    x_data = df_select["arrival.rate"][df_select["stable"]]
+    y_data = df_select[f"T{max(Ts)} Waiting"][df_select["stable"]]
     y_interp = savgol_filter(y_data, 3, 2)
 
     ax.scatter(x_data, y_data, color=cols[f], marker=markers[f], s=marker_size)
-    ax.plot(x_data, y_interp, color=cols[f], label=labels[f], ls=st, lw=line_size)
+    ax.plot(x_data, y_interp, color=cols[f], label=str(idx), ls=st, lw=line_size)
 
-    # ax.plot(lambdas[f][:lims[f]+1], waitTimes_big[f][:lims[f]+1], color = cols[f], label = labels[f], ls = st, marker = markers[f], lw = line_size, markersize = marker_size)
-    # ax.plot(lambdas[f][lims[f]:], waitTimes_big[f][lims[f]:], color = cols[f], ls = st, marker = markers[f], lw = line_size, markersize = marker_size, mfc='k')
-
-    # util = round(actual_util[f]*100, 1)
+    # util = round(actual_util[idx]*100, 1)
     # plt.text(x = xs[f], y = ys[f], s = f'{util}\%' , rotation=0, c = cols[f], fontsize = tick_size, weight= 'extra bold')
     if (cell == "cellA" and wins[f] != 0) or cell == "cellB":
-        plt.axvline(x=asymptotes[f], color=cols[f], linestyle="dotted", lw=asym_size)
+        plt.axvline(x=asymptotes[idx], color=cols[f], linestyle="dotted", lw=asym_size)
 
 ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
 ax.set_ylabel("Avg. Waiting Time $\\quad[$s$]$", fontsize=label_size)
