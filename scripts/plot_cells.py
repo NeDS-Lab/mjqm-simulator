@@ -80,14 +80,12 @@ inter_points = 10
 
 if cell == "cellB":
     wins = [-3, -2, 0, 1, 2, 5, 10]
-    types = [0 for i in range(len(wins))]
     index_asyms = [13, 52, 32, 27, 29, 34, 41]
 
     ys_bigResp = [7000, 5000, 3000, 500, 700, 1000, 2000]
     ys_resp = [2500, 750, 450, 15, 40, 100, 250]
 
     """wins = [-3, -2, 0, 1, 5]
-    types = [0 for i in range(len(wins))]
     index_asyms = [13, 52, 32, 27, 34]
 
     ys_bigResp = [700, 6000, 4700, 1000, 3000]
@@ -118,13 +116,11 @@ if cell == "cellB":
 elif cell == "cellA":
     if n == 4096:
         # wins = [-2, 0, 1, 2, 5, 10, 50, 100]
-        # types = [0 for i in range(len(wins))]
         # index_asyms = [39, 12, 31, 33, 37, 38, 13, 14]
         # ys_bigResp = [550, 400, 7, 15, 40, 100, 170, 200]
         # ys_resp = [70, 50, 4, 6, 8, 10, 25, 35]
 
         wins = [-3, -2, 0, 1, 2, 5, 10]
-        types = [0 for i in range(len(wins))]
         index_asyms = [16, 39, 11, 30, 33, 35, 37]
         ys_bigResp = [550, 350, 400, 7, 15, 40, 100]
         ys_resp = [40, 30, 50, 2, 5, 8, 11]
@@ -158,7 +154,6 @@ elif cell == "cellA":
         st = styles[0]
     elif n == 3072:
         wins = [-2, 0, 1, 2, 5, 10]
-        types = [0 for i in range(len(wins))]
         index_asyms = [41, 41, 19, 26, 36, 40]
         ys_bigResp = [800, 500, 20, 60, 120, 240]
         ys_resp = [10000, 6000, 200, 400, 800, 1400]
@@ -179,7 +174,6 @@ elif cell == "cellA":
         st = styles[0]
     elif n == 2048:
         wins = [0]
-        types = [0 for i in range(len(wins))]
 
         index_asyms = [5]
         ys_bigResp = [800]
@@ -238,16 +232,24 @@ index_asyms_comp = []
 utils = [[] for file in filenames]
 actual_util = []
 
+
+def row_label(row, win):
+    if row["policy"] == "smash":
+        if "policy.window" in row:
+            return policies[row["policy"]].format(row["policy.window"])
+        elif "smash.window" in row:
+            return policies[row["policy"]].format(row["smash.window"])
+        else:
+            return policies[row["policy"]].format(win)
+    else:
+        return policies[row["policy"]]
+
+
 for f in range(len(filenames)):
     with open(filenames[f]) as csv_file:
         df = pd.read_csv(filenames[f], delimiter=";")
-        if "policy.window" not in df.columns:
-            if "smash.window" in df.columns:
-                df["policy.window"] = df["smash.window"]
-                del df["smash.window"]
-            else:
-                df["policy.window"] = wins[f]
-
+        df["label"] = df.apply(row_label, axis=1, args=(wins[f],))
+        labels.append(df["label"][0])
         Ts = set()
         actual_check = False
         stability_columns = []
@@ -260,24 +262,11 @@ for f in range(len(filenames)):
                     actual_check = True
                 else:
                     stability_columns.append(column)
-            elif "policy.window" == column:
-                df = df.astype({column: int})
-            elif "ConfInt" not in column:
-                df = df.astype({column: float})
-            else:
-                del df[column]
             if match := re.match(r"T(?P<T>\d+)", column):
                 Ts.add(int(match.group("T")))
-        df = df.copy()
-
         if not actual_check:
             df["Stability Check"] = df[stability_columns].all(axis=1)
 
-        df.sort_values(
-            by=["policy", "policy.window", "arrival.rate"],
-            inplace=True,
-            ignore_index=True,
-        )
         df["Arrival Rate Increase"] = df["arrival.rate"].rolling(window=2).sem()
         df["Utilisation Increase"] = df["Utilisation"].rolling(window=2).sem()
         df["Utilisation Increase Ratio"] = (
@@ -291,7 +280,6 @@ for f in range(len(filenames)):
         print(df.head())
 
         Ts = sorted(list(Ts))
-        print(Ts)
 
         for index, row in df.iterrows():
             lambdas[f].append(row["arrival.rate"])
@@ -327,23 +315,74 @@ for f in range(len(filenames)):
         if len(index_asyms_comp) - 1 < f:
             index_asyms_comp.append(len(df["arrival.rate"]) - 1)
 
-        label = str(df["policy"][0])
-        if label == "smash":
-            label = policies[label].format(df["policy.window"][0])
-        else:
-            label = policies[label]
-        labels.append(label)
         dfs.append(df)
+        df = None
 
 computed_asymptotes = [
     float(dfs[i]["arrival.rate"][x]) for i, x in enumerate(index_asyms_comp)
 ]
+asymptotes = computed_asymptotes
 defined_asymptotes = [
     float(dfs[i]["arrival.rate"][min(i, len(dfs[i]["arrival.rate"]) - 1)])
     for i, x in enumerate(index_asyms)
 ]
 
-asymptotes = computed_asymptotes
+dfs = pd.concat(dfs)
+types = {}
+drops = []
+Ts = set()
+for column in dfs.columns:
+    if "policy" == column or "label" == column or "Stability Check" in column:
+        pass
+    elif (
+        "ConfInt" not in column
+        and "Unnamed" not in column
+        and not column.endswith(".window")
+    ):
+        types[column] = float
+    else:
+        drops.append(column)
+    if match := re.match(r"T(?P<T>\d+)", column):
+        Ts.add(int(match.group("T")))
+Ts = sorted(list(Ts))
+print(Ts)
+dfs = dfs.drop(columns=drops)
+dfs = dfs.astype(types)
+print(dfs.head())
+
+idx = ["label", "arrival.rate"]
+dfs.sort_values(
+    by=idx,
+    inplace=True,
+    ignore_index=True,
+)
+dfs.set_index(idx, drop=False, inplace=True)
+exp = dfs.index.names.difference(["arrival.rate"])
+dfs["Arrival Rate Increase"] = dfs.groupby(level=exp)["arrival.rate"].transform(
+    lambda x: x.rolling(2).sem()
+)
+dfs["Utilisation Increase"] = dfs.groupby(level=exp)["Utilisation"].transform(
+    lambda x: x.rolling(2).sem()
+)
+dfs["Utilisation Increase Ratio"] = (
+    dfs["Utilisation Increase"] / dfs["Arrival Rate Increase"]
+)
+dfs["Utilisation Increase Ratio Divergence"] = dfs.groupby(level=exp)[
+    "Utilisation Increase Ratio"
+].transform(lambda x: x.rolling(2).apply(lambda x: abs(1.0 - x.iloc[1] / x.iloc[0])))
+dfs = dfs.copy()
+dfs["stable"] = dfs["Stability Check"] & (
+    dfs["Utilisation Increase Ratio Divergence"].fillna(0) < 0.01
+)
+asymptotes = dfs.groupby(level=exp).apply(
+    lambda x: x["arrival.rate"]
+    .shift(
+        1, fill_value=x["arrival.rate"].max()
+    )  # this shift makes the "minimum" extraction do what we want
+    .where(~x["stable"], x["arrival.rate"].max())
+    .min()  # keep the maximum (known) arrival rate where the system is still stable
+)
+
 lims = index_asyms_comp
 for f in range(len(filenames)):
     summ_util = 0
