@@ -275,6 +275,7 @@ dfs.sort_values(
     ignore_index=True,
 )
 dfs.set_index(idx, drop=False, inplace=True)
+dfs.sort_index(inplace=True)
 exp = dfs.index.names.difference(["arrival.rate"])
 if len(exp) == 1:
     exp = exp[0]
