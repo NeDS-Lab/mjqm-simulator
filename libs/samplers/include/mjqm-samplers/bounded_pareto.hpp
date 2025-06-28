@@ -31,13 +31,18 @@ public:
                                        : (pow(l, alpha) / (1 - pow(l / h, alpha)) * alpha / (alpha - 2) *
                                           (1 / pow(l, alpha - 2) - 1 / pow(h, alpha - 2)));
 
+private:
+    const double h_to_alpha = pow(h, alpha);
+    const double l_to_alpha = pow(l, alpha);
+    const double den = h_to_alpha * l_to_alpha;
+
+public:
     // operative methods
     inline double get_mean() const override { return mean; }
     inline double get_variance() const override { return variance; }
     inline double sample() override {
         double u = randU01();
-        double num = u * pow(h, alpha) - u * pow(l, alpha) - pow(h, alpha);
-        double den = pow(h, alpha) * pow(l, alpha);
+        double num = u * h_to_alpha - u * l_to_alpha - h_to_alpha;
         double frac = num / den;
         return pow(-frac, -1 / alpha);
     }

@@ -31,8 +31,7 @@ if [ ${configure} -eq 1 ]; then
     fi
     command -v uv || {
         curl -LsSf https://astral.sh/uv/install.sh | sh
-        source $HOME/.local/bin/env
-    }
+    } && source $HOME/.local/bin/env
     uv sync --no-cache --link-mode=copy
 
     # configuration variabiles for cmake
