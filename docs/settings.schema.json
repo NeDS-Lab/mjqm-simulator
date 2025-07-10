@@ -193,6 +193,7 @@
         "server filling",
         "server filling memoryful",
         "back filling",
+        "quick swap",
         "most server first"
       ],
       "options": {
@@ -201,6 +202,7 @@
           "Server Filling",
           "Server Filling (memoryful)",
           "BackFilling",
+          "MSF with Quickswap",
           "Most Server First"
         ]
       }

@@ -31,6 +31,12 @@ std::unique_ptr<Policy> back_filling_builder(const toml::table&, const Experimen
     return std::make_unique<BackFilling>(-3, conf.cores, n_classes, sizes);
 }
 
+std::unique_ptr<Policy> quick_swap_builder(const toml::table&, const ExperimentConfig& conf) {
+    std::vector<unsigned int> sizes;
+    unsigned int n_classes = conf.get_sizes(sizes);
+    return std::make_unique<QuickSwap>(-4, conf.cores, n_classes, sizes);
+}
+
 std::unique_ptr<Policy> most_server_first_builder(const toml::table&, const ExperimentConfig& conf) {
     std::vector<unsigned int> sizes;
     unsigned int n_classes = conf.get_sizes(sizes);

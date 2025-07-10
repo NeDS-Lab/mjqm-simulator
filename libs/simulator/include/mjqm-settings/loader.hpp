@@ -162,6 +162,8 @@ inline Simulator::Simulator(const std::vector<double>& l, const std::vector<doub
         this->policy = std::make_unique<ServerFillingMem>(w, servers, nclasses);
     } else if (w == -3) {
         this->policy = std::make_unique<BackFilling>(w, servers, nclasses, sizes);
+    } else if (w == -4) {
+        this->policy = std::make_unique<QuickSwap>(w, servers, nclasses, sizes);
     } else {
         this->policy = std::make_unique<Smash>(w, servers, nclasses);
     }
