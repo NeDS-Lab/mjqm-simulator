@@ -64,7 +64,6 @@ jobs:
         with:
           boost_version: ${{ matrix.boost }}
           platform_version: ${{ matrix.boost_platform_version }}
-          toolset: gcc
       - name: Install uv
         uses: astral-sh/setup-uv@v6
       - name: Run configure
