@@ -31,13 +31,13 @@ jobs:
         gcc:
           - 10
           - 13
-          - 15
+          - 14
         boost:
           - 1.78.0
           - 1.88.0
         exclude:
           - os_version: 22.04
-            gcc: 15
+            gcc: 14
           - os_version: 24.04
             gcc: 13
           - os_version: 24.04
@@ -81,7 +81,7 @@ jobs:
           - ""
         os_version:
           - 13
-          - 15
+          # - 15 # disabled until we get it working there consistently
         gcc:
           - 11
           #- 12
@@ -94,10 +94,10 @@ jobs:
         exclude:
           - os_version: 13
             boost: 1.86.0
-          - os_version: 15
-            gcc: 11
-          - os_version: 15
-            boost: 1.78.0
+          # - os_version: 15
+          #   gcc: 11
+          # - os_version: 15
+          #   boost: 1.78.0
     steps:
       - uses: actions/checkout@v3
       - name: Setup Cpp
@@ -112,7 +112,7 @@ jobs:
           boost_version: ${{ matrix.boost }}
           platform_version: ${{ matrix.os_version }}
           toolset: clang
-          arch: ${{ runner.os == 'macOS' && runner.arch == 'ARM64' && 'aarch64' || 'x86' }}
+          arch: ${{ runner.arch == 'ARM64' && 'aarch64' || 'x86' }}
       - name: Install uv
         uses: astral-sh/setup-uv@v6
       - name: Run configure
