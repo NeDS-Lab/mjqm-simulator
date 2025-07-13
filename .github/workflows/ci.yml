@@ -40,14 +40,14 @@ jobs:
           - 1.88.0
         exclude:
           - os_version: 22.04
-            gcc: gcc-14
+            compiler: gcc-14
           - os_version: 24.04
             boost: 1.78.0
           - os_version: 24.04
             boost: 1.86.0
         include:
           - os_version: 22.04
-            gcc: gcc-13
+            compiler: gcc-13
 
     steps:
       - uses: actions/checkout@v3
