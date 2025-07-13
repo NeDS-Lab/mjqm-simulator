@@ -23,6 +23,8 @@ std::unique_ptr<Policy> server_filling_mem_builder(const toml::table&, const Exp
 
 std::unique_ptr<Policy> back_filling_builder(const toml::table&, const ExperimentConfig& conf);
 
+std::unique_ptr<Policy> quick_swap_builder(const toml::table&, const ExperimentConfig& conf);
+
 std::unique_ptr<Policy> most_server_first_builder(const toml::table&, const ExperimentConfig& conf);
 
 inline static std::unordered_map<std::string_view, policy_builder> policy_builders = {
@@ -31,6 +33,7 @@ inline static std::unordered_map<std::string_view, policy_builder> policy_builde
     {"server filling", server_filling_builder},
     {"server filling memoryful", server_filling_mem_builder},
     {"back filling", back_filling_builder},
+    {"quick swap", quick_swap_builder},
     {"most server first", most_server_first_builder},
 };
 

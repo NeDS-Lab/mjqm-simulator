@@ -95,9 +95,10 @@ double BackFilling::schedule_next() const {
 }
 void BackFilling::flush_buffer() {
 
+    ongoing_jobs.clear();
+    ongoing_jobs.resize(state_buf.size());
+    
     if (freeservers > 0) {
-        ongoing_jobs.clear();
-        ongoing_jobs.resize(state_buf.size());
         bool modified = true;
 
         auto it = buffer.begin();
