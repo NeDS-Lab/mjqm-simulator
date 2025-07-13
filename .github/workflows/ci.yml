@@ -30,9 +30,7 @@ jobs:
           - "24.04"
         compiler:
           - gcc-10
-          - gcc-11
-          #- gcc-12
-          #- gcc-13
+          - gcc-13
           - gcc-14
         boost:
           - 1.78.0
@@ -42,13 +40,11 @@ jobs:
           - os_version: 22.04
             compiler: gcc-14
           - os_version: 24.04
+            compiler: gcc-13
+          - os_version: 24.04
             boost: 1.78.0
           - os_version: 24.04
             boost: 1.86.0
-        include:
-          - os_version: 22.04
-            compiler: gcc-13
-
     steps:
       - uses: actions/checkout@v3
       - name: Setup Cpp
@@ -97,6 +93,9 @@ jobs:
           - 1.78.0
           - 1.86.0
           - 1.88.0
+        exclude:
+          - os_version: 15
+            boost: 1.78.0
     steps:
       - uses: actions/checkout@v3
       - name: Setup Cpp
