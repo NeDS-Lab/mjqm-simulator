@@ -26,7 +26,6 @@ jobs:
           - ""
           - "-arm"
         os_version:
-          - "20.04"
           - "22.04"
           - "24.04"
         compiler:
@@ -36,21 +35,20 @@ jobs:
           #- gcc-13
           - gcc-14
         boost:
-          - 1.71.0
           - 1.78.0
           - 1.86.0
           - 1.88.0
         exclude:
-          - os_version: 20.04
-            boost: 1.88.0
           - os_version: 22.04
-            boost: 1.71.0
-          - os_version: 22.04
-            boost: 1.78.0
-          - os_version: 24.04
-            boost: 1.71.0
+            gcc: gcc-14
           - os_version: 24.04
             boost: 1.78.0
+          - os_version: 24.04
+            boost: 1.86.0
+        include:
+          - os_version: 22.04
+            gcc: gcc-13
+
     steps:
       - uses: actions/checkout@v3
       - name: Setup Cpp
@@ -76,7 +74,7 @@ jobs:
           set -e
           ./configure
 
-  build:
+  build-macos:
     runs-on: ${{ matrix.os }}-${{matrix.os_version}}${{matrix.os_modifier}}
     strategy:
       fail-fast: false
@@ -112,7 +110,7 @@ jobs:
         with:
           boost_version: ${{ matrix.boost }}
           platform_version: ${{ matrix.os_version }}
-          toolset: clang'
+          toolset: clang
           arch: ${{ runner.os == 'macOS' && runner.arch == 'ARM64' && 'aarch64' || 'x86' }}
       - name: Install uv
         uses: astral-sh/setup-uv@v6
