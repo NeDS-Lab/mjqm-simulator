@@ -23,6 +23,8 @@ jobs:
           # - windows-11-arm
           - ubuntu
           - macos
+        os_modifier:
+          - ""
         compiler:
           - gcc-10
           - gcc-11
@@ -66,7 +68,7 @@ jobs:
         id: install-boost
         with:
           boost_version: ${{ matrix.boost }}
-          platform_version: ${{ matrix.boost_platform_version }}
+          platform_version: ${{ matrix.os_version }}
           toolset: ${{ runner.os == 'macOS' && 'clang' || 'gcc' }}
           arch: ${{ runner.os == 'macOS' && runner.arch == 'ARM64' && 'aarch64' || 'x86' }}
       - name: Install uv
