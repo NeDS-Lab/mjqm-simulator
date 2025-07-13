@@ -45,12 +45,16 @@ jobs:
         include:
           - os: ubuntu-24.04
             boost_platform_version: 24.04
+            boost_toolset: gcc
           - os: ubuntu-24.04-arm
             boost_platform_version: 24.04
+            boost_toolset: gcc
           - os: macos-13
             boost_platform_version: 13
+            boost_toolset: clang
           - os: macos-15
             boost_platform_version: 15
+            boost_toolset: clang
     steps:
       - uses: actions/checkout@v3
       - name: Setup Cpp
@@ -64,6 +68,7 @@ jobs:
         with:
           boost_version: ${{ matrix.boost }}
           platform_version: ${{ matrix.boost_platform_version }}
+          toolset: ${{ matrix.boost_toolset }}
       - name: Install uv
         uses: astral-sh/setup-uv@v6
       - name: Run configure
