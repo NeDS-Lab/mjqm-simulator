@@ -67,31 +67,18 @@ jobs:
           ./configure
 
   build-macos:
-    runs-on: ${{ matrix.os }}-${{matrix.os_version}}${{matrix.os_modifier}}
+    runs-on: macos-${{matrix.os_version}}
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - macos
-        os_modifier:
-          - ""
         os_version:
           - 13
-          - 15
         gcc:
           - 11
           - 15
         boost:
           - 1.78.0
-          - 1.86.0
           - 1.88.0
-        exclude:
-          - os_version: 13
-            boost: 1.86.0
-          - os_version: 15
-            gcc: 11
-          - os_version: 15
-            boost: 1.78.0
     steps:
       - uses: actions/checkout@v3
       - name: Setup Cpp
@@ -106,7 +93,7 @@ jobs:
           boost_version: ${{ matrix.boost }}
           platform_version: ${{ matrix.os_version }}
           toolset: clang
-          arch: ${{ runner.arch == 'ARM64' && 'aarch64' || 'x86' }}
+          arch: x86
       - name: Install uv
         uses: astral-sh/setup-uv@v6
       - name: Run configure
@@ -114,6 +101,31 @@ jobs:
         env:
           BOOST_ROOT: "${{ steps.install-boost.outputs.BOOST_ROOT }}"
           GCC_COMPILER: "g++-${{ matrix.gcc }}"
+        run: |
+          set -e
+          ./configure
+
+  build-macos-arm:
+    runs-on: macos-${{matrix.os_version}}
+    strategy:
+      fail-fast: false
+      matrix:
+        os_version:
+          - 15
+        gcc:
+          - 15
+        boost:
+          - 1.88.0
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup toolchain
+        shell: bash
+        run: |
+          brew install cmake gcc boost uv
+      - name: Run configure
+        shell: bash
+        env:
+          GCC_COMPILER: "g++-15"
         run: |
           set -e
           ./configure
