@@ -19,8 +19,6 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          # - windows-2025
-          # - windows-11-arm
           - ubuntu
         os_modifier:
           - ""
@@ -74,18 +72,14 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          # - windows-2025
-          # - windows-11-arm
           - macos
         os_modifier:
           - ""
         os_version:
           - 13
-          # - 15 # disabled until we get it working there consistently
+          - 15
         gcc:
           - 11
-          #- 12
-          #- 13
           - 15
         boost:
           - 1.78.0
@@ -94,10 +88,10 @@ jobs:
         exclude:
           - os_version: 13
             boost: 1.86.0
-          # - os_version: 15
-          #   gcc: 11
-          # - os_version: 15
-          #   boost: 1.78.0
+          - os_version: 15
+            gcc: 11
+          - os_version: 15
+            boost: 1.78.0
     steps:
       - uses: actions/checkout@v3
       - name: Setup Cpp
