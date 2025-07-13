@@ -28,18 +28,18 @@ jobs:
         os_version:
           - "22.04"
           - "24.04"
-        compiler:
-          - gcc-10
-          - gcc-13
-          - gcc-14
+        gcc:
+          - 10
+          - 13
+          - 15
         boost:
           - 1.78.0
           - 1.88.0
         exclude:
           - os_version: 22.04
-            compiler: gcc-14
+            gcc: 15
           - os_version: 24.04
-            compiler: gcc-13
+            gcc: 13
           - os_version: 24.04
             boost: 1.78.0
     steps:
@@ -47,7 +47,7 @@ jobs:
       - name: Setup Cpp
         uses: aminya/setup-cpp@v1
         with:
-          compiler: ${{ matrix.compiler }}
+          compiler: gcc-${{ matrix.gcc }}
           cmake: true
       - name: Install boost
         uses: MarkusJx/install-boost@v2
@@ -62,8 +62,8 @@ jobs:
       - name: Run configure
         shell: bash
         env:
-          BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
-          GCC_COMPILER: ${{ contains(matrix.compiler, '10') && 'g++-10' || (contains(matrix.compiler, '13') && 'g++-13' || 'g++-14') }}
+          BOOST_ROOT: "${{ steps.install-boost.outputs.BOOST_ROOT }}"
+          GCC_COMPILER: "g++-${{ matrix.gcc }}"
         run: |
           set -e
           ./configure
@@ -82,11 +82,11 @@ jobs:
         os_version:
           - 13
           - 15
-        compiler:
-          - gcc-11
-          #- gcc-12
-          #- gcc-13
-          - gcc-14
+        gcc:
+          - 11
+          #- 12
+          #- 13
+          - 15
         boost:
           - 1.78.0
           - 1.86.0
@@ -95,13 +95,15 @@ jobs:
           - os_version: 13
             boost: 1.86.0
           - os_version: 15
+            gcc: 11
+          - os_version: 15
             boost: 1.78.0
     steps:
       - uses: actions/checkout@v3
       - name: Setup Cpp
         uses: aminya/setup-cpp@v1
         with:
-          compiler: ${{ matrix.compiler }}
+          compiler: gcc-${{ matrix.gcc }}
           cmake: true
       - name: Install boost
         uses: MarkusJx/install-boost@v2
@@ -116,8 +118,8 @@ jobs:
       - name: Run configure
         shell: bash
         env:
-          BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
-          GCC_COMPILER: ${{ contains(matrix.compiler, '11') && 'g++-11' || 'g++-14' }}
+          BOOST_ROOT: "${{ steps.install-boost.outputs.BOOST_ROOT }}"
+          GCC_COMPILER: "g++-${{ matrix.gcc }}"
         run: |
           set -e
           ./configure
