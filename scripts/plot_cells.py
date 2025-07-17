@@ -210,7 +210,7 @@ def load_csv_filenames():
     folder = results / folder
     filenames = list(folder.glob("*.csv"))
     if not filenames:
-        print(f"No CSV files found in {folder}")
+        print(f"No CSV files found in {folder}", file=sys.stderr)
         exit(1)
     return folder, filenames
 
@@ -226,9 +226,13 @@ def row_label(row, win):
     else:
         return policies[row["policy"]]
 
+required_columns = set(["policy", "arrival.rate", "Utilisation"])
 
 def read_csv(f: Path):
     df = pd.read_csv(f, delimiter=";")
+    if not all(column in df.columns for column in required_columns):
+        print(f"Missing columns in {f}: {required_columns - df.columns}", file=sys.stderr)
+        return None
     win = None
     if match := re.match(r"Win(?P<win>-?\d+)", f.stem):
         win = int(match.group("win"))
@@ -253,7 +257,11 @@ def concat_csv_files(filenames: list[Path]):
     dfs = []
     for f in filenames:
         df = read_csv(f)
+        if df is None:
+            continue
         dfs.append(df)
+    if not dfs:
+        return None
     return pd.concat(dfs)
 
 
@@ -348,6 +356,9 @@ def compute_utilisation(dfs, Ts, exp):
 
 folder, filenames = load_csv_filenames()
 dfs = concat_csv_files(filenames)
+if dfs is None:
+    print("No data found", file=sys.stderr)
+    exit(1)
 dfs, Ts, exp = clean_dfs(dfs)
 dfs = compute_stability(dfs, exp)
 asymptotes, actual_util = compute_utilisation(dfs, Ts, exp)
