@@ -653,27 +653,56 @@ plt.savefig(
 ############################## TOTAL WAITING TIME ##############################
 
 
-plt.figure(dpi=1200)
-plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
-plt.rc("text", usetex=True)
-matplotlib.rcParams["font.size"] = fsize
-fix, ax = plt.subplots(figsize=tuplesize)
+def plot_total_waiting_time(
+    folder,
+    dfs,
+    exp,
+    actual_util,
+    asymptotes,
+    ylims=None,
+    legend=None,
+    util_percentages=True,
+):
+    plt.figure(dpi=1200)
+    plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
+    plt.rc("text", usetex=True)
+    matplotlib.rcParams["font.size"] = fsize
+    matplotlib.rcParams["xtick.major.pad"] = 8
+    matplotlib.rcParams["ytick.major.pad"] = 8
+    fix, ax = plt.subplots(figsize=tuplesize)
 
-i = 0
-for idx, df_select in dfs.groupby(level=exp):
-    f, i = i, i + 1
-    x_data = df_select["arrival.rate"][df_select["stable"]]
-    y_data = df_select["WaitTime Total"][df_select["stable"]]
-    y_interp = savgol_filter(y_data, 3, 2)
+    policy_groups = dfs.groupby(level=exp)
+    for idx, df_select in policy_groups:
+        x_data = df_select["arrival.rate"][df_select["stable"]]
+        y_data = df_select["WaitTime Total"][df_select["stable"]]
+        y_interp = savgol_filter(y_data, 3, 2)
 
-    ax.scatter(
-        x_data, y_data, color=colors[idx], marker=marks[idx], s=marker_size
-    )
-    ax.plot(
-        x_data, y_interp, color=colors[idx], label=str(idx), ls=st, lw=line_size
-    )
+        ax.scatter(
+            x_data, y_data, color=colors[idx], marker=marks[idx], s=marker_size
+        )
+        ax.plot(
+            x_data,
+            y_interp,
+            color=colors[idx],
+            label=str(idx),
+            ls=st,
+            lw=line_size,
+        )
 
-    if (cell == "cellA" and wins[f] != 0) or cell == "cellB":
+    ys = compute_limits(ax, ylims, policy_groups.ngroups)
+    i = 0
+    for idx, df_select in policy_groups:
+        f, i = i, i + 1
+        if util_percentages:
+            plt.text(
+                x=xs[f],
+                y=ys[f],
+                s=f"{actual_util[idx]:.1f}\\%",
+                rotation=0,
+                c=colors[idx],
+                fontsize=tick_size,
+                weight="extra bold",
+            )
         plt.axvline(
             x=asymptotes[idx],
             color=colors[idx],
@@ -681,23 +710,30 @@ for idx, df_select in dfs.groupby(level=exp):
             lw=asym_size,
         )
 
-ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
-ax.set_ylabel("Avg. Waiting Time $\\quad[$s$]$", fontsize=label_size)
-ax.set_title("Avg. Overall Waiting Time vs. Arrival Rate", fontsize=title_size)
-plt.xscale("log")
-plt.yscale("log")
-plt.ylim(ylims_totWait[0], ylims_totWait[1])
-plt.xlim(xlims[0], xlims[1])
-ax.tick_params(axis="both", which="major", labelsize=tick_size, pad=l_pad)
-ax.tick_params(axis="both", which="minor", labelsize=tick_size, pad=l_pad)
-# plt.yticks(fontsize=tick_size)
-# plt.xticks(fontsize=tick_size)
-# ax.legend(fontsize = legend_size, loc = legend_locs[3])
+    ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
+    ax.set_ylabel("Avg. Waiting Time $\\quad[$s$]$", fontsize=label_size)
+    ax.set_title(
+        "Avg. Overall Waiting Time vs. Arrival Rate", fontsize=title_size
+    )
+    ax.tick_params(axis="both", which="major", labelsize=tick_size, pad=l_pad)
+    ax.tick_params(axis="both", which="minor", labelsize=tick_size, pad=l_pad)
+    add_legend(ax, legend)
+    ax.grid()
+    rt_f = folder / "WaitTime"
+    rt_f.mkdir(parents=True, exist_ok=True)
+    plt.savefig(rt_f / "lambdasVsTotWaitTime.pdf", bbox_inches="tight")
+    plt.savefig(rt_f / "lambdasVsTotWaitTime.png", bbox_inches="tight")
+    plt.close()
 
 
-ax.grid()
-plt.savefig(
-    folder / f"lambdasVstotWaitTime-{cell}_{n}.pdf", bbox_inches="tight"
+plot_total_waiting_time(
+    folder,
+    dfs,
+    exp,
+    actual_util,
+    asymptotes,
+    ylims=ylims_totWait,
+    legend="upper left",
 )
 
 
