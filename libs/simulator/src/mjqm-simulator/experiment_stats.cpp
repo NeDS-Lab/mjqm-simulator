@@ -58,7 +58,7 @@ void ClassStats::add_headers(std::vector<std::string>& headers) const {
     visit_stats([&headers](const Stat& s) { s.add_headers(headers); });
 }
 std::ostream& operator<<(std::ostream& os, ClassStats const& m) {
-    m.visit_stats([&os](const Stat& s) { os << s; });
+    m.visit_stats([&os](const auto& s) { os << s; });
     return os;
 }
 

@@ -29,12 +29,13 @@ public:
 
     Stat(std::string name, bool has_confidence_interval) :
         name{std::move(name)}, has_confidence_interval{has_confidence_interval} {}
+    virtual ~Stat() = default;
 
     void prefix_with(std::string prefix) { this->prefix = std::move(prefix); }
     void add_headers(std::vector<std::string>& headers) const;
     virtual void finalise() {}
     VariantStat operator+(Stat const& that) const;
-    Stat& operator=(VariantStat const& value);
+    virtual Stat& operator=(VariantStat const& value);
     virtual void clear() { value = "N/A"; }
 };
 std::ostream& operator<<(std::ostream& os, const Stat& m);
@@ -45,20 +46,22 @@ private:
 
 public:
     CollectedStat(std::string name, bool has_confidence_interval) : Stat(std::move(name), has_confidence_interval) {}
+    ~CollectedStat() override = default;
+
     void collect(double value) {
-        if (visible) {
+        if (Stat::visible) {
             repetition_values.push_back(value);
         }
     }
     void finalise() override {
-        if (!visible || repetition_values.empty()) {
+        if (!Stat::visible || repetition_values.empty()) {
             value = Confidence_inter{0, 0, 0};
         } else {
             value = compute_interval_student(repetition_values, 0.05);
         }
     }
-    CollectedStat& operator=(VariantStat const& value) {
-        this->value = value;
+    CollectedStat& operator=(VariantStat const& value) override {
+        Stat::value = value;
         return *this;
     }
     void clear() override {
@@ -74,10 +77,10 @@ public:
     CollectedStat occupancy_ser{"Service", true};
     CollectedStat occupancy_system{"System", true};
     CollectedStat wait_time{"Waiting", true};
-    CollectedStat wait_time_var{"Waiting Variance", false};
+    CollectedStat wait_time_var{"Waiting Variance", true};
     CollectedStat throughput{"Throughput", true};
     CollectedStat resp_time{"RespTime", true};
-    CollectedStat resp_time_var{"RespTime Variance", false};
+    CollectedStat resp_time_var{"RespTime Variance", true};
     CollectedStat preemption_avg{"Preemption", true};
     CollectedStat seq_avg_len{"Sequence Length", true};
     CollectedStat seq_avg_dur{"Sequence Duration", true};
@@ -143,9 +146,9 @@ public:
     CollectedStat utilisation{"Utilisation", true};
     CollectedStat occupancy_tot{"Queue Total", true};
     CollectedStat wait_tot{"WaitTime Total", true};
-    CollectedStat wait_var_tot{"WaitTime Variance", false};
+    CollectedStat wait_var_tot{"WaitTime Variance", true};
     CollectedStat resp_tot{"RespTime Total", true};
-    CollectedStat resp_var_tot{"RespTime Variance", false};
+    CollectedStat resp_var_tot{"RespTime Variance", true};
     CollectedStat window_size{"Window Size", true};
     CollectedStat violations{"FIFO Violations", true};
     CollectedStat timings_tot{"Run Duration", true};

@@ -48,7 +48,7 @@ struct ExperimentConfig {
     std::string output_filename() const {
         std::string service_dist = toml.at_path("service.distribution").value<std::string>().value_or("exponential");
         service_dist[0] = std::toupper(service_dist[0]);
-        return "Results/simulator_toml/overLambdas-nClasses" + std::to_string(classes.size()) + "-N" +
+        return "Results/" + name + "/overLambdas-nClasses" + std::to_string(classes.size()) + "-N" +
             std::to_string(cores) + "-Win" + std::to_string(policy->get_w()) + "-" + service_dist + "-" + name + ".csv";
     }
 
