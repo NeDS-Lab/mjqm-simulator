@@ -587,69 +587,6 @@ for T in Ts:
     plot_class_response_time(folder, dfs, exp, T, actual_util, asymptotes)
 
 
-########################### BIG CLASS RESPONSE TIME ###########################
-
-
-plt.figure(dpi=1200)
-plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
-plt.rc("text", usetex=True)
-matplotlib.rcParams["font.size"] = fsize
-fix, ax = plt.subplots(figsize=tuplesize)
-
-i = 0
-for idx, df_select in dfs.groupby(level=exp):
-    f, i = i, i + 1
-    x_data = df_select["arrival.rate"][df_select["stable"]]
-    y_data = df_select[f"T{max(Ts)} RespTime"][df_select["stable"]]
-    y_interp = savgol_filter(y_data, 3, 2)
-
-    ax.scatter(
-        x_data, y_data, color=colors[idx], marker=marks[idx], s=marker_size
-    )
-    ax.plot(
-        x_data, y_interp, color=colors[idx], label=str(idx), ls=st, lw=line_size
-    )
-
-    if (cell == "cellA" and wins[f] != 0) or cell == "cellB":
-        plt.text(
-            x=xs[f],
-            y=ys_bigResp[f],
-            s=f"{actual_util[idx]:.1f}\\%",
-            rotation=0,
-            c=colors[idx],
-            fontsize=tick_size,
-            weight="extra bold",
-        )
-        plt.axvline(
-            x=asymptotes[idx],
-            color=colors[idx],
-            linestyle="dotted",
-            lw=asym_size,
-        )
-
-ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
-ax.set_ylabel("Avg. Response Time $\\quad[$s$]$", fontsize=label_size)
-ax.set_title(
-    "Avg. Response Time for the Biggest Class vs. Arrival Rate",
-    fontsize=title_size,
-)
-plt.xscale("log")
-plt.yscale("log")
-plt.ylim(ylims_bigResp[0], ylims_bigResp[1])
-plt.xlim(xlims[0], xlims[1])
-ax.tick_params(axis="both", which="major", labelsize=tick_size, pad=l_pad)
-ax.tick_params(axis="both", which="minor", labelsize=tick_size, pad=l_pad)
-# plt.yticks(fontsize=tick_size)
-# plt.xticks(fontsize=tick_size)
-# ax.legend(fontsize = legend_size, loc = legend_locs[2], ncols=2)
-
-
-ax.grid()
-plt.savefig(
-    folder / f"lambdasVsBigRespTime-{cell}_{n}.pdf", bbox_inches="tight"
-)
-
-
 ############################## TOTAL WAITING TIME ##############################
 
 
