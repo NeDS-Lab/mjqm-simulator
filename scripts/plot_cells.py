@@ -15,6 +15,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from scipy.signal import savgol_filter
 
 ################################ KNOWN POLICIES ################################
@@ -253,10 +254,11 @@ def read_csv(f: Path):
     return df
 
 
-def concat_csv_files(filenames: list[Path]):
+def concat_csv_files(filenames: list[Path], progress: tqdm):
     dfs = []
     for f in filenames:
         df = read_csv(f)
+        progress.update(1)
         if df is None:
             continue
         dfs.append(df)
@@ -287,7 +289,9 @@ def clean_dfs(dfs):
         if match := re.match(r"T(?P<T>\d+)", column):
             Ts.add(int(match.group("T")))
     Ts = sorted(list(Ts))
-    print(Ts)
+    progress.write(f"{len(Ts)} classes: {', '.join(map(str, Ts))}")
+    rates = sorted(list(dfs["arrival.rate"].unique()))
+    progress.write(f"{len(rates)} arrival rates: {', '.join(map(str, rates))}")
     dfs = dfs.drop(columns=drops)
     dfs = dfs.astype(types)
 
@@ -355,17 +359,24 @@ def compute_utilisation(dfs, Ts, exp):
 
 
 folder, filenames = load_csv_filenames()
-dfs = concat_csv_files(filenames)
+progress = tqdm(None, desc="Loading data", total=len(filenames) + 4)
+dfs = concat_csv_files(filenames, progress)
+progress.update(1)
 if dfs is None:
     print("No data found", file=sys.stderr)
     exit(1)
 dfs, Ts, exp = clean_dfs(dfs)
+progress.update(1)
 dfs = compute_stability(dfs, exp)
+progress.update(1)
 asymptotes, actual_util = compute_utilisation(dfs, Ts, exp)
+progress.update(1)
+progress.close()
 
 
 ############################### PLOT UTILITIES ###############################
 
+progress = tqdm(None, desc="Plotting", total=len(Ts)*2 + 2)
 
 def prepare_cosmetics(dfs, exp):
     policy_groups = dfs.groupby(level=exp).groups.keys()
@@ -409,10 +420,10 @@ def compute_limits(ax, ylims, ns):
 
     ax.set_xscale("log")
     ax.set_xmargin(0)
-    print("xbounds =", ax.get_xbound())
+    # print("xbounds =", ax.get_xbound())
     xmin, xmax = ax.get_xbound()
     ax.set_xlim(xmin, 10 ** math.ceil(math.log10(xmax)))
-    print("xbounds =", ax.get_xbound())
+    # print("xbounds =", ax.get_xbound())
 
     return np.geomspace(ymin, ymax, num=16, endpoint=False)[-skip::-1]
 
@@ -490,7 +501,7 @@ def plot_total_response_time(
     rt_f.mkdir(parents=True, exist_ok=True)
     plt.savefig(rt_f / "lambdasVsTotRespTime.pdf", bbox_inches="tight")
     plt.savefig(rt_f / "lambdasVsTotRespTime.png", bbox_inches="tight")
-    plt.close()
+    plt.close('all')
 
 
 plot_total_response_time(
@@ -502,7 +513,7 @@ plot_total_response_time(
     ylims=ylims_totResp,
     legend="upper left",
 )
-
+progress.update(1)
 
 ########################## SMALL CLASS RESPONSE TIME ##########################
 
@@ -580,11 +591,12 @@ def plot_class_response_time(
     rt_f.mkdir(parents=True, exist_ok=True)
     plt.savefig(rt_f / f"lambdasVsT{T}RespTime.pdf", bbox_inches="tight")
     plt.savefig(rt_f / f"lambdasVsT{T}RespTime.png", bbox_inches="tight")
-    plt.close()
+    plt.close('all')
 
 
 for T in Ts:
     plot_class_response_time(folder, dfs, exp, T, actual_util, asymptotes)
+    progress.update(1)
 
 
 ############################## TOTAL WAITING TIME ##############################
@@ -660,7 +672,7 @@ def plot_total_waiting_time(
     rt_f.mkdir(parents=True, exist_ok=True)
     plt.savefig(rt_f / "lambdasVsTotWaitTime.pdf", bbox_inches="tight")
     plt.savefig(rt_f / "lambdasVsTotWaitTime.png", bbox_inches="tight")
-    plt.close()
+    plt.close('all')
 
 
 plot_total_waiting_time(
@@ -672,6 +684,7 @@ plot_total_waiting_time(
     ylims=ylims_totWait,
     legend="upper left",
 )
+progress.update(1)
 
 
 ########################### SMALL CLASS WAITING TIME ###########################
@@ -750,11 +763,14 @@ def plot_class_waiting_time(
     rt_f.mkdir(parents=True, exist_ok=True)
     plt.savefig(rt_f / f"lambdasVsT{T}WaitTime.pdf", bbox_inches="tight")
     plt.savefig(rt_f / f"lambdasVsT{T}WaitTime.png", bbox_inches="tight")
-    plt.close()
+    plt.close('all')
 
 
 for T in Ts:
     plot_class_waiting_time(folder, dfs, exp, T, actual_util, asymptotes)
+    progress.update(1)
 
 
 ################################################################################
+
+progress.close()
