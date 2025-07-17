@@ -677,113 +677,84 @@ plot_total_waiting_time(
 ########################### SMALL CLASS WAITING TIME ###########################
 
 
-plt.figure(dpi=1200)
-plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
-plt.rc("text", usetex=True)
-matplotlib.rcParams["font.size"] = fsize
-fix, ax = plt.subplots(figsize=tuplesize)
+def plot_class_waiting_time(
+    folder,
+    dfs,
+    exp,
+    T,
+    actual_util,
+    asymptotes,
+    ylims=None,
+    legend=None,
+    util_percentages=True,
+):
+    plt.figure(dpi=1200)
+    plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
+    plt.rc("text", usetex=True)
+    matplotlib.rcParams["font.size"] = fsize
+    fix, ax = plt.subplots(figsize=tuplesize)
 
-i = 0
-for idx, df_select in dfs.groupby(level=exp):
-    f, i = i, i + 1
-    x_data = df_select["arrival.rate"][df_select["stable"]]
-    y_data = df_select[f"T{min(Ts)} Waiting"][df_select["stable"]]
-    y_interp = savgol_filter(y_data, 3, 2)
+    policy_groups = dfs.groupby(level=exp)
+    for idx, df_select in policy_groups:
+        x_data = df_select["arrival.rate"][df_select["stable"]]
+        y_data = df_select[f"T{T} Waiting"][df_select["stable"]]
+        y_interp = savgol_filter(y_data, 3, 2)
 
-    ax.scatter(
-        x_data, y_data, color=colors[idx], marker=marks[idx], s=marker_size
-    )
-    ax.plot(
-        x_data, y_interp, color=colors[idx], label=str(idx), ls=st, lw=line_size
-    )
-
-    # util = round(actual_util[idx]*100, 1)
-    # plt.text(x = xs[f], y = ys[f], s = f'{util}\%' , rotation=0, c = colors[idx], fontsize = tick_size, weight= 'extra bold')
-    if (cell == "cellA" and wins[f] != 0) or cell == "cellB":
-        plt.axvline(
-            x=asymptotes[idx],
+        ax.scatter(
+            x_data, y_data, color=colors[idx], marker=marks[idx], s=marker_size
+        )
+        ax.plot(
+            x_data,
+            y_interp,
             color=colors[idx],
-            linestyle="dotted",
-            lw=asym_size,
+            label=str(idx),
+            ls=st,
+            lw=line_size,
         )
 
-ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
-ax.set_ylabel("Avg. Waiting Time $\\quad[$s$]$", fontsize=label_size)
-ax.set_title(
-    "Avg. Waiting Time for the Smallest Class vs. Arrival Rate",
-    fontsize=title_size,
-)
-plt.xscale("log")
-plt.yscale("log")
-plt.ylim(ylims_smallWait[0], ylims_smallWait[1])
-plt.xlim(xlims[0], xlims[1])
-# plt.yticks(fontsize=tick_size)
-# plt.xticks(fontsize=tick_size)
-ax.tick_params(axis="both", which="major", labelsize=tick_size, pad=l_pad)
-ax.tick_params(axis="both", which="minor", labelsize=tick_size, pad=l_pad)
-# ax.legend(fontsize = legend_size, loc = legend_locs[4])
+    ys = compute_limits(ax, ylims, policy_groups.ngroups)
+    i = 0
+    for idx, df_select in policy_groups:
+        f, i = i, i + 1
+        if (cell == "cellA" and wins[f] != 0) or cell == "cellB":
+            if util_percentages:
+                plt.text(
+                    x=xs[f],
+                    y=ys[f],
+                    s=f"{actual_util[idx]:.1f}\\%",
+                    rotation=0,
+                    c=colors[idx],
+                    fontsize=tick_size,
+                    weight="extra bold",
+                )
+            plt.axvline(
+                x=asymptotes[idx],
+                color=colors[idx],
+                linestyle="dotted",
+                lw=asym_size,
+            )
 
-
-ax.grid()
-plt.savefig(
-    folder / f"lambdasVsSmallWaitTime-{cell}_{n}.pdf", bbox_inches="tight"
-)
-
-
-############################ BIG CLASS WAITING TIME ############################
-
-
-plt.figure(dpi=1200)
-plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
-plt.rc("text", usetex=True)
-matplotlib.rcParams["font.size"] = fsize
-fix, ax = plt.subplots(figsize=tuplesize)
-
-i = 0
-for idx, df_select in dfs.groupby(level=exp):
-    f, i = i, i + 1
-    x_data = df_select["arrival.rate"][df_select["stable"]]
-    y_data = df_select[f"T{max(Ts)} Waiting"][df_select["stable"]]
-    y_interp = savgol_filter(y_data, 3, 2)
-
-    ax.scatter(
-        x_data, y_data, color=colors[idx], marker=marks[idx], s=marker_size
+    ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
+    ax.set_ylabel("Avg. Waiting Time $\\quad[$s$]$", fontsize=label_size)
+    ax.set_title(
+        f"Avg. Waiting Time for Class ${T}$ vs. Arrival Rate",
+        fontsize=title_size,
     )
-    ax.plot(
-        x_data, y_interp, color=colors[idx], label=str(idx), ls=st, lw=line_size
-    )
+    ax.tick_params(axis="both", which="major", labelsize=tick_size, pad=l_pad)
+    ax.tick_params(axis="both", which="minor", labelsize=tick_size, pad=l_pad)
 
-    # util = round(actual_util[idx]*100, 1)
-    # plt.text(x = xs[f], y = ys[f], s = f'{util}\%' , rotation=0, c = colors[idx], fontsize = tick_size, weight= 'extra bold')
-    if (cell == "cellA" and wins[f] != 0) or cell == "cellB":
-        plt.axvline(
-            x=asymptotes[idx],
-            color=colors[idx],
-            linestyle="dotted",
-            lw=asym_size,
-        )
+    add_legend(ax, legend)
 
-ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
-ax.set_ylabel("Avg. Waiting Time $\\quad[$s$]$", fontsize=label_size)
-ax.set_title(
-    "Avg. Waiting Time for the Biggest Class vs. Arrival Rate",
-    fontsize=title_size,
-)
-plt.xscale("log")
-plt.yscale("log")
-plt.ylim(ylims_v2[0], ylims_v2[1])
-plt.xlim(xlims[0], xlims[1])
-ax.tick_params(axis="both", which="major", labelsize=tick_size, pad=l_pad)
-ax.tick_params(axis="both", which="minor", labelsize=tick_size, pad=l_pad)
-# plt.yticks(fontsize=tick_size)
-# plt.xticks(fontsize=tick_size)
-# ax.legend(fontsize = legend_size, loc = legend_locs[5])
+    ax.grid()
+    rt_f = folder / "WaitTime"
+    rt_f.mkdir(parents=True, exist_ok=True)
+    plt.savefig(rt_f / f"lambdasVsT{T}WaitTime.pdf", bbox_inches="tight")
+    plt.savefig(rt_f / f"lambdasVsT{T}WaitTime.png", bbox_inches="tight")
+    plt.close()
 
 
-ax.grid()
-plt.savefig(
-    folder / f"lambdasVsBigWaitTime-{cell}_{n}.pdf", bbox_inches="tight"
-)
+for T in Ts:
+    plot_class_waiting_time(folder, dfs, exp, T, actual_util, asymptotes)
 
 
 ################################################################################
