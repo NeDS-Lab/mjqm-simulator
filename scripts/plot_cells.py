@@ -15,6 +15,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from colorama import init as colorama_init, Fore, Style
 from tqdm import tqdm
 from scipy.signal import savgol_filter
 
@@ -58,6 +59,7 @@ tick_size = 180
 l_pad = 40
 asym_size = 20
 
+colorama_init(autoreset=True)
 cols = [
     "black",
     "peru",
@@ -341,6 +343,12 @@ def compute_utilisation(dfs, Ts, exp):
         .where(~x["stable"], x["arrival.rate"].max())
         .min()  # keep the maximum (known) arrival rate where the system is still stable
     )
+
+    max_arrival_rates = dfs.groupby(level=exp)["arrival.rate"].max()
+    instability_not_reached = max_arrival_rates == asymptotes
+    for idx, not_reached in instability_not_reached.items():
+        if not_reached:
+            progress.write(f"{Fore.YELLOW}{Style.BRIGHT}Instability region not reached for {idx} with maximum arrival rate tested: {max_arrival_rates[idx]}")
 
     actual_util = pd.Series(pd.NA, index=asymptotes.index)
     for idx, df_select in dfs.groupby(level=exp):
