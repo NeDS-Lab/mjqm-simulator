@@ -97,7 +97,7 @@ void BackFilling::flush_buffer() {
 
     ongoing_jobs.clear();
     ongoing_jobs.resize(state_buf.size());
-    
+
     if (freeservers > 0) {
         bool modified = true;
 
