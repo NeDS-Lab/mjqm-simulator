@@ -5,6 +5,7 @@
 #ifndef TOML_LOADER_H
 #define TOML_LOADER_H
 
+#include <filesystem>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -15,6 +16,8 @@
 #include <mjqm-settings/toml_overrides.h>
 #include <mjqm-settings/toml_utils.h>
 #include <mjqm-simulator/experiment_stats.h>
+
+namespace fs = std::filesystem;
 
 struct ClassConfig {
     std::string name;
@@ -45,11 +48,12 @@ struct ExperimentConfig {
 
     unsigned int get_sizes(std::vector<unsigned int>&) const;
 
-    std::string output_filename() const {
+    fs::path output_filename() const {
         std::string service_dist = toml.at_path("service.distribution").value<std::string>().value_or("exponential");
         service_dist[0] = std::toupper(service_dist[0]);
-        return "Results/" + name + "/overLambdas-nClasses" + std::to_string(classes.size()) + "-N" +
-            std::to_string(cores) + "-Win" + std::to_string(policy->get_w()) + "-" + service_dist + "-" + name + ".csv";
+        std::string fname = "overLambdas-nClasses" + std::to_string(classes.size()) + "-N" + std::to_string(cores) +
+            "-Win" + std::to_string(policy->get_w()) + "-" + service_dist + "-" + name + ".csv";
+        return fs::current_path() / "Results" / name / fname;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const ExperimentConfig& conf) {
@@ -68,10 +72,10 @@ struct ExperimentConfig {
 };
 
 bool from_toml(toml::table& data, ExperimentConfig& conf);
-bool from_toml(std::string_view filename, ExperimentConfig& conf);
+bool from_toml(const fs::path& input_file, ExperimentConfig& conf);
 std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
 from_toml(const toml::table& data, const std::vector<std::multimap<std::string, ConfigValue>>& overrides = {});
 std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
-from_toml(const std::string_view filename, const std::vector<std::multimap<std::string, ConfigValue>>& overrides = {});
+from_toml(const fs::path& input_file, const std::vector<std::multimap<std::string, ConfigValue>>& overrides = {});
 
 #endif // TOML_LOADER_H
