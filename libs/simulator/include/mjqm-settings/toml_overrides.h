@@ -30,7 +30,13 @@ class toml_overrides {
 public:
     explicit toml_overrides(const std::multimap<std::string, ConfigValue>& overrides);
 
-    size_t size() const;
+    size_t size() const {
+        size_t s = 1;
+        for (const auto& o : overrides) {
+            s *= o.size();
+        }
+        return s;
+    }
 
     class iterator {
         using self_type = iterator;
@@ -44,17 +50,38 @@ public:
     public:
         explicit iterator(const toml_overrides& data) : state(data.overrides.size() + 1, 0), data(data.overrides) {}
 
-        value_type operator*() const;
+        value_type operator*() const {
+            value_type result(0);
+            result.reserve(data.size());
+            for (size_t i = 0; i < data.size(); ++i) {
+                result.emplace_back(data[i][state[i]]);
+            }
+            return result;
+        }
 
-        iterator operator++();
-        iterator operator++(int);
-        iterator operator+(size_t n);
-        bool operator==(const iterator& other) const;
-        bool operator!=(const iterator& other) const;
+        iterator operator++() { return *this + 1; }
+        iterator operator++(int) {
+            iterator tmp(*this);
+            operator++();
+            return tmp;
+        }
+        iterator operator+(size_t n) {
+            for (size_t i = 0; i < data.size() && n > 0; ++i) {
+                n += state[i];
+                state[i] = n % data[i].size();
+                n /= data[i].size();
+            }
+            if (n > 0) {
+                state[data.size()] = 1;
+            }
+            return *this;
+        }
+        bool operator==(const iterator& other) const { return state == other.state; }
+        bool operator!=(const iterator& other) const { return state != other.state; }
     };
 
-    iterator begin() const;
-    iterator end() const;
+    iterator begin() const { return iterator{*this}; }
+    iterator end() const { return iterator{*this} + size(); }
 };
 
 #endif // TOML_OVERRIDES_H

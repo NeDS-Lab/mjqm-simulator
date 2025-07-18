@@ -110,7 +110,7 @@ std::multimap<std::string, ConfigValue> parse_overrides_from_pivot(const toml::t
     return overrides;
 }
 
-std::set<std::string> keys(const std::multimap<std::string, ConfigValue>& overrides) {
+inline std::set<std::string> keys(const std::multimap<std::string, ConfigValue>& overrides) {
     std::set<std::string> keys;
     for (const auto& [key, value] : overrides) {
         keys.emplace(key);
@@ -141,42 +141,6 @@ toml_overrides::toml_overrides(const std::multimap<std::string, ConfigValue>& ov
         }
     }
 }
-size_t toml_overrides::size() const {
-    size_t s = 1;
-    for (const auto& o : overrides) {
-        s *= o.size();
-    }
-    return s;
-}
-toml_overrides::iterator::value_type toml_overrides::iterator::operator*() const {
-    value_type result(0);
-    result.reserve(data.size());
-    for (size_t i = 0; i < data.size(); ++i) {
-        result.emplace_back(data[i][state[i]]);
-    }
-    return result;
-}
-toml_overrides::iterator toml_overrides::iterator::operator++() { return *this + 1; }
-toml_overrides::iterator toml_overrides::iterator::operator++(int) {
-    iterator tmp(*this);
-    operator++();
-    return tmp;
-}
-toml_overrides::iterator toml_overrides::iterator::operator+(size_t n) {
-    for (size_t i = 0; i < data.size() && n > 0; ++i) {
-        n += state[i];
-        state[i] = n % data[i].size();
-        n /= data[i].size();
-    }
-    if (n > 0) {
-        state[data.size()] = 1;
-    }
-    return *this;
-}
-bool toml_overrides::iterator::operator==(const iterator& other) const { return state == other.state; }
-bool toml_overrides::iterator::operator!=(const iterator& other) const { return state != other.state; }
-toml_overrides::iterator toml_overrides::begin() const { return iterator{*this}; }
-toml_overrides::iterator toml_overrides::end() const { return iterator{*this} + size(); }
 
 std::ostream& operator<<(std::ostream& os, const ConfigValue& variant) {
     std::visit([&](auto&& value) { os << value; }, variant);
