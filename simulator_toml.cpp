@@ -32,8 +32,12 @@ void run_simulation(ExperimentConfig& conf) {
 
 int main(int argc, char* argv[]) {
     std::string input_name(argv[1]);
+    if (!input_name.ends_with(".toml")) {
+        input_name += ".toml";
+    }
     auto overrides = parse_overrides_from_args(argc, argv);
-    auto experiments = from_toml("Inputs/" + input_name + ".toml", overrides);
+    fs::path input_file = fs::current_path() / "Inputs" / input_name;
+    auto experiments = from_toml(input_file, overrides);
     if (experiments->empty()) {
         std::cerr << "The provided identifier doesn't generate any configuration" << std::endl;
         return 1;
@@ -50,8 +54,9 @@ int main(int argc, char* argv[]) {
 
     for (const auto& [name, conf] : *experiments) {
         std::cout << conf << std::endl;
-        std::string out_filename = conf.output_filename();
-        std::ofstream out_file = std::ofstream(out_filename, std::ios::app);
+        fs::path out_file_path = conf.output_filename();
+        fs::create_directories(out_file_path.parent_path());
+        std::ofstream out_file = std::ofstream(out_file_path, std::ios::app);
         if (out_file.tellp() == 0) {
             std::vector<unsigned int> sizes;
             std::vector<std::string> headers{};

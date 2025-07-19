@@ -14,7 +14,8 @@ class QuickSwap final : public Policy {
 public:
     QuickSwap(const int w, const int servers, const int classes, const std::vector<unsigned int>& sizes) :
         state_buf(classes), state_ser(classes), stopped_jobs(classes), ongoing_jobs(classes), freeservers(servers),
-        servers(servers), w(w), sizes(sizes), violations_counter(0), threshold(1), big_priority(false), drops_below(false) {}
+        servers(servers), w(w), sizes(sizes), violations_counter(0), threshold(1), drops_below(false),
+        big_priority(false) {}
     void arrival(int c, int size, long int id) override;
     void departure(int c, int size, long int id) override;
     bool fit_jobs(std::unordered_map<long int, double> holdTime, double simTime) override { return false; };

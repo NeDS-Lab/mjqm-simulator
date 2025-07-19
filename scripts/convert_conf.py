@@ -26,14 +26,15 @@ if __name__ == "__main__":
     classes = classes_file.read_text().splitlines()
     rates = rates.read_text().strip()
     classes = [c.strip("()").split(",") for c in classes]
+    max_class = max([int(c[0]) for c in classes])
     classes = "".join([class_def(c) for c in classes])
     print(
         f"""identifier = "{classes_file.stem}"
 events = 100000
 repetitions = 10
-cores = 50
-policy = "smash"
-smash.window = 1
+cores = {max_class}
+policy.name = "smash"
+policy.window = 1
 
 arrival.distribution = "exponential"
 
@@ -45,8 +46,9 @@ service.distribution = "exponential"
 policy = [
     "fifo",
     "back filling",
-    "server filling memoryful",
     "most server first",
+    "server filling memoryful",
+    "quick swap",
     {{ name = "smash", window = 2 }},
     {{ name = "smash", window = 5 }},
     {{ name = "smash", window = 10 }},

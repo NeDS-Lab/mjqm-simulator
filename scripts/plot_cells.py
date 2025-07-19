@@ -15,9 +15,10 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from colorama import init as colorama_init, Fore, Style
-from tqdm import tqdm
+from colorama import Fore, Style
+from colorama import init as colorama_init
 from scipy.signal import savgol_filter
+from tqdm import tqdm
 
 ################################ KNOWN POLICIES ################################
 policies_keys = [
@@ -27,7 +28,16 @@ policies_keys = [
     "server filling",
     "server filling memoryful",
     "back filling",
+    "quick swap",
 ]
+policies_wins = {
+    1: "fifo",
+    0: "most server first",
+    -1: "server filling",
+    -2: "server filling memoryful",
+    -3: "back filling",
+    -4: "quick swap",
+}
 policies_labels = [
     "SMASH w/ $w = {0}$",
     "First-In First-Out",
@@ -35,6 +45,7 @@ policies_labels = [
     "Server Filling",
     "Server Filling",
     "Back Filling",
+    "Quick Swap",
 ]
 policies = dict(zip(policies_keys, policies_labels))
 
@@ -75,13 +86,10 @@ styles = ["solid", "dashdot", "dotted", "dashed", (0, (3, 5, 1, 5, 1, 5))]
 
 cell = "cellA"
 n = 4096
-nClasses = 29
 
 cell = "cellB"
 n = 2048
-nClasses = 26
 
-inter_points = 10
 # -3 : backfilling
 # -2 : server filling
 # 0: Most Server First
@@ -218,6 +226,15 @@ def load_csv_filenames():
     return folder, filenames
 
 
+def fix_policy(row, win):
+    if "policy" not in row:
+        if win > 1:
+            return "smash"
+        else:
+            return policies_wins[win]
+    return row["policy"]
+
+
 def row_label(row, win):
     if row["policy"] == "smash":
         if "policy.window" in row:
@@ -229,17 +246,25 @@ def row_label(row, win):
     else:
         return policies[row["policy"]]
 
-required_columns = set(["policy", "arrival.rate", "Utilisation"])
+
+required_columns = set(["arrival.rate", "Utilisation"])
+
 
 def read_csv(f: Path):
     df = pd.read_csv(f, delimiter=";")
-    if not all(column in df.columns for column in required_columns):
-        print(f"Missing columns in {f}: {required_columns - df.columns}", file=sys.stderr)
+    if df.empty:
         return None
     win = None
     if match := re.match(r"Win(?P<win>-?\d+)", f.stem):
         win = int(match.group("win"))
+    df["policy"] = df.apply(fix_policy, axis=1, args=(win,))
     df["label"] = df.apply(row_label, axis=1, args=(win,))
+    if not all(column in df.columns for column in required_columns):
+        print(
+            f"Missing columns in {f}: {required_columns - set(df.columns)}",
+            file=sys.stderr,
+        )
+        return None
     actual_check = False
     stability_columns = []
     for column in df.columns:
@@ -348,7 +373,9 @@ def compute_utilisation(dfs, Ts, exp):
     instability_not_reached = max_arrival_rates == asymptotes
     for idx, not_reached in instability_not_reached.items():
         if not_reached:
-            progress.write(f"{Fore.YELLOW}{Style.BRIGHT}Instability region not reached for {idx} with maximum arrival rate tested: {max_arrival_rates[idx]}")
+            progress.write(
+                f"{Fore.YELLOW}{Style.BRIGHT}Instability region not reached for {idx} with maximum arrival rate tested: {max_arrival_rates[idx]}"
+            )
 
     actual_util = pd.Series(pd.NA, index=asymptotes.index)
     for idx, df_select in dfs.groupby(level=exp):
@@ -384,7 +411,8 @@ progress.close()
 
 ############################### PLOT UTILITIES ###############################
 
-progress = tqdm(None, desc="Plotting", total=len(Ts)*2 + 2)
+progress = tqdm(None, desc="Plotting", total=len(Ts) * 2 + 2)
+
 
 def prepare_cosmetics(dfs, exp):
     policy_groups = dfs.groupby(level=exp).groups.keys()
@@ -509,7 +537,7 @@ def plot_total_response_time(
     rt_f.mkdir(parents=True, exist_ok=True)
     plt.savefig(rt_f / "lambdasVsTotRespTime.pdf", bbox_inches="tight")
     plt.savefig(rt_f / "lambdasVsTotRespTime.png", bbox_inches="tight")
-    plt.close('all')
+    plt.close("all")
 
 
 plot_total_response_time(
@@ -599,7 +627,7 @@ def plot_class_response_time(
     rt_f.mkdir(parents=True, exist_ok=True)
     plt.savefig(rt_f / f"lambdasVsT{T}RespTime.pdf", bbox_inches="tight")
     plt.savefig(rt_f / f"lambdasVsT{T}RespTime.png", bbox_inches="tight")
-    plt.close('all')
+    plt.close("all")
 
 
 for T in Ts:
@@ -680,7 +708,7 @@ def plot_total_waiting_time(
     rt_f.mkdir(parents=True, exist_ok=True)
     plt.savefig(rt_f / "lambdasVsTotWaitTime.pdf", bbox_inches="tight")
     plt.savefig(rt_f / "lambdasVsTotWaitTime.png", bbox_inches="tight")
-    plt.close('all')
+    plt.close("all")
 
 
 plot_total_waiting_time(
@@ -771,7 +799,7 @@ def plot_class_waiting_time(
     rt_f.mkdir(parents=True, exist_ok=True)
     plt.savefig(rt_f / f"lambdasVsT{T}WaitTime.pdf", bbox_inches="tight")
     plt.savefig(rt_f / f"lambdasVsT{T}WaitTime.png", bbox_inches="tight")
-    plt.close('all')
+    plt.close("all")
 
 
 for T in Ts:

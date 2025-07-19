@@ -2,7 +2,8 @@ identifier = "oneOrAll"
 events = 100000
 repetitions = 10
 cores = 32
-policy = "most server first"
+policy.name = "smash"
+policy.window = 1
 
 arrival.distribution = "exponential"
 
@@ -21,6 +22,16 @@ service.mean = 1
 
 
 [[pivot]]
+policy = [
+    "fifo",
+    "back filling",
+    "most server first",
+    "server filling memoryful",
+    "quick swap",
+    { name = "smash", window = 2 },
+    { name = "smash", window = 5 },
+    { name = "smash", window = 10 },
+]
 arrival.rate = [
     0.25,
     0.5,

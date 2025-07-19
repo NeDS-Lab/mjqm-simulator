@@ -82,8 +82,8 @@ bool normalise_probs(toml::table& data) {
     return true;
 }
 
-bool from_toml(const std::string_view filename, ExperimentConfig& conf) {
-    toml::table data = toml::parse_file(filename);
+bool from_toml(const fs::path& input_file, ExperimentConfig& conf) {
+    toml::table data = toml::parse_file(input_file.string());
     return from_toml(data, conf);
 }
 
@@ -210,8 +210,8 @@ from_toml(const toml::table& data, const std::vector<std::multimap<std::string, 
 }
 
 std::unique_ptr<std::vector<std::pair<bool, ExperimentConfig>>>
-from_toml(const std::string_view filename, const std::vector<std::multimap<std::string, ConfigValue>>& overrides) {
-    toml::table data = toml::parse_file(filename);
+from_toml(const fs::path& input_file, const std::vector<std::multimap<std::string, ConfigValue>>& overrides) {
+    toml::table data = toml::parse_file(input_file.string());
     return from_toml(data, overrides);
 }
 
