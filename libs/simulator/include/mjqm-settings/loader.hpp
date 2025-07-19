@@ -164,6 +164,12 @@ inline Simulator::Simulator(const std::vector<double>& l, const std::vector<doub
         this->policy = std::make_unique<BackFilling>(w, servers, nclasses, sizes);
     } else if (w == -4) {
         this->policy = std::make_unique<QuickSwap>(w, servers, nclasses, sizes);
+    } else if (w == -7) {
+        this->policy = std::make_unique<AdaptiveMSF>(w, servers, nclasses, sizes);
+    } else if (w == -8) {
+        this->policy = std::make_unique<StaticMSF>(w, servers, nclasses, sizes);
+    } else if (w == -14) {
+        this->policy = std::make_unique<FirstFit>(w, servers, nclasses, sizes);
     } else {
         this->policy = std::make_unique<Smash>(w, servers, nclasses);
     }

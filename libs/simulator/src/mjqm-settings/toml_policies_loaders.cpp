@@ -37,6 +37,24 @@ std::unique_ptr<Policy> quick_swap_builder(const toml::table&, const ExperimentC
     return std::make_unique<QuickSwap>(-4, conf.cores, n_classes, sizes);
 }
 
+std::unique_ptr<Policy> first_fit_builder(const toml::table&, const ExperimentConfig& conf) {
+    std::vector<unsigned int> sizes;
+    unsigned int n_classes = conf.get_sizes(sizes);
+    return std::make_unique<FirstFit>(-14, conf.cores, n_classes, sizes);
+}
+
+std::unique_ptr<Policy> adaptive_msf_builder(const toml::table&, const ExperimentConfig& conf) {
+    std::vector<unsigned int> sizes;
+    unsigned int n_classes = conf.get_sizes(sizes);
+    return std::make_unique<AdaptiveMSF>(-7, conf.cores, n_classes, sizes);
+}
+
+std::unique_ptr<Policy> static_msf_builder(const toml::table&, const ExperimentConfig& conf) {
+    std::vector<unsigned int> sizes;
+    unsigned int n_classes = conf.get_sizes(sizes);
+    return std::make_unique<StaticMSF>(-8, conf.cores, n_classes, sizes);
+}
+
 std::unique_ptr<Policy> most_server_first_builder(const toml::table&, const ExperimentConfig& conf) {
     std::vector<unsigned int> sizes;
     unsigned int n_classes = conf.get_sizes(sizes);

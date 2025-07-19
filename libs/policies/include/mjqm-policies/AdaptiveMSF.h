@@ -2,20 +2,19 @@
 // Created by Adityo Anggraito on 21/01/25.
 //
 
-#ifndef QUICKSWAP_H
-#define QUICKSWAP_H
+#ifndef ADAPTIVEMSF_H
+#define ADAPTIVEMSF_H
 
 #include <map>
 
 #include <mjqm-policies/policy.h>
 #include <mjqm-utils/string.hpp>
 
-class QuickSwap final : public Policy {
+class AdaptiveMSF final : public Policy {
 public:
-    QuickSwap(const int w, const int servers, const int classes, const std::vector<unsigned int>& sizes) :
+    AdaptiveMSF(const int w, const int servers, const int classes, const std::vector<unsigned int>& sizes) :
         state_buf(classes), state_ser(classes), stopped_jobs(classes), ongoing_jobs(classes), freeservers(servers),
-        servers(servers), w(w), sizes(sizes), violations_counter(0), threshold(1), drops_below(false),
-        big_priority(false) {}
+        servers(servers), w(w), sizes(sizes), violations_counter(0), switching_time(false) {}
     void arrival(int c, int size, long int id) override;
     void departure(int c, int size, long int id) override;
     bool fit_jobs(std::unordered_map<long int, double> holdTime, double simTime) override { return false; };
@@ -31,12 +30,12 @@ public:
     void reset_completion(double simtime) override {};
     bool prio_big() override { return false; }
     int get_state_ser_small() override { return -1; }
-    ~QuickSwap() override = default;
+    ~AdaptiveMSF() override = default;
     std::unique_ptr<Policy> clone() const override {
-        return std::make_unique<QuickSwap>(w, servers, state_buf.size(), sizes);
+        return std::make_unique<AdaptiveMSF>(w, servers, state_buf.size(), sizes);
     }
     explicit operator std::string() const override {
-        return "QuickSwap(servers=" + std::to_string(servers) + ", classes=" + std::to_string(state_buf.size()) +
+        return "AdaptiveMSF(servers=" + std::to_string(servers) + ", classes=" + std::to_string(state_buf.size()) +
             ", sizes=(" + join(sizes.begin(), sizes.end()) + "))";
     }
 
@@ -54,11 +53,10 @@ private:
     std::map<double, int> completion_time;
     int violations_counter;
 
-    int threshold;
-    bool drops_below;
-    bool big_priority;
+    bool switching_time;
 
     void flush_buffer() override;
+    bool check_condition();
 };
 
-#endif // QUICKSWAP_H
+#endif // ADAPTIVEMSF_H

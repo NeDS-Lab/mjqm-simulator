@@ -29,6 +29,9 @@ policies_keys = [
     "server filling memoryful",
     "back filling",
     "quick swap",
+    "first fit",
+    "adaptive msf",
+    "static msf",
 ]
 policies_wins = {
     1: "fifo",
@@ -37,6 +40,9 @@ policies_wins = {
     -2: "server filling memoryful",
     -3: "back filling",
     -4: "quick swap",
+    -14: "first fit",
+    -7: "adaptive msf",
+    -8: "static msf",
 }
 policies_labels = [
     "SMASH w/ $w = {0}$",
@@ -46,6 +52,9 @@ policies_labels = [
     "Server Filling",
     "Back Filling",
     "Quick Swap",
+    "First-Fit",
+    "Adaptive MSF",
+    "Static MSF",
 ]
 policies = dict(zip(policies_keys, policies_labels))
 
