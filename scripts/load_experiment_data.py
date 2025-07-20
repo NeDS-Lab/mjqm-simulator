@@ -97,7 +97,7 @@ def read_csv(f: Path):
     df["policy"] = df.apply(fix_policy, axis=1, args=(win,))
     if "policy.name" in df.columns:
         del df["policy.name"]
-    df.insert(1, "label", df.apply(row_label, axis=1, args=(win,)))
+    df.insert(0, "label", df.apply(row_label, axis=1, args=(win,)))
     missing_columns = {"arrival.rate", "Utilisation"} - set(df.columns)
     if missing_columns:
         print(f"Missing columns in {f}: {missing_columns}", file=sys.stderr)
