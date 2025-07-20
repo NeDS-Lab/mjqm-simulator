@@ -194,7 +194,10 @@
         "server filling memoryful",
         "back filling",
         "quick swap",
-        "most server first"
+        "most server first",
+        "first fit",
+        "adaptive msf",
+        "static msf"
       ],
       "options": {
         "enum_titles": [
@@ -203,7 +206,10 @@
           "Server Filling (memoryful)",
           "BackFilling",
           "MSF with Quickswap",
-          "Most Server First"
+          "Most Server First",
+          "First-Fit",
+          "Adaptive MSF",
+          "Static MSF"
         ]
       }
     },

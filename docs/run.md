@@ -199,6 +199,18 @@ If `mean` is defined, the `min` and `max` will be calculated as $0.5 \times \mu$
 ### Most server first
 - `policy = "most server first"`
 
+### Most server first w/ quick swap
+- `policy = "quick swap"`
+
+### Adaptive Most server first
+- `policy = "adaptive msf"`
+
+### Static Most server first
+- `policy = "static msf"`
+
+### First-Fit
+- `policy = "first fit"`
+
 # Overriding parameters from command line
 
 You can override any parameter defined in the configuration file from the command line.
