@@ -12,9 +12,6 @@ from tqdm import tqdm
 
 colorama_init(autoreset=True)
 
-# TODO this should be read from result files
-n_cores = 2048
-
 ################################ KNOWN POLICIES ################################
 policies_keys = [
     "smash",
@@ -26,7 +23,7 @@ policies_keys = [
     "quick swap",
 ]
 policies_labels = [
-    "SMASH w/ $w = {0}$",
+    "SMASH (w = {0})",
     "First-In First-Out",
     "Most Server First",
     "Server Filling",
@@ -56,11 +53,13 @@ stability_check_mapping = {
 
 
 def fix_policy(row, win):
-    if "policy" not in row:
+    if "policy" not in row and "policy.name" not in row:
         if win > 1:
             return "smash"
         else:
             return policies_wins[win]
+    elif "policy.name" in row:
+        return row["policy.name"]
     return row["policy"]
 
 
@@ -84,15 +83,15 @@ def read_csv(f: Path):
     if df.empty:
         return None
     win = None
-    if match := re.match(r"Win(?P<win>-?\d+)", f.stem):
+    if match := re.search(r"Win(?P<win>-?\d+)", f.stem):
         win = int(match.group("win"))
     df["policy"] = df.apply(fix_policy, axis=1, args=(win,))
-    df["label"] = df.apply(row_label, axis=1, args=(win,))
-    if not all(column in df.columns for column in required_columns):
-        print(
-            f"Missing columns in {f}: {required_columns - set(df.columns)}",
-            file=sys.stderr,
-        )
+    if "policy.name" in df.columns:
+        del df["policy.name"]
+    df.insert(1, "label", df.apply(row_label, axis=1, args=(win,)))
+    missing_columns = {"arrival.rate", "Utilisation"} - set(df.columns)
+    if missing_columns:
+        print(f"Missing columns in {f}: {missing_columns}", file=sys.stderr)
         return None
     actual_check = False
     stability_columns = []
@@ -186,17 +185,20 @@ def compute_stability(dfs, exp):
     return dfs
 
 
-def compute_utilisation(dfs, Ts, exp):
+def compute_utilisation(dfs, Ts, exp, n_cores=None):
     asymptotes = dfs.groupby(
         level=exp
     ).apply(
-        lambda x: x["arrival.rate"]
-        .shift(
-            1, fill_value=x["arrival.rate"].max()
-        )  # this shift makes the "minimum" extraction do what we want
-        .where(~x["stable"], x["arrival.rate"].max())
-        .min()  # keep the maximum (known) arrival rate where the system is still stable
+        lambda x: (
+            x["arrival.rate"]
+            # this shift makes the "minimum" extraction do what we want
+            .shift(1, fill_value=x["arrival.rate"].max())
+            # we keep all non-stable columns (but given the previous shift, we get also the last stable value)
+            .where(~x["stable"], x["arrival.rate"].max())
+            .min()  # keep the maximum (known) arrival rate where the system is still stable
+        )
     )
+    asymptotes.name = "asymptote"
 
     max_arrival_rates = dfs.groupby(level=exp)["arrival.rate"].max()
     instability_not_reached = max_arrival_rates == asymptotes
@@ -206,7 +208,9 @@ def compute_utilisation(dfs, Ts, exp):
                 f"{Fore.YELLOW}{Style.BRIGHT}Instability region not reached for {idx} with maximum arrival rate tested: {max_arrival_rates[idx]}"
             )
 
-    actual_util = pd.Series(pd.NA, index=asymptotes.index)
+    actual_util = pd.Series(
+        pd.NA, index=asymptotes.index, name="system_utilisation"
+    )
     for idx, df_select in dfs.groupby(level=exp):
         summ_util = 0
         asymptote = asymptotes[idx]
@@ -252,7 +256,7 @@ def select_experiment(preselected: str):
     return selected
 
 
-def load_experiment_data(folder):
+def load_experiment_data(folder, n_cores=None):
     global progress
     folder = folder if isinstance(folder, Path) else Path("Results") / folder
     filenames = list(folder.glob("*.csv"))
@@ -264,6 +268,8 @@ def load_experiment_data(folder):
         return None, None, None, None, None
     progress = tqdm(None, desc="Loading data", total=len(filenames) + 4)
     dfs = concat_csv_files(filenames, progress)
+    if "cores" in dfs.columns:
+        n_cores = dfs["cores"].max()
     progress.update(1)
     if dfs is None:
         progress.close()
@@ -276,7 +282,7 @@ def load_experiment_data(folder):
     progress.update(1)
     dfs = compute_stability(dfs, exp)
     progress.update(1)
-    asymptotes, actual_util = compute_utilisation(dfs, Ts, exp)
+    asymptotes, actual_util = compute_utilisation(dfs, Ts, exp, n_cores=n_cores)
     progress.update(1)
     progress.close()
 
@@ -287,4 +293,6 @@ if __name__ == "__main__":
     folder = select_experiment(sys.argv[1] if len(sys.argv) > 1 else None)
     if not folder:
         exit(0)
-    dfs, Ts, exp, asymptotes, actual_util = load_experiment_data(folder)
+    dfs, Ts, exp, asymptotes, actual_util = load_experiment_data(
+        folder, n_cores=2048
+    )

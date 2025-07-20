@@ -13,50 +13,11 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from colorama import init as colorama_init
 from load_experiment_data import load_experiment_data, select_experiment
 from scipy.signal import savgol_filter
 from tqdm import tqdm
 
-################################ KNOWN POLICIES ################################
-policies_keys = [
-    "smash",
-    "fifo",
-    "most server first",
-    "server filling",
-    "server filling memoryful",
-    "back filling",
-    "quick swap",
-]
-policies_wins = {
-    1: "fifo",
-    0: "most server first",
-    -1: "server filling",
-    -2: "server filling memoryful",
-    -3: "back filling",
-    -4: "quick swap",
-}
-policies_labels = [
-    "SMASH w/ $w = {0}$",
-    "First-In First-Out",
-    "Most Server First",
-    "Server Filling",
-    "Server Filling",
-    "Back Filling",
-    "Quick Swap",
-]
-policies = dict(zip(policies_keys, policies_labels))
-
-
 ################################ PANDAS AND PLOT CONFIGS ################################
-policies_dtype = pd.api.types.CategoricalDtype(
-    categories=policies_keys, ordered=True
-)
-stability_check_mapping = {
-    "0": True,
-    "1": False,
-}  # we invert them because the column actually means "warning"
-
 fsize = 150
 legend_size = 200
 label_size = 220
@@ -68,7 +29,6 @@ tick_size = 180
 l_pad = 40
 asym_size = 20
 
-colorama_init(autoreset=True)
 cols = [
     "black",
     "peru",
@@ -80,6 +40,17 @@ cols = [
     "pink",
 ]
 markers = ["P", "o", "v", "s", "X", "D", "H", "<", ">"]
+markers_plotly = [
+    "cross",
+    "circle",
+    "triangle-down",
+    "square",
+    "x",
+    "diamond",
+    "triangle-up",
+    "triangle-left",
+    "triangle-right",
+]
 styles = ["solid", "dashdot", "dotted", "dashed", (0, (3, 5, 1, 5, 1, 5))]
 
 cell = "cellA"
@@ -87,7 +58,6 @@ n = 4096
 
 cell = "cellB"
 n = 2048
-
 # -3 : backfilling
 # -2 : server filling
 # 0: Most Server First
@@ -95,17 +65,14 @@ n = 2048
 # i: SMASH w/ w=i
 
 if cell == "cellB":
-    wins = [-3, -2, 0, 1, 2, 5, 10]
-
     ys_bigResp = [7000, 5000, 3000, 500, 700, 1000, 2000]
     ys_resp = [2500, 750, 450, 15, 40, 100, 250]
 
-    """wins = [-3, -2, 0, 1, 5]
-
+    """
     ys_bigResp = [700, 6000, 4700, 1000, 3000]
     ys_resp = [800, 550, 350, 7, 40]"""
 
-    xs = [5.4, 5.4, 5.4, 5.4, 5.4, 5.4, 5.4]
+    xs = [5.4, 5.4, 5.4, 5.4, 5.4, 5.4, 5.4, 5.4, 5.4]
     legend_locs = [
         "upper left",
         "upper left",
@@ -129,20 +96,19 @@ if cell == "cellB":
 
 elif cell == "cellA":
     if n == 4096:
-        # wins = [-2, 0, 1, 2, 5, 10, 50, 100]
         # ys_bigResp = [550, 400, 7, 15, 40, 100, 170, 200]
         # ys_resp = [70, 50, 4, 6, 8, 10, 25, 35]
 
-        wins = [-3, -2, 0, 1, 2, 5, 10]
         ys_bigResp = [550, 350, 400, 7, 15, 40, 100]
         ys_resp = [40, 30, 50, 2, 5, 8, 11]
 
-        """wins = [-3, -2, 0, 1, 5]
-        types = [0 for i in range(len(wins))]
+        """
+        types = [0 for i in range(20)]
         ys_bigResp = [650, 550, 400, 7, 40]
-        ys_resp = [100, 70, 50, 4, 8]"""
+        ys_resp = [100, 70, 50, 4, 8]
+        """
 
-        xs = [725 for w in wins]
+        xs = [725 for w in range(20)]
         # xs = [602, 739, 561, 614, 667, 711]
 
         ylims_totResp = [1, 100]
@@ -164,11 +130,10 @@ elif cell == "cellA":
         xlims = [100, 10**3]
         st = styles[0]
     elif n == 3072:
-        wins = [-2, 0, 1, 2, 5, 10]
         ys_bigResp = [800, 500, 20, 60, 120, 240]
         ys_resp = [10000, 6000, 200, 400, 800, 1400]
 
-        xs = [370 for w in wins]
+        xs = [370 for i in range(20)]
         # xs = [602, 739, 561, 614, 667, 711]
 
         ylims_totResp = [1, 100]
@@ -183,12 +148,10 @@ elif cell == "cellA":
         xlims = [100, 10**3]
         st = styles[0]
     elif n == 2048:
-        wins = [0]
-
         ys_bigResp = [800]
         ys_resp = [1000]
 
-        xs = [50 for w in wins]
+        xs = [50 for i in range(20)]
         # xs = [602, 739, 561, 614, 667, 711]
 
         ylims_totResp = [0.001, 100]
@@ -219,13 +182,20 @@ def prepare_cosmetics(dfs, exp):
         dtype=pd.api.types.CategoricalDtype(categories=markers, ordered=True),
         name="marker",
     )
+    marks_plotly = pd.Series(
+        dtype=pd.api.types.CategoricalDtype(
+            categories=markers_plotly, ordered=True
+        ),
+        name="marker_plotly",
+    )
     i = 0
     for group in policy_groups:
         colors[group] = cols[i]
         marks[group] = markers[i]
+        marks_plotly[group] = markers_plotly[i]
         i += 1
 
-    return colors, marks
+    return colors, marks, marks_plotly
 
 
 def add_legend(ax, legend):
@@ -236,6 +206,30 @@ def add_legend(ax, legend):
         else:
             ncol = 1
         ax.legend(fontsize=legend_size, loc=legend, ncol=ncol)
+
+
+def add_utilisation_labels(
+    ax, policy_groups, xs, ys, actual_util, util_percentages
+):
+    i = 0
+    for idx, df_select in policy_groups:
+        f, i = i, i + 1
+        if util_percentages:
+            plt.text(
+                x=xs[f],
+                y=ys[f],
+                s=f"{actual_util[idx]:.1f}\\%",
+                rotation=0,
+                c=colors[idx],
+                fontsize=tick_size,
+                weight="extra bold",
+            )
+        ax.axvline(
+            x=asymptotes[idx],
+            color=colors[idx],
+            linestyle="dotted",
+            lw=asym_size,
+        )
 
 
 def compute_limits(ax, ylims, ns):
@@ -267,6 +261,7 @@ def plot_total_response_time(
     ylims=None,
     legend=None,
     util_percentages=True,
+    result=["png", "pdf"],
 ):
     plt.figure(dpi=1200)
     plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
@@ -274,7 +269,7 @@ def plot_total_response_time(
     matplotlib.rcParams["font.size"] = fsize
     matplotlib.rcParams["xtick.major.pad"] = 8
     matplotlib.rcParams["ytick.major.pad"] = 8
-    fix, ax = plt.subplots(figsize=tuplesize)
+    fig, ax = plt.subplots(figsize=tuplesize)
 
     policy_groups = dfs.groupby(level=exp)
     for idx, df_select in policy_groups:
@@ -295,25 +290,9 @@ def plot_total_response_time(
         )
 
     ys = compute_limits(ax, ylims, policy_groups.ngroups)
-    i = 0
-    for idx, df_select in policy_groups:
-        f, i = i, i + 1
-        if util_percentages:
-            plt.text(
-                x=xs[f],
-                y=ys[f],
-                s=f"{actual_util[idx]:.1f}\\%",
-                rotation=0,
-                c=colors[idx],
-                fontsize=tick_size,
-                weight="extra bold",
-            )
-        plt.axvline(
-            x=asymptotes[idx],
-            color=colors[idx],
-            linestyle="dotted",
-            lw=asym_size,
-        )
+    add_utilisation_labels(
+        ax, policy_groups, xs, ys, actual_util, util_percentages
+    )
 
     ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
     ax.set_ylabel("Avg. Response Time $\\quad[$s$]$", fontsize=label_size)
@@ -324,10 +303,15 @@ def plot_total_response_time(
     ax.tick_params(axis="both", which="minor", labelsize=tick_size, pad=l_pad)
     add_legend(ax, legend)
     ax.grid()
-    rt_f = folder / "RespTime"
-    rt_f.mkdir(parents=True, exist_ok=True)
-    plt.savefig(rt_f / "lambdasVsTotRespTime.pdf", bbox_inches="tight")
-    plt.savefig(rt_f / "lambdasVsTotRespTime.png", bbox_inches="tight")
+    if "png" in result or "pdf" in result:
+        rt_f = folder / "RespTime"
+        rt_f.mkdir(parents=True, exist_ok=True)
+        if "pdf" in result:
+            fig.savefig(rt_f / "lambdasVsTotRespTime.pdf", bbox_inches="tight")
+        if "png" in result:
+            fig.savefig(rt_f / "lambdasVsTotRespTime.png", bbox_inches="tight")
+    if "return" in result:
+        return fig, ax
     plt.close("all")
 
 
@@ -370,26 +354,9 @@ def plot_class_response_time(
         )
 
     ys = compute_limits(ax, ylims, policy_groups.ngroups)
-    i = 0
-    for idx, df_select in policy_groups:
-        f, i = i, i + 1
-        if (cell == "cellA" and wins[f] != 0) or cell == "cellB":
-            if util_percentages:
-                plt.text(
-                    x=xs[f],
-                    y=ys[f],
-                    s=f"{actual_util[idx]:.1f}\\%",
-                    rotation=0,
-                    c=colors[idx],
-                    fontsize=tick_size,
-                    weight="extra bold",
-                )
-            plt.axvline(
-                x=asymptotes[idx],
-                color=colors[idx],
-                linestyle="dotted",
-                lw=asym_size,
-            )
+    add_utilisation_labels(
+        ax, policy_groups, xs, ys, actual_util, util_percentages
+    )
 
     ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
     ax.set_ylabel("Avg. Response Time $\\quad[$s$]$", fontsize=label_size)
@@ -450,25 +417,9 @@ def plot_total_waiting_time(
         )
 
     ys = compute_limits(ax, ylims, policy_groups.ngroups)
-    i = 0
-    for idx, df_select in policy_groups:
-        f, i = i, i + 1
-        if util_percentages:
-            plt.text(
-                x=xs[f],
-                y=ys[f],
-                s=f"{actual_util[idx]:.1f}\\%",
-                rotation=0,
-                c=colors[idx],
-                fontsize=tick_size,
-                weight="extra bold",
-            )
-        plt.axvline(
-            x=asymptotes[idx],
-            color=colors[idx],
-            linestyle="dotted",
-            lw=asym_size,
-        )
+    add_utilisation_labels(
+        ax, policy_groups, xs, ys, actual_util, util_percentages
+    )
 
     ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
     ax.set_ylabel("Avg. Waiting Time $\\quad[$s$]$", fontsize=label_size)
@@ -499,12 +450,13 @@ def plot_class_waiting_time(
     ylims=None,
     legend=None,
     util_percentages=True,
+    result=["pdf", "png"],
 ):
     plt.figure(dpi=1200)
     plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
     plt.rc("text", usetex=True)
     matplotlib.rcParams["font.size"] = fsize
-    fix, ax = plt.subplots(figsize=tuplesize)
+    fig, ax = plt.subplots(figsize=tuplesize)
 
     policy_groups = dfs.groupby(level=exp)
     for idx, df_select in policy_groups:
@@ -525,26 +477,9 @@ def plot_class_waiting_time(
         )
 
     ys = compute_limits(ax, ylims, policy_groups.ngroups)
-    i = 0
-    for idx, df_select in policy_groups:
-        f, i = i, i + 1
-        if (cell == "cellA" and wins[f] != 0) or cell == "cellB":
-            if util_percentages:
-                plt.text(
-                    x=xs[f],
-                    y=ys[f],
-                    s=f"{actual_util[idx]:.1f}\\%",
-                    rotation=0,
-                    c=colors[idx],
-                    fontsize=tick_size,
-                    weight="extra bold",
-                )
-            plt.axvline(
-                x=asymptotes[idx],
-                color=colors[idx],
-                linestyle="dotted",
-                lw=asym_size,
-            )
+    add_utilisation_labels(
+        ax, policy_groups, xs, ys, actual_util, util_percentages
+    )
 
     ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
     ax.set_ylabel("Avg. Waiting Time $\\quad[$s$]$", fontsize=label_size)
@@ -558,10 +493,17 @@ def plot_class_waiting_time(
     add_legend(ax, legend)
 
     ax.grid()
-    rt_f = folder / "WaitTime"
-    rt_f.mkdir(parents=True, exist_ok=True)
-    plt.savefig(rt_f / f"lambdasVsT{T}WaitTime.pdf", bbox_inches="tight")
-    plt.savefig(rt_f / f"lambdasVsT{T}WaitTime.png", bbox_inches="tight")
+    if "png" in result or "pdf" in result:
+        rt_f = folder / "WaitTime"
+        rt_f.mkdir(parents=True, exist_ok=True)
+        if "pdf" in result:
+            fig.savefig(
+                rt_f / f"lambdasVsT{T}WaitTime.pdf", bbox_inches="tight"
+            )
+        if "png" in result:
+            fig.savefig(
+                rt_f / f"lambdasVsT{T}WaitTime.png", bbox_inches="tight"
+            )
     plt.close("all")
 
 
@@ -572,12 +514,14 @@ if __name__ == "__main__":
     folder = select_experiment(sys.argv[1] if len(sys.argv) > 1 else None)
     if not folder:
         exit(0)
-    dfs, Ts, exp, asymptotes, actual_util = load_experiment_data(folder)
+    dfs, Ts, exp, asymptotes, actual_util = load_experiment_data(
+        folder, n_cores=n
+    )
     if dfs is None:
         exit(0)
 
     progress = tqdm(None, desc="Plotting", total=len(Ts) * 2 + 2)
-    colors, marks = prepare_cosmetics(dfs, exp)
+    colors, marks, _ = prepare_cosmetics(dfs, exp)
 
     plot_total_response_time(
         folder,
