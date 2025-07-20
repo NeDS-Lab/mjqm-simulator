@@ -103,6 +103,11 @@ void ExperimentStats::add_headers(std::vector<std::string>& headers, std::vector
 void ExperimentStats::add_headers(std::vector<std::string>& headers) const {
     visit_all_stats([&headers](const Stat& s) { s.add_headers(headers); });
 }
+std::vector<std::string> ExperimentStats::get_headers() const {
+    std::vector<std::string> headers;
+    add_headers(headers);
+    return headers;
+}
 
 std::ostream& operator<<(std::ostream& os, const ExperimentStats& m) {
     m.visit_all_stats([&os](const Stat& s) { os << s; });
