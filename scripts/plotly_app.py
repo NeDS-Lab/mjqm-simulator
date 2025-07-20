@@ -188,12 +188,10 @@ app.layout = [
             dcc.Tabs(
                 id="y-axis-value",
                 value="response_time",
-                children=list(
-                    map(
-                        lambda x: dcc.Tab(label=x[1]["label"], value=x[0]),
-                        y_axis_mappings.items(),
-                    )
-                ),
+                children=[
+                    dcc.Tab(label=config["label"], value=key)
+                    for key, config in y_axis_mappings.items()
+                ],
                 style={
                     "border": "thin lightgrey solid",
                     "overflowX": "scroll",
@@ -396,7 +394,6 @@ def show_totresp(experiment, y_axis, y_group, selected_class):
 
     if y_group == "overall" or not per_class:
         col = y_axis_mappings[y_axis]["column"]
-        pass
     elif y_group == "smallest_class":
         col = y_axis_mappings[y_axis]["class_column"]
         col = col.format(min(Ts))
