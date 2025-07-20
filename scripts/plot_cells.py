@@ -249,6 +249,15 @@ def compute_limits(ax, ylims, ns):
     return np.geomspace(ymin, ymax, num=16, endpoint=False)[-skip::-1]
 
 
+def save_files(fig, folder, basename: str, formats):
+    if "png" in formats or "pdf" in formats:
+        folder.mkdir(parents=True, exist_ok=True)
+        if "pdf" in formats:
+            fig.savefig(folder / f"{basename}.pdf", bbox_inches="tight")
+        if "png" in formats:
+            fig.savefig(folder / f"{basename}.png", bbox_inches="tight")
+
+
 ############################# TOTAL RESPONSE TIME #############################
 
 
@@ -303,13 +312,7 @@ def plot_total_response_time(
     ax.tick_params(axis="both", which="minor", labelsize=tick_size, pad=l_pad)
     add_legend(ax, legend)
     ax.grid()
-    if "png" in result or "pdf" in result:
-        rt_f = folder / "RespTime"
-        rt_f.mkdir(parents=True, exist_ok=True)
-        if "pdf" in result:
-            fig.savefig(rt_f / "lambdasVsTotRespTime.pdf", bbox_inches="tight")
-        if "png" in result:
-            fig.savefig(rt_f / "lambdasVsTotRespTime.png", bbox_inches="tight")
+    save_files(fig, folder / "RespTime", "lambdasVsTotRespTime", result)
     if "return" in result:
         return fig, ax
     plt.close("all")
@@ -328,12 +331,13 @@ def plot_class_response_time(
     ylims=None,
     legend=None,
     util_percentages=True,
+    result=["png", "pdf"],
 ):
     plt.figure(dpi=1200)
     plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
     plt.rc("text", usetex=True)
     matplotlib.rcParams["font.size"] = fsize
-    fix, ax = plt.subplots(figsize=tuplesize)
+    fig, ax = plt.subplots(figsize=tuplesize)
 
     policy_groups = dfs.groupby(level=exp)
     for idx, df_select in policy_groups:
@@ -370,10 +374,9 @@ def plot_class_response_time(
     add_legend(ax, legend)
 
     ax.grid()
-    rt_f = folder / "RespTime"
-    rt_f.mkdir(parents=True, exist_ok=True)
-    plt.savefig(rt_f / f"lambdasVsT{T}RespTime.pdf", bbox_inches="tight")
-    plt.savefig(rt_f / f"lambdasVsT{T}RespTime.png", bbox_inches="tight")
+    save_files(fig, folder / "RespTime", f"lambdasVsT{T}RespTime", result)
+    if "return" in result:
+        return fig, ax
     plt.close("all")
 
 
@@ -389,6 +392,7 @@ def plot_total_waiting_time(
     ylims=None,
     legend=None,
     util_percentages=True,
+    result=["png", "pdf"],
 ):
     plt.figure(dpi=1200)
     plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
@@ -396,7 +400,7 @@ def plot_total_waiting_time(
     matplotlib.rcParams["font.size"] = fsize
     matplotlib.rcParams["xtick.major.pad"] = 8
     matplotlib.rcParams["ytick.major.pad"] = 8
-    fix, ax = plt.subplots(figsize=tuplesize)
+    fig, ax = plt.subplots(figsize=tuplesize)
 
     policy_groups = dfs.groupby(level=exp)
     for idx, df_select in policy_groups:
@@ -430,10 +434,9 @@ def plot_total_waiting_time(
     ax.tick_params(axis="both", which="minor", labelsize=tick_size, pad=l_pad)
     add_legend(ax, legend)
     ax.grid()
-    rt_f = folder / "WaitTime"
-    rt_f.mkdir(parents=True, exist_ok=True)
-    plt.savefig(rt_f / "lambdasVsTotWaitTime.pdf", bbox_inches="tight")
-    plt.savefig(rt_f / "lambdasVsTotWaitTime.png", bbox_inches="tight")
+    save_files(fig, folder / "WaitTime", "lambdasVsTotWaitTime", result)
+    if "return" in result:
+        return fig, ax
     plt.close("all")
 
 
@@ -493,17 +496,9 @@ def plot_class_waiting_time(
     add_legend(ax, legend)
 
     ax.grid()
-    if "png" in result or "pdf" in result:
-        rt_f = folder / "WaitTime"
-        rt_f.mkdir(parents=True, exist_ok=True)
-        if "pdf" in result:
-            fig.savefig(
-                rt_f / f"lambdasVsT{T}WaitTime.pdf", bbox_inches="tight"
-            )
-        if "png" in result:
-            fig.savefig(
-                rt_f / f"lambdasVsT{T}WaitTime.png", bbox_inches="tight"
-            )
+    save_files(fig, folder / "WaitTime", f"lambdasVsT{T}WaitTime", result)
+    if "return" in result:
+        return fig, ax
     plt.close("all")
 
 
