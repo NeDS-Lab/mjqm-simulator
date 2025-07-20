@@ -186,9 +186,14 @@ def compute_stability(dfs, exp):
     util_increase_ratio.name = "Utilisation Increase Ratio"
     dfs = pd.concat([dfs, util_increase_ratio], axis=1)
     divergence = dfs.groupby(level=exp)["Utilisation Increase Ratio"].transform(
-        lambda x: x.rolling(2).apply(lambda x: abs(1.0 - x.iloc[1] / x.iloc[0]))
+        lambda x: (
+            x.rolling(2)
+            .apply(lambda x: abs(1.0 - x.iloc[1] / x.iloc[0]))
+            .fillna(0)
+            .cummax()
+        )
     )
-    stable = dfs["Stability Check"] & (divergence.fillna(0) < 0.01)
+    stable = dfs["Stability Check"] & (divergence < 0.01)
     stable.name = "stable"
     dfs = pd.concat([dfs, stable], axis=1)
     return dfs
