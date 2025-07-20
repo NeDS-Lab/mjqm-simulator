@@ -166,10 +166,10 @@ void from_toml(const std::unique_ptr<std::vector<std::pair<bool, ExperimentConfi
                     using T = std::decay_t<decltype(value)>;
                     overwrite_value<T>(overridden_data, key, value);
                     if constexpr (toml::is_table<T>) {
-                        static_cast<toml::table>(value).for_each([&](auto&& key, auto&& val) {
+                        static_cast<toml::table>(value).for_each([&](auto&& inner_key, auto&& val) {
                             using T = std::decay_t<decltype(val)>;
                             if constexpr (is_override_value<T>) {
-                                config.stats.add_pivot_column(std::string(key), val.get());
+                                config.stats.add_pivot_column(std::string(toml::path(key) + inner_key), val.get());
                             }
                         });
                     } else {

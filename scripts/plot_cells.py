@@ -7,67 +7,17 @@ Created on Sun Jan  7 16:21:22 2024
 """
 
 import math
-import re
 import sys
-from pathlib import Path
 
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from colorama import Fore, Style
-from colorama import init as colorama_init
+from load_experiment_data import load_experiment_data, select_experiment
 from scipy.signal import savgol_filter
 from tqdm import tqdm
 
-################################ KNOWN POLICIES ################################
-policies_keys = [
-    "smash",
-    "fifo",
-    "most server first",
-    "server filling",
-    "server filling memoryful",
-    "back filling",
-    "quick swap",
-    "first fit",
-    "adaptive msf",
-    "static msf",
-]
-policies_wins = {
-    1: "fifo",
-    0: "most server first",
-    -1: "server filling",
-    -2: "server filling memoryful",
-    -3: "back filling",
-    -4: "quick swap",
-    -14: "first fit",
-    -7: "adaptive msf",
-    -8: "static msf",
-}
-policies_labels = [
-    "SMASH w/ $w = {0}$",
-    "First-In First-Out",
-    "Most Server First",
-    "Server Filling",
-    "Server Filling",
-    "Back Filling",
-    "Quick Swap",
-    "First-Fit",
-    "Adaptive MSF",
-    "Static MSF",
-]
-policies = dict(zip(policies_keys, policies_labels))
-
-
 ################################ PANDAS AND PLOT CONFIGS ################################
-policies_dtype = pd.api.types.CategoricalDtype(
-    categories=policies_keys, ordered=True
-)
-stability_check_mapping = {
-    "0": True,
-    "1": False,
-}  # we invert them because the column actually means "warning"
-
 fsize = 150
 legend_size = 200
 label_size = 220
@@ -79,7 +29,6 @@ tick_size = 180
 l_pad = 40
 asym_size = 20
 
-colorama_init(autoreset=True)
 cols = [
     "black",
     "peru",
@@ -91,6 +40,17 @@ cols = [
     "pink",
 ]
 markers = ["P", "o", "v", "s", "X", "D", "H", "<", ">"]
+markers_plotly = [
+    "cross",
+    "circle",
+    "triangle-down",
+    "square",
+    "x",
+    "diamond",
+    "triangle-up",
+    "triangle-left",
+    "triangle-right",
+]
 styles = ["solid", "dashdot", "dotted", "dashed", (0, (3, 5, 1, 5, 1, 5))]
 
 cell = "cellA"
@@ -98,7 +58,6 @@ n = 4096
 
 cell = "cellB"
 n = 2048
-
 # -3 : backfilling
 # -2 : server filling
 # 0: Most Server First
@@ -106,17 +65,14 @@ n = 2048
 # i: SMASH w/ w=i
 
 if cell == "cellB":
-    wins = [-3, -2, 0, 1, 2, 5, 10]
-
     ys_bigResp = [7000, 5000, 3000, 500, 700, 1000, 2000]
     ys_resp = [2500, 750, 450, 15, 40, 100, 250]
 
-    """wins = [-3, -2, 0, 1, 5]
-
+    """
     ys_bigResp = [700, 6000, 4700, 1000, 3000]
     ys_resp = [800, 550, 350, 7, 40]"""
 
-    xs = [5.4, 5.4, 5.4, 5.4, 5.4, 5.4, 5.4]
+    xs = [5.4, 5.4, 5.4, 5.4, 5.4, 5.4, 5.4, 5.4, 5.4]
     legend_locs = [
         "upper left",
         "upper left",
@@ -140,20 +96,19 @@ if cell == "cellB":
 
 elif cell == "cellA":
     if n == 4096:
-        # wins = [-2, 0, 1, 2, 5, 10, 50, 100]
         # ys_bigResp = [550, 400, 7, 15, 40, 100, 170, 200]
         # ys_resp = [70, 50, 4, 6, 8, 10, 25, 35]
 
-        wins = [-3, -2, 0, 1, 2, 5, 10]
         ys_bigResp = [550, 350, 400, 7, 15, 40, 100]
         ys_resp = [40, 30, 50, 2, 5, 8, 11]
 
-        """wins = [-3, -2, 0, 1, 5]
-        types = [0 for i in range(len(wins))]
+        """
+        types = [0 for i in range(20)]
         ys_bigResp = [650, 550, 400, 7, 40]
-        ys_resp = [100, 70, 50, 4, 8]"""
+        ys_resp = [100, 70, 50, 4, 8]
+        """
 
-        xs = [725 for w in wins]
+        xs = [725 for w in range(20)]
         # xs = [602, 739, 561, 614, 667, 711]
 
         ylims_totResp = [1, 100]
@@ -175,11 +130,10 @@ elif cell == "cellA":
         xlims = [100, 10**3]
         st = styles[0]
     elif n == 3072:
-        wins = [-2, 0, 1, 2, 5, 10]
         ys_bigResp = [800, 500, 20, 60, 120, 240]
         ys_resp = [10000, 6000, 200, 400, 800, 1400]
 
-        xs = [370 for w in wins]
+        xs = [370 for i in range(20)]
         # xs = [602, 739, 561, 614, 667, 711]
 
         ylims_totResp = [1, 100]
@@ -194,12 +148,10 @@ elif cell == "cellA":
         xlims = [100, 10**3]
         st = styles[0]
     elif n == 2048:
-        wins = [0]
-
         ys_bigResp = [800]
         ys_resp = [1000]
 
-        xs = [50 for w in wins]
+        xs = [50 for i in range(20)]
         # xs = [602, 739, 561, 614, 667, 711]
 
         ylims_totResp = [0.001, 100]
@@ -216,211 +168,7 @@ elif cell == "cellA":
         st = styles[0]
 
 
-def load_csv_filenames():
-    results = Path("Results")
-    # get folder from first argument or user input
-    if len(sys.argv) > 1:
-        folder = sys.argv[1]
-    else:
-        # list folders in Results directory
-        print("Known folders:")
-        for f in list(results.glob("*/")):
-            print("-", f.stem)
-        folder = input("Enter folder to read results from: ")
-    folder = results / folder
-    filenames = list(folder.glob("*.csv"))
-    if not filenames:
-        print(f"No CSV files found in {folder}", file=sys.stderr)
-        exit(1)
-    return folder, filenames
-
-
-def fix_policy(row, win):
-    if "policy" not in row:
-        if win > 1:
-            return "smash"
-        else:
-            return policies_wins[win]
-    return row["policy"]
-
-
-def row_label(row, win):
-    if row["policy"] == "smash":
-        if "policy.window" in row:
-            return policies[row["policy"]].format(row["policy.window"])
-        elif "smash.window" in row:
-            return policies[row["policy"]].format(row["smash.window"])
-        else:
-            return policies[row["policy"]].format(win)
-    else:
-        return policies[row["policy"]]
-
-
-required_columns = set(["arrival.rate", "Utilisation"])
-
-
-def read_csv(f: Path):
-    df = pd.read_csv(f, delimiter=";")
-    if df.empty:
-        return None
-    win = None
-    if match := re.match(r"Win(?P<win>-?\d+)", f.stem):
-        win = int(match.group("win"))
-    df["policy"] = df.apply(fix_policy, axis=1, args=(win,))
-    df["label"] = df.apply(row_label, axis=1, args=(win,))
-    if not all(column in df.columns for column in required_columns):
-        print(
-            f"Missing columns in {f}: {required_columns - set(df.columns)}",
-            file=sys.stderr,
-        )
-        return None
-    actual_check = False
-    stability_columns = []
-    for column in df.columns:
-        if "policy" == column:
-            df[column] = df[column].astype(policies_dtype)
-        elif "Stability Check" in column:
-            df[column] = df[column].map(stability_check_mapping).astype(bool)
-            if "Stability Check" == column:
-                actual_check = True
-            else:
-                stability_columns.append(column)
-    if not actual_check:
-        df["Stability Check"] = df[stability_columns].all(axis=1)
-    return df
-
-
-def concat_csv_files(filenames: list[Path], progress: tqdm):
-    dfs = []
-    for f in filenames:
-        df = read_csv(f)
-        progress.update(1)
-        if df is None:
-            continue
-        dfs.append(df)
-    if not dfs:
-        return None
-    return pd.concat(dfs)
-
-
-def clean_dfs(dfs):
-    types = {}
-    drops = []
-    Ts = set()
-    for column in dfs.columns:
-        if "policy" == column:
-            pass
-        elif "label" == column:
-            pass
-        elif "Stability Check" in column:
-            pass
-        elif (
-            "ConfInt" not in column
-            and "Unnamed" not in column
-            and not column.endswith(".window")
-        ):
-            types[column] = float
-        else:
-            drops.append(column)
-        if match := re.match(r"T(?P<T>\d+)", column):
-            Ts.add(int(match.group("T")))
-    Ts = sorted(list(Ts))
-    progress.write(f"{len(Ts)} classes: {', '.join(map(str, Ts))}")
-    rates = sorted(list(dfs["arrival.rate"].unique()))
-    progress.write(f"{len(rates)} arrival rates: {', '.join(map(str, rates))}")
-    dfs = dfs.drop(columns=drops)
-    dfs = dfs.astype(types)
-
-    idx = ["label", "arrival.rate"]
-    dfs.sort_values(
-        by=idx,
-        inplace=True,
-        ignore_index=True,
-    )
-    dfs.set_index(idx, drop=False, inplace=True)
-    dfs.sort_index(inplace=True)
-
-    exp = dfs.index.names.difference(["arrival.rate"])
-    if len(exp) == 1:
-        exp = exp[0]
-
-    return dfs, Ts, exp
-
-
-def compute_stability(dfs, exp):
-    arr_rate_increase = dfs.groupby(level=exp)["arrival.rate"].transform(
-        lambda x: x.rolling(2).sem()
-    )
-    util_increase = dfs.groupby(level=exp)["Utilisation"].transform(
-        lambda x: x.rolling(2).sem()
-    )
-    util_increase_ratio = arr_rate_increase / util_increase
-    util_increase_ratio.name = "Utilisation Increase Ratio"
-    dfs = pd.concat([dfs, util_increase_ratio], axis=1)
-    divergence = dfs.groupby(level=exp)["Utilisation Increase Ratio"].transform(
-        lambda x: x.rolling(2).apply(lambda x: abs(1.0 - x.iloc[1] / x.iloc[0]))
-    )
-    stable = dfs["Stability Check"] & (divergence.fillna(0) < 0.01)
-    stable.name = "stable"
-    dfs = pd.concat([dfs, stable], axis=1)
-    return dfs
-
-
-def compute_utilisation(dfs, Ts, exp):
-    asymptotes = dfs.groupby(
-        level=exp
-    ).apply(
-        lambda x: x["arrival.rate"]
-        .shift(
-            1, fill_value=x["arrival.rate"].max()
-        )  # this shift makes the "minimum" extraction do what we want
-        .where(~x["stable"], x["arrival.rate"].max())
-        .min()  # keep the maximum (known) arrival rate where the system is still stable
-    )
-
-    max_arrival_rates = dfs.groupby(level=exp)["arrival.rate"].max()
-    instability_not_reached = max_arrival_rates == asymptotes
-    for idx, not_reached in instability_not_reached.items():
-        if not_reached:
-            progress.write(
-                f"{Fore.YELLOW}{Style.BRIGHT}Instability region not reached for {idx} with maximum arrival rate tested: {max_arrival_rates[idx]}"
-            )
-
-    actual_util = pd.Series(pd.NA, index=asymptotes.index)
-    for idx, df_select in dfs.groupby(level=exp):
-        summ_util = 0
-        asymptote = asymptotes[idx]
-        asymp_row = df_select.loc[idx, asymptote]
-        Ps = [asymp_row[f"T{T} lambda"] / asymp_row["arrival.rate"] for T in Ts]
-        serTimes = [
-            asymp_row[f"T{T} RespTime"] - asymp_row[f"T{T} Waiting"] for T in Ts
-        ]
-        for t in range(len(Ts)):
-            summ_util += asymptote * Ps[t] * serTimes[t] * Ts[t] * (1 / n)
-        actual_util[idx] = summ_util * 100.0
-
-    return asymptotes, actual_util
-
-
-folder, filenames = load_csv_filenames()
-progress = tqdm(None, desc="Loading data", total=len(filenames) + 4)
-dfs = concat_csv_files(filenames, progress)
-progress.update(1)
-if dfs is None:
-    print("No data found", file=sys.stderr)
-    exit(1)
-dfs, Ts, exp = clean_dfs(dfs)
-progress.update(1)
-dfs = compute_stability(dfs, exp)
-progress.update(1)
-asymptotes, actual_util = compute_utilisation(dfs, Ts, exp)
-progress.update(1)
-progress.close()
-
-
 ############################### PLOT UTILITIES ###############################
-
-progress = tqdm(None, desc="Plotting", total=len(Ts) * 2 + 2)
 
 
 def prepare_cosmetics(dfs, exp):
@@ -434,16 +182,20 @@ def prepare_cosmetics(dfs, exp):
         dtype=pd.api.types.CategoricalDtype(categories=markers, ordered=True),
         name="marker",
     )
+    marks_plotly = pd.Series(
+        dtype=pd.api.types.CategoricalDtype(
+            categories=markers_plotly, ordered=True
+        ),
+        name="marker_plotly",
+    )
     i = 0
     for group in policy_groups:
         colors[group] = cols[i]
         marks[group] = markers[i]
+        marks_plotly[group] = markers_plotly[i]
         i += 1
 
-    return colors, marks
-
-
-colors, marks = prepare_cosmetics(dfs, exp)
+    return colors, marks, marks_plotly
 
 
 def add_legend(ax, legend):
@@ -454,6 +206,30 @@ def add_legend(ax, legend):
         else:
             ncol = 1
         ax.legend(fontsize=legend_size, loc=legend, ncol=ncol)
+
+
+def add_utilisation_labels(
+    ax, policy_groups, xs, ys, actual_util, util_percentages
+):
+    i = 0
+    for idx, df_select in policy_groups:
+        f, i = i, i + 1
+        if util_percentages:
+            plt.text(
+                x=xs[f],
+                y=ys[f],
+                s=f"{actual_util[idx]:.1f}\\%",
+                rotation=0,
+                c=colors[idx],
+                fontsize=tick_size,
+                weight="extra bold",
+            )
+        ax.axvline(
+            x=asymptotes[idx],
+            color=colors[idx],
+            linestyle="dotted",
+            lw=asym_size,
+        )
 
 
 def compute_limits(ax, ylims, ns):
@@ -473,6 +249,15 @@ def compute_limits(ax, ylims, ns):
     return np.geomspace(ymin, ymax, num=16, endpoint=False)[-skip::-1]
 
 
+def save_files(fig, folder, basename: str, formats):
+    if "png" in formats or "pdf" in formats:
+        folder.mkdir(parents=True, exist_ok=True)
+        if "pdf" in formats:
+            fig.savefig(folder / f"{basename}.pdf", bbox_inches="tight")
+        if "png" in formats:
+            fig.savefig(folder / f"{basename}.png", bbox_inches="tight")
+
+
 ############################# TOTAL RESPONSE TIME #############################
 
 
@@ -485,6 +270,7 @@ def plot_total_response_time(
     ylims=None,
     legend=None,
     util_percentages=True,
+    result=["png", "pdf"],
 ):
     plt.figure(dpi=1200)
     plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
@@ -492,7 +278,7 @@ def plot_total_response_time(
     matplotlib.rcParams["font.size"] = fsize
     matplotlib.rcParams["xtick.major.pad"] = 8
     matplotlib.rcParams["ytick.major.pad"] = 8
-    fix, ax = plt.subplots(figsize=tuplesize)
+    fig, ax = plt.subplots(figsize=tuplesize)
 
     policy_groups = dfs.groupby(level=exp)
     for idx, df_select in policy_groups:
@@ -513,25 +299,9 @@ def plot_total_response_time(
         )
 
     ys = compute_limits(ax, ylims, policy_groups.ngroups)
-    i = 0
-    for idx, df_select in policy_groups:
-        f, i = i, i + 1
-        if util_percentages:
-            plt.text(
-                x=xs[f],
-                y=ys[f],
-                s=f"{actual_util[idx]:.1f}\\%",
-                rotation=0,
-                c=colors[idx],
-                fontsize=tick_size,
-                weight="extra bold",
-            )
-        plt.axvline(
-            x=asymptotes[idx],
-            color=colors[idx],
-            linestyle="dotted",
-            lw=asym_size,
-        )
+    add_utilisation_labels(
+        ax, policy_groups, xs, ys, actual_util, util_percentages
+    )
 
     ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
     ax.set_ylabel("Avg. Response Time $\\quad[$s$]$", fontsize=label_size)
@@ -542,23 +312,11 @@ def plot_total_response_time(
     ax.tick_params(axis="both", which="minor", labelsize=tick_size, pad=l_pad)
     add_legend(ax, legend)
     ax.grid()
-    rt_f = folder / "RespTime"
-    rt_f.mkdir(parents=True, exist_ok=True)
-    plt.savefig(rt_f / "lambdasVsTotRespTime.pdf", bbox_inches="tight")
-    plt.savefig(rt_f / "lambdasVsTotRespTime.png", bbox_inches="tight")
+    save_files(fig, folder / "RespTime", "lambdasVsTotRespTime", result)
+    if "return" in result:
+        return fig, ax
     plt.close("all")
 
-
-plot_total_response_time(
-    folder,
-    dfs,
-    exp,
-    actual_util,
-    asymptotes,
-    ylims=ylims_totResp,
-    legend="upper left",
-)
-progress.update(1)
 
 ########################## SMALL CLASS RESPONSE TIME ##########################
 
@@ -573,12 +331,13 @@ def plot_class_response_time(
     ylims=None,
     legend=None,
     util_percentages=True,
+    result=["png", "pdf"],
 ):
     plt.figure(dpi=1200)
     plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
     plt.rc("text", usetex=True)
     matplotlib.rcParams["font.size"] = fsize
-    fix, ax = plt.subplots(figsize=tuplesize)
+    fig, ax = plt.subplots(figsize=tuplesize)
 
     policy_groups = dfs.groupby(level=exp)
     for idx, df_select in policy_groups:
@@ -599,26 +358,9 @@ def plot_class_response_time(
         )
 
     ys = compute_limits(ax, ylims, policy_groups.ngroups)
-    i = 0
-    for idx, df_select in policy_groups:
-        f, i = i, i + 1
-        if (cell == "cellA" and wins[f] != 0) or cell == "cellB":
-            if util_percentages:
-                plt.text(
-                    x=xs[f],
-                    y=ys[f],
-                    s=f"{actual_util[idx]:.1f}\\%",
-                    rotation=0,
-                    c=colors[idx],
-                    fontsize=tick_size,
-                    weight="extra bold",
-                )
-            plt.axvline(
-                x=asymptotes[idx],
-                color=colors[idx],
-                linestyle="dotted",
-                lw=asym_size,
-            )
+    add_utilisation_labels(
+        ax, policy_groups, xs, ys, actual_util, util_percentages
+    )
 
     ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
     ax.set_ylabel("Avg. Response Time $\\quad[$s$]$", fontsize=label_size)
@@ -632,16 +374,10 @@ def plot_class_response_time(
     add_legend(ax, legend)
 
     ax.grid()
-    rt_f = folder / "RespTime"
-    rt_f.mkdir(parents=True, exist_ok=True)
-    plt.savefig(rt_f / f"lambdasVsT{T}RespTime.pdf", bbox_inches="tight")
-    plt.savefig(rt_f / f"lambdasVsT{T}RespTime.png", bbox_inches="tight")
+    save_files(fig, folder / "RespTime", f"lambdasVsT{T}RespTime", result)
+    if "return" in result:
+        return fig, ax
     plt.close("all")
-
-
-for T in Ts:
-    plot_class_response_time(folder, dfs, exp, T, actual_util, asymptotes)
-    progress.update(1)
 
 
 ############################## TOTAL WAITING TIME ##############################
@@ -656,6 +392,7 @@ def plot_total_waiting_time(
     ylims=None,
     legend=None,
     util_percentages=True,
+    result=["png", "pdf"],
 ):
     plt.figure(dpi=1200)
     plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
@@ -663,7 +400,7 @@ def plot_total_waiting_time(
     matplotlib.rcParams["font.size"] = fsize
     matplotlib.rcParams["xtick.major.pad"] = 8
     matplotlib.rcParams["ytick.major.pad"] = 8
-    fix, ax = plt.subplots(figsize=tuplesize)
+    fig, ax = plt.subplots(figsize=tuplesize)
 
     policy_groups = dfs.groupby(level=exp)
     for idx, df_select in policy_groups:
@@ -684,25 +421,9 @@ def plot_total_waiting_time(
         )
 
     ys = compute_limits(ax, ylims, policy_groups.ngroups)
-    i = 0
-    for idx, df_select in policy_groups:
-        f, i = i, i + 1
-        if util_percentages:
-            plt.text(
-                x=xs[f],
-                y=ys[f],
-                s=f"{actual_util[idx]:.1f}\\%",
-                rotation=0,
-                c=colors[idx],
-                fontsize=tick_size,
-                weight="extra bold",
-            )
-        plt.axvline(
-            x=asymptotes[idx],
-            color=colors[idx],
-            linestyle="dotted",
-            lw=asym_size,
-        )
+    add_utilisation_labels(
+        ax, policy_groups, xs, ys, actual_util, util_percentages
+    )
 
     ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
     ax.set_ylabel("Avg. Waiting Time $\\quad[$s$]$", fontsize=label_size)
@@ -713,23 +434,10 @@ def plot_total_waiting_time(
     ax.tick_params(axis="both", which="minor", labelsize=tick_size, pad=l_pad)
     add_legend(ax, legend)
     ax.grid()
-    rt_f = folder / "WaitTime"
-    rt_f.mkdir(parents=True, exist_ok=True)
-    plt.savefig(rt_f / "lambdasVsTotWaitTime.pdf", bbox_inches="tight")
-    plt.savefig(rt_f / "lambdasVsTotWaitTime.png", bbox_inches="tight")
+    save_files(fig, folder / "WaitTime", "lambdasVsTotWaitTime", result)
+    if "return" in result:
+        return fig, ax
     plt.close("all")
-
-
-plot_total_waiting_time(
-    folder,
-    dfs,
-    exp,
-    actual_util,
-    asymptotes,
-    ylims=ylims_totWait,
-    legend="upper left",
-)
-progress.update(1)
 
 
 ########################### SMALL CLASS WAITING TIME ###########################
@@ -745,12 +453,13 @@ def plot_class_waiting_time(
     ylims=None,
     legend=None,
     util_percentages=True,
+    result=["pdf", "png"],
 ):
     plt.figure(dpi=1200)
     plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
     plt.rc("text", usetex=True)
     matplotlib.rcParams["font.size"] = fsize
-    fix, ax = plt.subplots(figsize=tuplesize)
+    fig, ax = plt.subplots(figsize=tuplesize)
 
     policy_groups = dfs.groupby(level=exp)
     for idx, df_select in policy_groups:
@@ -771,26 +480,9 @@ def plot_class_waiting_time(
         )
 
     ys = compute_limits(ax, ylims, policy_groups.ngroups)
-    i = 0
-    for idx, df_select in policy_groups:
-        f, i = i, i + 1
-        if (cell == "cellA" and wins[f] != 0) or cell == "cellB":
-            if util_percentages:
-                plt.text(
-                    x=xs[f],
-                    y=ys[f],
-                    s=f"{actual_util[idx]:.1f}\\%",
-                    rotation=0,
-                    c=colors[idx],
-                    fontsize=tick_size,
-                    weight="extra bold",
-                )
-            plt.axvline(
-                x=asymptotes[idx],
-                color=colors[idx],
-                linestyle="dotted",
-                lw=asym_size,
-            )
+    add_utilisation_labels(
+        ax, policy_groups, xs, ys, actual_util, util_percentages
+    )
 
     ax.set_xlabel("Arrival Rate $\\quad[$s$^{-1}]$", fontsize=label_size)
     ax.set_ylabel("Avg. Waiting Time $\\quad[$s$]$", fontsize=label_size)
@@ -804,18 +496,55 @@ def plot_class_waiting_time(
     add_legend(ax, legend)
 
     ax.grid()
-    rt_f = folder / "WaitTime"
-    rt_f.mkdir(parents=True, exist_ok=True)
-    plt.savefig(rt_f / f"lambdasVsT{T}WaitTime.pdf", bbox_inches="tight")
-    plt.savefig(rt_f / f"lambdasVsT{T}WaitTime.png", bbox_inches="tight")
+    save_files(fig, folder / "WaitTime", f"lambdasVsT{T}WaitTime", result)
+    if "return" in result:
+        return fig, ax
     plt.close("all")
-
-
-for T in Ts:
-    plot_class_waiting_time(folder, dfs, exp, T, actual_util, asymptotes)
-    progress.update(1)
 
 
 ################################################################################
 
-progress.close()
+
+if __name__ == "__main__":
+    folder = select_experiment(sys.argv[1] if len(sys.argv) > 1 else None)
+    if not folder:
+        exit(0)
+    dfs, Ts, exp, asymptotes, actual_util = load_experiment_data(
+        folder, n_cores=n
+    )
+    if dfs is None:
+        exit(0)
+
+    progress = tqdm(None, desc="Plotting", total=len(Ts) * 2 + 2)
+    colors, marks, _ = prepare_cosmetics(dfs, exp)
+
+    plot_total_response_time(
+        folder,
+        dfs,
+        exp,
+        actual_util,
+        asymptotes,
+        ylims=ylims_totResp,
+        legend="upper left",
+    )
+    progress.update(1)
+    for T in Ts:
+        plot_class_response_time(folder, dfs, exp, T, actual_util, asymptotes)
+        progress.update(1)
+
+    plot_total_waiting_time(
+        folder,
+        dfs,
+        exp,
+        actual_util,
+        asymptotes,
+        ylims=ylims_totWait,
+        legend="upper left",
+    )
+    progress.update(1)
+
+    for T in Ts:
+        plot_class_waiting_time(folder, dfs, exp, T, actual_util, asymptotes)
+        progress.update(1)
+
+    progress.close()
