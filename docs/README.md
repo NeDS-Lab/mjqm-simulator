@@ -42,7 +42,7 @@ brew install boost # MacOS
 
 To run the tests, you need to have `Python3` installed on your system, in addition to the previous requirements.
 
-We recommend using `uv` as a Python package manager, for which we provide the pyproject.toml configuration file.
+We recommend using [`uv`](https://docs.astral.sh/uv/) as Python package manager, for which we provide the pyproject.toml configuration file.
 
 ## Build
 
@@ -61,6 +61,7 @@ The additional parameters work as such:
 - `--clean` to remove the cmake directory before configuring the project, effectively doing a _full fresh restart_.
 - `--test` to also run tests.
 - `--no-build` to only configure the project without building it.
+- `--no-uv` to skip the installation of `uv` and the Python environment.
 
 > [!Note]
   To dig deeper into the details, in the output of the `configure` script you can find the actual commands used to configure and build the project, prepended with `+`.
