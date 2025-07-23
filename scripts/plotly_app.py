@@ -119,7 +119,7 @@ app.layout = [
         style={
             "justifyContent": "flex-start",
             "display": "flex",
-            "margin-bottom": "1em",
+            "margin": ".5em 0",
         },
     ),
     html.Div(
@@ -163,12 +163,10 @@ app.layout = [
             dcc.Tabs(
                 id="y-axis-value",
                 value="response_time",
-                children=list(
-                    map(
-                        lambda x: dcc.Tab(label=x[1]["label"], value=x[0]),
-                        y_axis_mappings.items(),
-                    )
-                ),
+                children=[
+                    dcc.Tab(label=x[1]["label"], value=x[0])
+                    for x in y_axis_mappings.items()
+                ],
                 style={
                     "border": "thin lightgrey solid",
                     "overflowX": "scroll",
