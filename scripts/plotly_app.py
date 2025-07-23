@@ -48,11 +48,19 @@ y_axis_mappings = dict(
         uom="",
         per_class=False,
     ),
+    queue=dict(
+        column="Queue Total",
+        label="Queue",
+        class_column="T{} Queue",
+        uom="",
+        per_class=True,
+    ),
 )
 
 
 # Initialize the app
 app = Dash("mjqm")
+app.style = {"height": "100%"}
 # App layout
 app.layout = [
     html.H1(
@@ -68,9 +76,7 @@ app.layout = [
                 [
                     html.Div(
                         "Experiment",
-                        style={
-                            "margin-left": ".5em",
-                        },
+                        style=dict(margin="0 .5em"),
                     ),
                     dcc.Dropdown(
                         options=list(
@@ -84,11 +90,7 @@ app.layout = [
                         id="experiment-selection",
                         persistence=True,
                         persistence_type="session",
-                        style={
-                            "width": "99%",
-                            # "display": "inline-block",
-                            "margin-left": ".5em",
-                        },
+                        style=dict(margin="0 .5em", width="99%"),
                     ),
                 ],
                 style={
@@ -104,35 +106,15 @@ app.layout = [
                 label="Simulated cores",
                 persistence=True,
                 persistence_type="session",
-                style={
-                    "margin-left": "1em",
-                },
+                style=dict(margin="0 .5em"),
                 size=100,
             ),
-            dcc.Tabs(
-                id="display-table",
-                value="yes",
-                children=[
-                    dcc.Tab(
-                        label="Show data",
-                        value="yes",
-                        style=dict(padding=".5em"),
-                        selected_style=dict(padding=".5em"),
-                    ),
-                    dcc.Tab(
-                        label="Hide data",
-                        value="no",
-                        style=dict(padding=".5em"),
-                        selected_style=dict(padding=".5em"),
-                    ),
-                ],
-                style={
-                    "border": "thin lightgrey solid",
-                    "margin-left": "1em",
-                    # "overflowX": "scroll",
-                    # "width": "49%",
-                    # "float": "left",
-                },
+            daq.BooleanSwitch(
+                id="display-data-table",
+                on=False,
+                label="Show data table",
+                labelPosition="top",
+                style=dict(margin="0 .5em"),
             ),
         ],
         style={
@@ -171,19 +153,13 @@ app.layout = [
                 overlay_style={"visibility": "visible", "filter": "blur(2px)"},
                 type="circle",
                 show_initially=False,
-                parent_style={
-                    # "border-left": "1px solid #222222",
-                    # "justifyContent": "flex-start",
-                    # "display": "flex",
-                    "width": "98%",
-                    "margin-left": "1em",
-                },
+                parent_style=dict(margin="0 .5em", width="99%"),
             ),
         ],
         id="table-container",
-        style={"margin-bottom": "1em"},
+        style={"margin": ".5em 0", "display": "none"},
     ),
-    html.Div(
+    dcc.Loading(
         [
             dcc.Tabs(
                 id="y-axis-value",
@@ -197,8 +173,8 @@ app.layout = [
                 style={
                     "border": "thin lightgrey solid",
                     "overflowX": "scroll",
-                    "width": "49%",
-                    "float": "left",
+                    "display": "inline-flex",
+                    "margin": "0 .5em",
                 },
             ),
             dcc.Tabs(
@@ -222,16 +198,14 @@ app.layout = [
                         id="select-class-tab",
                         children=[
                             dcc.Dropdown(
+                                id="custom-class-selection",
                                 options=[],
                                 value=None,
-                                placeholder="The class to analyse",
-                                id="custom-class-selection",
+                                clearable=False,
+                                placeholder="Class to analyse",
                                 persistence=True,
                                 persistence_type="session",
-                                style={
-                                    "width": "69%",
-                                    "float": "right",
-                                },
+                                style=dict(padding="0 .5em"),
                             ),
                         ],
                     ),
@@ -239,22 +213,47 @@ app.layout = [
                 style={
                     "border": "thin lightgrey solid",
                     "overflowX": "scroll",
-                    "width": "49%",
-                    "float": "right",
+                    "display": "inline-flex",
+                    "margin": "0 .5em",
                 },
             ),
-        ]
+        ],
+        target_components={
+            "custom-class-selection": "options",
+        },
+        overlay_style={"visibility": "visible", "filter": "blur(2px)"},
+        type="circle",
+        show_initially=False,
+        parent_style={
+            "display": "flex",
+            "width": "99%",
+        },
+        style=dict(margin=".5em 0", display="flex"),
     ),
     dcc.Loading(
         children=[
             dcc.Graph(
                 figure={},
-                id="plot-total-response-time",
-                config={
-                    # "fillFrame": True,
-                    "displaylogo": False,
-                },
+                id="main-mjqm-plot",
+                config=dict(
+                    autosizable=True,
+                    responsive=True,
+                    scrollZoom=True,
+                    toImageButtonOptions=dict(
+                        filename="mjqm-chart",
+                    ),
+                    edits=dict(
+                        legendPosition=True,
+                    ),
+                    # showEditInChartStudio=True,
+                    # plotlyServerURL="https://chart-studio.plotly.com",
+                ),
+                responsive=True,
                 mathjax=True,
+                style={
+                    "width": "100%",
+                    "height": "550px",
+                },
             ),
             # html.Br(),
             # dcc.Clipboard(target_id="structure"),
@@ -269,14 +268,13 @@ app.layout = [
             # ),
         ],
         target_components={
-            "plot-total-response-time": "figure",
+            "main-mjqm-plot": "figure",
         },
         overlay_style={"visibility": "visible", "filter": "blur(2px)"},
         type="circle",
         show_initially=False,
         parent_style={
-            "position": "relative",
-            "float": "inline-start",
+            "display": "flex",
             "width": "99%",
         },
     ),
@@ -295,13 +293,11 @@ def update_title(experiment):
 
 @callback(
     Output("table-container", "style", allow_duplicate=True),
-    Input("display-table", "value"),
+    Input("display-data-table", "on"),
     prevent_initial_call=True,
 )
 def update_table_view(display_table):
-    if display_table == "yes":
-        return dict(display="block")
-    return dict(display="none")
+    return dict(display="block" if display_table else "none")
 
 
 @callback(
@@ -309,21 +305,24 @@ def update_table_view(display_table):
     Output("table-container", "style", allow_duplicate=True),
     Output("experiment-cores", "value"),
     Output("experiment-cores", "disabled"),
+    Output("custom-class-selection", "options"),
+    Output("custom-class-selection", "value"),
     Input("experiment-selection", "value"),
     Input("experiment-cores", "value"),
-    State("display-table", "value"),
+    State("display-data-table", "on"),
     running=[
         (Output("experiment-selection", "disabled"), True, False),
+        (Output("custom-class-selection", "disabled"), True, False),
     ],
     prevent_initial_call=True,
 )
 def update_table(experiment, cores, display_table):
     global dfs, Ts, exp, asymptotes, actual_util
     if experiment is None:
-        return None, dict(display="none"), no_update, False
+        return None, dict(display="none"), no_update, False, None, None
     results = load_experiment_data(experiment, n_cores=cores or 2048)
     if results is None:
-        return None, dict(display="none"), no_update, False
+        return None, dict(display="none"), no_update, False, None, None
     dfs, Ts, exp, asymptotes, actual_util = results
     if "cores" in dfs.columns:
         cores = dfs["cores"].max()
@@ -334,39 +333,26 @@ def update_table(experiment, cores, display_table):
     return (
         dfs.to_dict("records"),
         dict(
-            width="100%", display="block" if display_table == "yes" else "none"
+            width="100%",
+            display="block" if display_table else "none",
         ),
         cores,
         not cores_selectable,
+        Ts,
+        min(Ts),
     )
 
 
 @callback(
-    Output("custom-class-selection", "options"),
-    Output("custom-class-selection", "value"),
-    Output("smallest-class-tab", "disabled", allow_duplicate=True),
-    Output("biggest-class-tab", "disabled", allow_duplicate=True),
-    Output("select-class-tab", "disabled", allow_duplicate=True),
-    Input("experiment-data-table", "data"),
-    prevent_initial_call=True,
-)
-def populate_classes_list(experiment):
-    global dfs, Ts, exp, asymptotes, actual_util
-    if experiment is None:
-        return None, None, True, True, True
-    return Ts, min(Ts), False, False, False
-
-
-@callback(
     Output("y-axis-group", "value"),
-    Output("smallest-class-tab", "disabled", allow_duplicate=True),
-    Output("biggest-class-tab", "disabled", allow_duplicate=True),
-    Output("select-class-tab", "disabled", allow_duplicate=True),
+    Output("smallest-class-tab", "disabled"),
+    Output("biggest-class-tab", "disabled"),
+    Output("select-class-tab", "disabled"),
+    Input("experiment-data-table", "data"),
     Input("y-axis-value", "value"),
-    prevent_initial_call=True,
 )
-def only_overall_value(y_axis):
-    if y_axis is None:
+def only_overall_value(experiment, y_axis):
+    if experiment is None or y_axis is None:
         return no_update, False, False, False
     per_class = y_axis_mappings[y_axis]["per_class"]
     if not per_class:
@@ -375,17 +361,18 @@ def only_overall_value(y_axis):
 
 
 @callback(
-    Output("plot-total-response-time", "figure"),
-    Output("plot-total-response-time", "style"),
+    Output("main-mjqm-plot", "figure"),
+    Output("main-mjqm-plot", "style"),
     Input("experiment-data-table", "data"),
     Input("y-axis-value", "value"),
     Input("y-axis-group", "value"),
     Input("custom-class-selection", "value"),
     running=[
         (Output("experiment-selection", "disabled"), True, False),
+        (Output("custom-class-selection", "disabled"), True, False),
     ],
 )
-def show_totresp(experiment, y_axis, y_group, selected_class):
+def show_main_plot(experiment, y_axis, y_group, selected_class):
     global dfs, Ts, exp, asymptotes, actual_util
     if experiment is None:
         return None, dict(visibility="hidden")
@@ -396,7 +383,6 @@ def show_totresp(experiment, y_axis, y_group, selected_class):
 
     if y_group == "overall" or not per_class:
         col = y_axis_mappings[y_axis]["column"]
-        pass
     elif y_group == "smallest_class":
         col = y_axis_mappings[y_axis]["class_column"]
         col = col.format(min(Ts))
@@ -455,23 +441,21 @@ def show_totresp(experiment, y_axis, y_group, selected_class):
             title=None,
         ),
         legend2=dict(
-            yanchor="middle",
-            y=0.5,
-            xanchor="left",
-            x=0.98,
+            yanchor="top",
+            y=0.99,
+            xanchor="center",
+            x=0.99,
             title=None,
         ),
         hoversubplots="axis",
         hovermode="x unified",
-        # xaxis=dict(zerolinecolor="black"),
-        # yaxis=dict(zerolinecolor="black"),
     )
-    return fig, dict(visibility="visible")
+    return fig, dict(visibility="visible", display="flex")
 
 
 # @app.callback(
 #     Output("structure", "children"),
-#     Input("plot-total-response-time", component_property="figure"),
+#     Input("main-mjqm-plot", component_property="figure"),
 # )
 # def display_structure(fig_json):
 #     return json.dumps(fig_json, indent=2)

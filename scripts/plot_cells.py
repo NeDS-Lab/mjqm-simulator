@@ -54,10 +54,10 @@ markers_plotly = [
 styles = ["solid", "dashdot", "dotted", "dashed", (0, (3, 5, 1, 5, 1, 5))]
 
 cell = "cellA"
-n = 4096
+n_cores = 4096
 
 cell = "cellB"
-n = 2048
+n_cores = 2048
 # -3 : backfilling
 # -2 : server filling
 # 0: Most Server First
@@ -95,7 +95,7 @@ if cell == "cellB":
     st = styles[0]
 
 elif cell == "cellA":
-    if n == 4096:
+    if n_cores == 4096:
         # ys_bigResp = [550, 400, 7, 15, 40, 100, 170, 200]
         # ys_resp = [70, 50, 4, 6, 8, 10, 25, 35]
 
@@ -129,7 +129,7 @@ elif cell == "cellA":
 
         xlims = [100, 10**3]
         st = styles[0]
-    elif n == 3072:
+    elif n_cores == 3072:
         ys_bigResp = [800, 500, 20, 60, 120, 240]
         ys_resp = [10000, 6000, 200, 400, 800, 1400]
 
@@ -147,7 +147,7 @@ elif cell == "cellA":
 
         xlims = [100, 10**3]
         st = styles[0]
-    elif n == 2048:
+    elif n_cores == 2048:
         ys_bigResp = [800]
         ys_resp = [1000]
 
@@ -270,7 +270,7 @@ def plot_total_response_time(
     ylims=None,
     legend=None,
     util_percentages=True,
-    result=["png", "pdf"],
+    result=[],
 ):
     plt.figure(dpi=1200)
     plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
@@ -331,7 +331,7 @@ def plot_class_response_time(
     ylims=None,
     legend=None,
     util_percentages=True,
-    result=["png", "pdf"],
+    result=[],
 ):
     plt.figure(dpi=1200)
     plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
@@ -375,7 +375,7 @@ def plot_class_response_time(
 
     ax.grid()
     save_files(fig, folder / "RespTime", f"lambdasVsT{T}RespTime", result)
-    if "return" in result:
+    if "return" in result or len(result) == 0:
         return fig, ax
     plt.close("all")
 
@@ -392,7 +392,7 @@ def plot_total_waiting_time(
     ylims=None,
     legend=None,
     util_percentages=True,
-    result=["png", "pdf"],
+    result=[],
 ):
     plt.figure(dpi=1200)
     plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
@@ -435,7 +435,7 @@ def plot_total_waiting_time(
     add_legend(ax, legend)
     ax.grid()
     save_files(fig, folder / "WaitTime", "lambdasVsTotWaitTime", result)
-    if "return" in result:
+    if "return" in result or len(result) == 0:
         return fig, ax
     plt.close("all")
 
@@ -453,7 +453,7 @@ def plot_class_waiting_time(
     ylims=None,
     legend=None,
     util_percentages=True,
-    result=["pdf", "png"],
+    result=[],
 ):
     plt.figure(dpi=1200)
     plt.rc("font", **{"family": "serif", "serif": ["Palatino"]})
@@ -497,7 +497,7 @@ def plot_class_waiting_time(
 
     ax.grid()
     save_files(fig, folder / "WaitTime", f"lambdasVsT{T}WaitTime", result)
-    if "return" in result:
+    if "return" in result or len(result) == 0:
         return fig, ax
     plt.close("all")
 
@@ -510,7 +510,7 @@ if __name__ == "__main__":
     if not folder:
         exit(0)
     dfs, Ts, exp, asymptotes, actual_util = load_experiment_data(
-        folder, n_cores=n
+        folder, n_cores=n_cores
     )
     if dfs is None:
         exit(0)
@@ -526,10 +526,13 @@ if __name__ == "__main__":
         asymptotes,
         ylims=ylims_totResp,
         legend="upper left",
+        result=["png", "pdf"],
     )
     progress.update(1)
     for T in Ts:
-        plot_class_response_time(folder, dfs, exp, T, actual_util, asymptotes)
+        plot_class_response_time(
+            folder, dfs, exp, T, actual_util, asymptotes, result=["png", "pdf"]
+        )
         progress.update(1)
 
     plot_total_waiting_time(
@@ -540,11 +543,14 @@ if __name__ == "__main__":
         asymptotes,
         ylims=ylims_totWait,
         legend="upper left",
+        result=["png", "pdf"],
     )
     progress.update(1)
 
     for T in Ts:
-        plot_class_waiting_time(folder, dfs, exp, T, actual_util, asymptotes)
+        plot_class_waiting_time(
+            folder, dfs, exp, T, actual_util, asymptotes, result=["png", "pdf"]
+        )
         progress.update(1)
 
     progress.close()
