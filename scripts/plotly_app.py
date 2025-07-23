@@ -60,7 +60,6 @@ y_axis_mappings = dict(
 
 # Initialize the app
 app = Dash("mjqm")
-app.style = {"height": "100%"}
 # App layout
 app.layout = [
     html.H1(
