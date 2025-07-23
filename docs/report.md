@@ -1,6 +1,6 @@
 # Result Analysis
 
-After running simulations with the MJQM simulator, you'll find data files in the `Results` directory, in a subdirectory with the [name](#/run?id=simulation-parameters) of your simulation. We provide two main ways to visualize and analyze these results:
+After running simulations with the MJQM simulator, you'll find data files in the `Results` directory, in a subdirectory with the [name](./#/run?id=simulation-parameters) of your simulation. We provide two main ways to visualize and analyze these results:
 
 1. **Static Plots**: Generate publication-quality charts using `plot_cells.py`
 2. **Interactive Dashboard**: Explore results dynamically with the Plotly-based web application
@@ -21,7 +21,7 @@ The plots help identify:
 
 1. **Policy Efficiency**: Which policies perform better at different load levels
 2. **Fairness**: How different job classes are treated by each policy
-3. **Stability Limits**: At what arrival rate each policy becomes unstable
+3. **System Stability**: At what arrival rate each policy makes the system unstable
 4. **Scalability**: How performance changes as system load increases
 
 ## Static Charts
@@ -147,24 +147,15 @@ This allows you to easily examine, modify, and run the visualization code while 
 
 ### Working with Data in Spyder
 
-To interactively explore simulation data in Spyder:
+To interactively explore simulation data in Spyder, open the `load_experiment_data.py` file and execute it.
+It will let you select the simulation results to load via the command line, and it will prepare the environment with your data.
 
-1. Open the files mentioned above
-2. Run the following code in Spyder's IPython console to load data from a simulation:
+If the wrong number of cores was picked, or you want to reload the data for any other reason, you can directly execute the following:
 
 ```python
-from load_experiment_data import load_experiment_data, select_experiment
-
-# Either select a simulation interactively:
-folder = select_experiment()
-# Or specify one directly:
-# folder = "my_simulation_name"
-
-# Load the data with the appropriate number of cores
+# Reload the data with the appropriate number of cores
 dfs, Ts, exp, asymptotes, actual_util = load_experiment_data(folder, n_cores=2048)
 
 # Now you can explore the dataframe
 dfs.head()
 ```
-
-This gives you direct access to the simulation data for custom analysis and visualization.
