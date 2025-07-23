@@ -7,8 +7,9 @@ clean=0
 build=1
 test=0
 configure=1
+setup_uv=1
 
-for ARG in $(getopt -l clean,debug,build,help,no-build,only-build,test -o 'cdbht' -- "$@"); do
+for ARG in $(getopt -l clean,debug,build,help,no-build,only-build,test,no-uv -o 'cdbht' -- "$@"); do
     case "$ARG" in
         --clean|-c) clean=1 ; rm -rf build build-debug ;;
         --debug|-d) preset=debug ;;
@@ -16,7 +17,8 @@ for ARG in $(getopt -l clean,debug,build,help,no-build,only-build,test -o 'cdbht
         --test|-t) test=1 ; build=1 ;;
         --no-build) build=0 ; test=0 ;;
         --only-build) build=1 ; configure=0 ;;
-        --help|-h) echo "Usage: $0 [--clean] [--debug] [--build|--no-build] [--test] [--help]"; exit 0 ;;
+        --help|-h) echo "Usage: $0 [--clean] [--debug] [--(|only-|no-)build] [--no-uv] [--test] [--help]"; exit 0 ;;
+        --no-uv) setup_uv=0 ;;
         --) break;;
         *) echo "Unknown option: $ARG"; exit 1 ;;
     esac
@@ -25,17 +27,19 @@ done
 CMAKE_VER=$(cmake --version | awk '/version/ {print $3}')
 
 if [ ${configure} -eq 1 ]; then
-    # python environment with uv
-    if [ -f "$HOME/.local/bin/env" ]; then
-        source $HOME/.local/bin/env
-    fi
-    command -v uv || {
-        curl -LsSf https://astral.sh/uv/install.sh | sh
+    if [ ${setup_uv} -eq 1 ]; then
+        # python environment with uv
         if [ -f "$HOME/.local/bin/env" ]; then
             source $HOME/.local/bin/env
         fi
-    }
-    uv sync --no-cache --link-mode=copy
+        command -v uv || {
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+            if [ -f "$HOME/.local/bin/env" ]; then
+                source $HOME/.local/bin/env
+            fi
+        }
+        uv sync --no-cache --link-mode=copy
+    fi
 
     # configuration variabiles for cmake
     CXX=$(scripts/select-g++.sh)
