@@ -170,8 +170,11 @@ app.layout = [
                 style={
                     "border": "thin lightgrey solid",
                     "overflowX": "scroll",
-                    "display": "inline-flex",
                     "margin": "0 .5em",
+                    "flex": "1 0 100%"
+                },
+                parent_style={
+                    "flex": "1 0 50%"
                 },
             ),
             dcc.Tabs(
@@ -210,8 +213,11 @@ app.layout = [
                 style={
                     "border": "thin lightgrey solid",
                     "overflowX": "scroll",
-                    "display": "inline-flex",
                     "margin": "0 .5em",
+                    "flex": "1 0 100%"
+                },
+                parent_style={
+                    "flex": "1 0 50%"
                 },
             ),
         ],
@@ -223,9 +229,9 @@ app.layout = [
         show_initially=False,
         parent_style={
             "display": "flex",
-            "width": "99%",
+            "width": "100%",
         },
-        style=dict(margin=".5em 0", display="flex"),
+        style=dict(margin=".5em 0", flex="1 0 100%"),
     ),
     dcc.Loading(
         children=[
@@ -250,6 +256,7 @@ app.layout = [
                 style={
                     "width": "100%",
                     "height": "550px",
+                    "flex": "1 0 100%"
                 },
             ),
             # html.Br(),

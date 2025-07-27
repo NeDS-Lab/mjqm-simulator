@@ -2,8 +2,7 @@ identifier = "testing_4C_16"
 events = 100000
 repetitions = 20
 cores = 16
-policy = "smash"
-smash.window = 1
+policy = { name = "smash", window = 1 }
 
 arrival.distribution = "exponential"
 
