@@ -1,0 +1,30 @@
+name: Publish documentation PDF
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - docs/**
+      - .github/docs/**
+  push:
+    branches:
+      - main
+      - feat/docs-and-testing
+    paths:
+      - docs/**
+      - .github/docs/**
+
+jobs:
+  convert_via_pandoc:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: create output folder
+        run: bash scripts/docs-to-pdf.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: output/docs
