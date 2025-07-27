@@ -24,7 +24,7 @@ To run a set of experiments, there are two main configurations that need to be s
   the distribution of the job inter-arrival times, and number of cores required.
 
 These settings are defined in a single configuration file,
-using the toml^[https://toml.io/en/] format.
+using the [TOML](https://toml.io/en/) format.
 
 ## Simulation parameters
 
@@ -117,8 +117,8 @@ Each set is defined by a `[[pivot]]` header, and then you can define the values 
 > ```toml
 > [[pivot]]
 > arrival.rate = [ 0.1, 0.2, 0.3 ]
-> policy = "smash"
-> smash.window = [ 1, 4, 8 ]
+> policy.name = "smash"
+> policy.window = [ 1, 4, 8 ]
 > ```
 >
 > This pivot will generate 9 different configurations, with all the possible combinations of the default arrival rate, and the SMASH window size.
@@ -248,14 +248,14 @@ To achieve that, you can use the `--pivot` argument separating the overrides.
 For example, if you want to test two sets of values, this command line is equivalent to the following configuration extract:
 
 ```sh
-./simulator_toml my_awesome_experiment --arrival.rate 0.1 0.2 0.3 --policy smash --smash.window 1 4 8 --pivot --arrival.rate 0.1 0.2 0.3 --policy "server filling" "back filling" "most server first"
+./simulator_toml my_awesome_experiment --arrival.rate 0.1 0.2 0.3 --policy.name smash --policy.window 1 4 8 --pivot --arrival.rate 0.1 0.2 0.3 --policy "server filling" "back filling" "most server first"
 ```
 
 ```toml
 [[pivot]]
 arrival.rate = [ 0.1, 0.2, 0.3 ]
-policy = "smash"
-smash.window = [ 1, 4, 8 ]
+policy.name = "smash"
+policy.window = [ 1, 4, 8 ]
 
 [[pivot]]
 arrival.rate = [ 0.1, 0.2, 0.3 ]
