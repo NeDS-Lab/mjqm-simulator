@@ -19,7 +19,7 @@ add_compile_options(-ffinite-math-only -fno-signed-zeros -fno-math-errno)
 
 if (COMPILE_NATIVE)
     message(STATUS "Compiling for the current machine")
-    add_link_options(-march=native)
+    add_link_options(   -march=native)
     add_compile_options(-march=native)
 endif ()
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -53,7 +53,7 @@ if (BUILD_SHARED_LIBS)
 else ()
     set(Boost_USE_STATIC_LIBS    ON)  # only find static libs
 endif ()
-find_package(Boost 1.71)
+find_package(Boost 1.71 REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
 
 include_directories(
@@ -70,15 +70,15 @@ add_subdirectory(libs/utils)
 
 add_executable(simulator_smash simulator_smash.cpp)
 target_compile_options(simulator_smash PRIVATE -fwhole-program)
-target_link_libraries(simulator_smash -s math policies stats RngStreams::RngStreams)
+target_link_libraries(simulator_smash math policies stats RngStreams::RngStreams)
 
 add_executable(simulator_toml simulator_toml.cpp)
 target_compile_options(simulator_toml PRIVATE -fwhole-program)
-target_link_libraries(simulator_toml -s toml_loader)
+target_link_libraries(simulator_toml toml_loader)
 
 add_executable(toml_loader_test toml_loader_test.cpp)
 target_compile_options(toml_loader_test PRIVATE -fwhole-program)
-target_link_libraries(toml_loader_test -s toml_loader ${Boost_LIBRARIES})
+target_link_libraries(toml_loader_test toml_loader ${Boost_LIBRARIES})
 
 foreach (target simulator_smash simulator_toml toml_loader_test)
     add_custom_command(
