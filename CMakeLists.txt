@@ -10,13 +10,28 @@ option(COMPILE_NATIVE "Build optimizing for the current machine" ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+project(mjqm-simulator
+    VERSION 0.1.0
+    DESCRIPTION "Simulator for Multiserver Job Queuing Model (MJQM)"
+    HOMEPAGE_URL "https://github.com/NeDS-Lab/mjqm-simulator"
+    LANGUAGES CXX
+)
+
 # Link and compile time optimization
-add_link_options(   -flto=auto -ffat-lto-objects -O3)
-add_compile_options(-flto=auto -ffat-lto-objects -O3)
+add_link_options(   -flto=auto -O3)
+add_compile_options(-flto=auto -O3)
 # Safe math improvements for the project
 add_link_options(   -ffinite-math-only -fno-signed-zeros -fno-math-errno)
 add_compile_options(-ffinite-math-only -fno-signed-zeros -fno-math-errno)
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # CLang has issues on darwin
+    add_link_options(   -ffat-lto-objects)
+    add_compile_options(-ffat-lto-objects)
+else ()
+    add_link_options(   -Wno-ignored-optimization-argument)
+    add_compile_options(-Wno-ignored-optimization-argument)
+endif()
 if (COMPILE_NATIVE)
     message(STATUS "Compiling for the current machine")
     add_link_options(   -march=native)
@@ -27,17 +42,6 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_link_options(   -g)
     add_compile_options(-g)
     add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter)
-endif()
-
-project(mjqm-simulator
-    VERSION 0.1.0
-    DESCRIPTION "Simulator for Multiserver Job Queuing Model (MJQM)"
-    HOMEPAGE_URL "https://github.com/NeDS-Lab/mjqm-simulator"
-    LANGUAGES CXX
-)
-
-if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    message(FATAL_ERROR "Only GCC is supported, your compiler is ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
 # Include the Boost library
@@ -78,7 +82,7 @@ target_link_libraries(simulator_toml toml_loader)
 
 add_executable(toml_loader_test toml_loader_test.cpp)
 target_compile_options(toml_loader_test PRIVATE -fwhole-program)
-target_link_libraries(toml_loader_test toml_loader ${Boost_LIBRARIES})
+target_link_libraries(toml_loader_test toml_loader)
 
 foreach (target simulator_smash simulator_toml toml_loader_test)
     add_custom_command(
