@@ -4,7 +4,7 @@ New distribution implementations need two parts: the sampler and the loader.
 
 The sampler is a header-only class that generates random numbers following the distribution. It needs to be located in the [`mjqm-samplers`](https://github.com/NeDS-Lab/mjqm-simulator/tree/main/libs/samplers/include/mjqm-samplers) folder of the `samplers` library.
 
-The loader is a function to read the distribution parameters from the TOML^[Read *Tom's Obvious Minimal Language* (TOML) definition at https://toml.io/en/] configuration file and creates the sampler object. It is split into two parts: the declaration in `mjqm-settings/toml_distributions_loader.h` and the implementation in `mjqm-settings/toml_distributions_loader.cpp`. Additionally, the loader needs to be added to the `distribution_loaders` map at the end of the header file.
+The loader is a function to read the distribution parameters from the [TOML](https://toml.io/en/) configuration file and creates the sampler object. It is split into two parts: the declaration in `mjqm-settings/toml_distributions_loader.h` and the implementation in `mjqm-settings/toml_distributions_loader.cpp`. Additionally, the loader needs to be added to the `distribution_loaders` map at the end of the header file.
 
 # Adding a new distribution
 

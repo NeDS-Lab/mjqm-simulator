@@ -212,6 +212,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, ExperimentStats const& m);
     void add_headers(std::vector<std::string>& headers, std::vector<unsigned int>& sizes) const;
     void add_headers(std::vector<std::string>& headers) const;
+    std::vector<std::string> get_headers() const;
 
     // add elements
     ClassStats& add_class(const std::string& name) { return std::ref(class_stats.emplace_back(name)); }

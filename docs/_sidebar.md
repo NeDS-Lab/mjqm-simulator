@@ -3,11 +3,12 @@
 - **Use**
   - [Run](run.md)
   - [Output columns](output_columns.md)
+  - [Result analysis](report.md)
 - **Extend**
   - [Intro](extend/index.md)
   - [Project structure](extend/structure.md)
-  - [Policies](extend/policies.md)
+  <!-- - [Policies](extend/policies.md) -->
   - [Distributions](extend/distributions.md)
-  - [Statistics](extend/statistics.md)
-  - [Output columns](extend/output_columns.md)
-  - [Visualizations](extend/visualizations.md)
+  <!-- - [Statistics](extend/statistics.md) -->
+  <!-- - [Output columns](extend/output_columns.md) -->
+  <!-- - [Visualizations](extend/visualizations.md) -->
