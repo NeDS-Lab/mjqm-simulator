@@ -12,9 +12,9 @@
 
 class QuickSwap final : public Policy {
 public:
-    QuickSwap(const int w, const int servers, const int classes, const std::vector<unsigned int>& sizes) :
+    QuickSwap(const int w, const int servers, const int classes, const std::vector<unsigned int>& sizes, const int threshold) :
         state_buf(classes), state_ser(classes), stopped_jobs(classes), ongoing_jobs(classes), freeservers(servers),
-        servers(servers), w(w), sizes(sizes), violations_counter(0), threshold(1), drops_below(false),
+        servers(servers), w(w), sizes(sizes), violations_counter(0), threshold(threshold), drops_below(false),
         big_priority(false) {}
     void arrival(int c, int size, long int id) override;
     void departure(int c, int size, long int id) override;
@@ -33,11 +33,11 @@ public:
     int get_state_ser_small() override { return -1; }
     ~QuickSwap() override = default;
     std::unique_ptr<Policy> clone() const override {
-        return std::make_unique<QuickSwap>(w, servers, state_buf.size(), sizes);
+        return std::make_unique<QuickSwap>(w, servers, state_buf.size(), sizes, threshold);
     }
     explicit operator std::string() const override {
         return "QuickSwap(servers=" + std::to_string(servers) + ", classes=" + std::to_string(state_buf.size()) +
-            ", sizes=(" + join(sizes.begin(), sizes.end()) + "))";
+            ", sizes=(" + join(sizes.begin(), sizes.end()) + "), threshold="+ std::to_string(threshold) +")";
     }
 
 private:
