@@ -163,7 +163,7 @@ inline Simulator::Simulator(const std::vector<double>& l, const std::vector<doub
     } else if (w == -3) {
         this->policy = std::make_unique<BackFilling>(w, servers, nclasses, sizes);
     } else if (w == -4) {
-        this->policy = std::make_unique<QuickSwap>(w, servers, nclasses, sizes);
+        this->policy = std::make_unique<QuickSwap>(w, servers, nclasses, sizes, 1);
     } else if (w == -7) {
         this->policy = std::make_unique<AdaptiveMSF>(w, servers, nclasses, sizes);
     } else if (w == -8) {
