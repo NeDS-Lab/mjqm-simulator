@@ -32,7 +32,7 @@ policies_labels = [
     "Server Filling",
     "Server Filling",
     "Back Filling",
-    "Quick Swap",
+    "Quick Swap (l = {0})",
     "First-Fit",
     "Adaptive MSF",
     "Static MSF",
@@ -80,6 +80,11 @@ def row_label(row, win):
             return policies[row["policy"]].format(row["smash.window"])
         else:
             return policies[row["policy"]].format(win)
+    elif row["policy"] == "quick swap":
+        if "policy.threshold" in row:
+            return policies[row["policy"]].format(row["policy.threshold"])
+        else:
+            return policies[row["policy"]].format(1)
     else:
         return policies[row["policy"]]
 
@@ -146,6 +151,7 @@ def clean_dfs(dfs):
             "ConfInt" not in column
             and "Unnamed" not in column
             and not column.endswith(".window")
+            and not column.endswith(".threshold")
         ):
             types[column] = float
         else:

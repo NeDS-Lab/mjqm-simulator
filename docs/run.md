@@ -200,7 +200,8 @@ If `mean` is defined, the `min` and `max` will be calculated as $0.5 \times \mu$
 - `policy = "most server first"`
 
 ### Most server first w/ quick swap
-- `policy = "quick swap"`
+- `policy.name = "quick swap"`
+- `policy.threshold`: the threshold. Default is 1.
 
 ### Adaptive Most server first
 - `policy = "adaptive msf"`
