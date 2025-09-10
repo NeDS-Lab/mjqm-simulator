@@ -2,6 +2,7 @@ add_library(policies
         src/mjqm-policies/AdaptiveMSF.cpp
         src/mjqm-policies/BackFilling.cpp
         src/mjqm-policies/FirstFit.cpp
+        src/mjqm-policies/KillSmart.cpp
         src/mjqm-policies/MostServerFirst.cpp
         src/mjqm-policies/QuickSwap.cpp
         src/mjqm-policies/ServerFilling.cpp

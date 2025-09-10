@@ -455,7 +455,7 @@ private:
 
     void resample() {
         // add arrivals and departures
-        if (this->w == -2) { // special blocks for serverFilling (memoryful)
+        if (this->w == -2 || this->w == -16) { // special blocks for serverFilling (memoryful)
             auto stopped_jobs = policy->get_stopped_jobs();
             auto ongoing_jobs = policy->get_ongoing_jobs();
             for (int i = 0; i < nclasses; i++) {
