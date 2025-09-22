@@ -195,6 +195,7 @@
         "back filling",
         "quick swap",
         "most server first",
+        "kill smart",
         "first fit",
         "adaptive msf",
         "static msf"
@@ -207,6 +208,7 @@
           "BackFilling",
           "MSF with Quickswap",
           "Most Server First",
+          "Kill Smart",
           "First-Fit",
           "Adaptive MSF",
           "Static MSF"

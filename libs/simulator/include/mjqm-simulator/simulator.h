@@ -455,7 +455,7 @@ private:
 
     void resample() {
         // add arrivals and departures
-        if (this->w == -2) { // special blocks for serverFilling (memoryful)
+        if (this->w == -2 || this->w == -16) { // special blocks for serverFilling (memoryful)
             auto stopped_jobs = policy->get_stopped_jobs();
             auto ongoing_jobs = policy->get_ongoing_jobs();
             for (int i = 0; i < nclasses; i++) {
@@ -465,8 +465,11 @@ private:
 
                 for (auto job_id : stopped_jobs[i]) {
                     if (jobs_inservice[i].contains(job_id)) { // If they are currently being served: stop them
-                        jobs_preempted[i][job_id] =
-                            jobs_inservice[i][job_id] - simtime; // Save the remaining service time
+                        if (this->w == -2) {
+                            jobs_preempted[i][job_id] = jobs_inservice[i][job_id] - simtime; // Save the remaining service time
+                        } else if (this->w == -16) {
+                            jobs_preempted[i][job_id] = holdTime[job_id]; // Save the original whole service time
+                        }
                         jobs_inservice[i].erase(job_id);
                         arrTime[job_id] = simtime;
                         preemption[i]++;

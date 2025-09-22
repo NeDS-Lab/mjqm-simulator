@@ -8,6 +8,7 @@
 #include <mjqm-policies/AdaptiveMSF.h>
 #include <mjqm-policies/BackFilling.h>
 #include <mjqm-policies/FirstFit.h>
+#include <mjqm-policies/KillSmart.h>
 #include <mjqm-policies/MostServerFirst.h>
 #include <mjqm-policies/ServerFilling.h>
 #include <mjqm-policies/ServerFillingMem.h>
