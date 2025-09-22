@@ -6,16 +6,18 @@
 #define KILLSMART_H
 
 #include <map>
+#include <unordered_set>
 
 #include <mjqm-policies/policy.h>
 #include <mjqm-utils/string.hpp>
 
 class KillSmart final : public Policy {
 public:
-    KillSmart(const int w, const int servers, const int classes, const std::vector<unsigned int>& sizes, const int max_stopped_size, const int kill_threshold) :
+    KillSmart(const int w, const int servers, const int classes, const std::vector<unsigned int>& sizes, const int max_kill_cycle, const int kill_threshold) :
         state_buf(classes), state_ser(classes), stopped_jobs(classes), ongoing_jobs(classes), freeservers(servers),
         servers(servers), w(w), sizes(sizes), violations_counter(0), service_jobs(0), waiting_jobs(0),
-        stopped_size(0), max_stopped_size(max_stopped_size), after_kill(false), reach_max_stopped_size(false), kill_threshold(kill_threshold) {}
+        stopped_size(0), max_stopped_size((max_kill_cycle-1)*kill_threshold), after_kill(false), reach_max_stopped_size(false), kill_threshold(kill_threshold),
+        max_kill_cycle(max_kill_cycle-1), kill_cycle(0), no_killing(false) {}
     void arrival(int c, int size, long int id) override;
     void departure(int c, int size, long int id) override;
     bool fit_jobs(std::unordered_map<long int, double> holdTime, double simTime) override { return false; };
@@ -33,15 +35,16 @@ public:
     int get_state_ser_small() override { return -1; }
     ~KillSmart() override = default;
     std::unique_ptr<Policy> clone() const override {
-        return std::make_unique<KillSmart>(w, servers, state_buf.size(), sizes, max_stopped_size, kill_threshold);
+        return std::make_unique<KillSmart>(w, servers, state_buf.size(), sizes, max_kill_cycle, kill_threshold);
     }
     explicit operator std::string() const override {
         return "KillSmart(servers=" + std::to_string(servers) + ", classes=" + std::to_string(state_buf.size()) +
-            ", sizes=(" + join(sizes.begin(), sizes.end()) + "), k="+ std::to_string(max_stopped_size) +", v="+ std::to_string(kill_threshold) +")";
+            ", sizes=(" + join(sizes.begin(), sizes.end()) + "), k="+ std::to_string(max_kill_cycle) +", v="+ std::to_string(kill_threshold) +")";
     }
 
 private:
     std::list<std::tuple<int, int, long int>> buffer;
+    std::unordered_set<long> restarted_jobs;
     std::list<std::tuple<int, int, long int>> mset; // list of jobs in service
     std::vector<int> state_buf;
     std::vector<int> state_ser;
@@ -61,8 +64,11 @@ private:
     int max_stopped_size;
     bool reach_max_stopped_size;
     int kill_threshold;
+    int max_kill_cycle;
+    int kill_cycle;
+    bool no_killing;
 
-    void put_jobs_normally(); 
+    void put_jobs_normally(bool treat_as_restart); 
     void flush_buffer() override;
 };
 

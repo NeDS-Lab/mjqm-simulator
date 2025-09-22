@@ -35,9 +35,11 @@ policy = [
 #    { name = "smash", window = 2 },
 #    { name = "smash", window = 5 },
 #    { name = "smash", window = 10 },
-#     { name = "kill smart", k = 32, v = 1},
-#     { name = "kill smart", k = 5, v = 1},
+     { name = "kill smart", k = 32, v = 1},
+     { name = "kill smart", k = 5, v = 1},
      { name = "kill smart", k = 5, v = 5},
+     { name = "kill smart", k = 5, v = 16},
+     { name = "kill smart", k = 5, v = 32},
 ]
 
 arrival.rate = [

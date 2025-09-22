@@ -34,9 +34,13 @@ std::unique_ptr<Policy> back_filling_builder(const toml::table&, const Experimen
 std::unique_ptr<Policy> kill_smart_builder(const toml::table& data, const ExperimentConfig& conf) {
     std::vector<unsigned int> sizes;
     unsigned int n_classes = conf.get_sizes(sizes);
-    const auto max_stopped_size = data.at_path("policy.k").value<int>().value_or(10);
+    const auto max_kill_cycle = data.at_path("policy.k").value<int>().value_or(10);
     const auto kill_threshold = data.at_path("policy.v").value<int>().value_or(1);
-    return std::make_unique<KillSmart>(-16, conf.cores, n_classes, sizes, max_stopped_size, kill_threshold);
+    //if (kill_threshold > max_stopped_size) {
+    //    std::cerr << "v cannot be higher than k" << std::endl;
+    //    return;
+    //}
+    return std::make_unique<KillSmart>(-16, conf.cores, n_classes, sizes, max_kill_cycle, kill_threshold);
 }
 
 std::unique_ptr<Policy> quick_swap_builder(const toml::table& data, const ExperimentConfig& conf) {
