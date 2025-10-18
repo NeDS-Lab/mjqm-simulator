@@ -171,7 +171,9 @@ inline Simulator::Simulator(const std::vector<double>& l, const std::vector<doub
     } else if (w == -14) {
         this->policy = std::make_unique<FirstFit>(w, servers, nclasses, sizes);
     } else if (w == -16) {
-        this->policy = std::make_unique<FirstFit>(w, servers, nclasses, sizes);
+        this->policy = std::make_unique<KillSmart>(w, servers, nclasses, sizes);
+    } else if (w == -17) {
+        this->policy = std::make_unique<DualKill>(w, servers, nclasses, sizes);
     } else {
         this->policy = std::make_unique<Smash>(w, servers, nclasses);
     }

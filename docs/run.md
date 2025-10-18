@@ -208,6 +208,11 @@ If `mean` is defined, the `min` and `max` will be calculated as $0.5 \times \mu$
 - `policy.k`: max stopped size. Default is 10.
 - `policy.v`: how many jobs to kill at once. Default is 1.
 
+### Dual kill
+- `policy.name = "dual kill"`
+- `policy.k`: max stopped size. Default is 10.
+- `policy.v`: how many jobs to kill at once. Default is 1.
+
 ### Adaptive Most server first
 - `policy = "adaptive msf"`
 
