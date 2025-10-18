@@ -4,16 +4,16 @@
 
 #include <iostream>
 
-#include <mjqm-policies/KillSmart.h>
+#include <mjqm-policies/DualKill.h>
 
-void KillSmart::arrival(int c, int size, long int id) {
+void DualKill::arrival(int c, int size, long int id) {
     std::tuple<int,int,long int> e(c,size,id);
     this->buffer.push_back(e);
     state_buf[std::get<0>(e)]++;
     waiting_jobs++;
     flush_buffer();
 }
-void KillSmart::departure(int c, int size, long int id) {
+void DualKill::departure(int c, int size, long int id) {
     std::tuple<int,int,long int> e(c,size,id);
     service_jobs--;
     state_ser[std::get<0>(e)]--;
@@ -25,7 +25,7 @@ void KillSmart::departure(int c, int size, long int id) {
     flush_buffer();
 }
 
-void KillSmart::put_jobs_normally(bool treat_as_restart) {
+void DualKill::put_jobs_normally(bool treat_as_restart) {
     auto it = buffer.begin();
     bool modified = true;
     //std::cout << freeservers << std::endl;
@@ -51,18 +51,21 @@ void KillSmart::put_jobs_normally(bool treat_as_restart) {
     }
 }
 
-void KillSmart::flush_buffer() {
+void DualKill::flush_buffer() {
 
     //ongoing_jobs[i].push_back(*it);
     //it = stopped_jobs[i].erase(it);
     int servers_occupied = servers - freeservers;
     if (service_jobs >=1 && servers_occupied <= kill_threshold  && servers_occupied <= (max_stopped_size-stopped_size) && kill_cycle < max_kill_cycle &&
-        (!buffer.empty()) && std::get<1>(buffer.front()) > freeservers && std::get<1>(buffer.front()) > servers_occupied && no_killing == false) {
-        // put all ongoing jobs into stopped
-        //std::cout << "KILLING TIME" << std::endl;
+        (!buffer.empty()) && std::get<1>(buffer.front()) > freeservers && no_killing == false &&
+        ((kill_turn == 1 && (service_jobs == 1 && servers_occupied == servers)          && std::get<1>(buffer.front()) == sizes[0]) ||
+         (kill_turn == 0 && (service_jobs == 1 && servers_occupied == servers) == false && std::get<1>(buffer.front()) == sizes[sizes.size()-1])) ) {
+        /*if (kill_turn == 1) {
+            std::cout << "service jobs: " << service_jobs << "; servers occupied: " << servers_occupied << std::endl;
+        }
         if (service_jobs == 1 && servers_occupied == servers) {
             std::cerr << "killing big jobs?" << std::endl;
-        }
+        }*/
         violations_counter++;
         for (int i = 0; i < ongoing_jobs.size(); i++) {
             for (auto it = ongoing_jobs[i].begin(); it != ongoing_jobs[i].end(); ) {
@@ -105,37 +108,50 @@ void KillSmart::flush_buffer() {
         //std::cout << freeservers << std::endl;
     }
 
-    if (no_killing && restarted_jobs.empty()) {
+    if (no_killing && restarted_jobs.empty() && stopped_size == 0) {
         no_killing = false;
     }
 
     bool empty_state = (service_jobs == 0 && waiting_jobs == 0);
     bool kill_wins = (service_jobs == 0 && (!buffer.empty()) && std::get<1>(buffer.front()) < stopped_size);
-    if (reach_max_stopped_size || (empty_state && stopped_size > 0) || kill_cycle == max_kill_cycle) {
+    if (reach_max_stopped_size || empty_state || kill_cycle == max_kill_cycle) {
+        if (kill_turn == 1) {
+            //std::cout << "reach max stopped size: " << reach_max_stopped_size << std::endl;
+            //std::cout << "stopped size: " << stopped_size << std::endl;
+            //std::cout << "kill cycle: " << kill_cycle << std::endl;
+            //std::cout << "max kill cycle: " << max_kill_cycle << std::endl;
+        }
         // not letting any jobs untill we have enough servers to accomodate stopped jobs
-        if (freeservers < stopped_size) {
+        if (max_stopped_size <= servers && freeservers < stopped_size) {
             //std::cerr << "why aint we kill em all? " << freeservers << std::endl;
             after_kill = false;
             return;
         } else {
             // put all stopped jobs back in action
-            //std::cout << "START " << stopped_size << "BOOL"<< empty_state << std::endl;
+            //std::cout <<  stopped_size <<std::endl;
             for (int i = 0; i < stopped_jobs.size(); i++) {
                 for (auto it = stopped_jobs[i].begin(); it != stopped_jobs[i].end(); ) {
-                    ongoing_jobs[i].push_back(*it);
-                    restarted_jobs.insert(*it);
-                    it = stopped_jobs[i].erase(it);
+                    if (freeservers >= sizes[i] ) {
+                        ongoing_jobs[i].push_back(*it);
+                        restarted_jobs.insert(*it);
+                        it = stopped_jobs[i].erase(it);
 
-                    service_jobs++;
-                    state_ser[i]++;
-                    freeservers -= sizes[i];
+                        service_jobs++;
+                        state_ser[i]++;
+                        freeservers -= sizes[i];
 
-                    stopped_size -= sizes[i];
+                        stopped_size -= sizes[i];
+                    } else {
+                        it++;
+                    }
                 }
             }
-            //std::cout << "AFTER " << stopped_size <<std::endl;
-            reach_max_stopped_size = false;
-            kill_cycle = 0;
+            if (stopped_size == 0) {
+                reach_max_stopped_size = false;
+                kill_cycle = 0;
+                kill_turn = (kill_turn-1)*(-1);
+                //std::cout << "kill turn: " << kill_turn << std::endl;
+            }
             no_killing = true;
             if (freeservers > 0) {
                 put_jobs_normally(true);

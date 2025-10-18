@@ -168,62 +168,6 @@ public:
         }
         stats->lambda = tot_lambda;
 
-        // std::string out_filename = "Results/logfile_N" + std::to_string(n) + "_" + std::to_string(tot_lambda) + "_W"
-        // +
-        //     std::to_string(w) + ".csv";
-        // remove(out_filename.c_str());
-        // std::ofstream outputFile_rep(out_filename, std::ios::app);
-        // std::vector<std::string> headers_rep;
-        // headers_rep = {"Repetition"};
-        // for (int ts : sizes) {
-        //     headers_rep.push_back("T" + std::to_string(ts) + " Queue");
-        //     headers_rep.push_back("T" + std::to_string(ts) + " MQL");
-        // }
-        //
-        // headers_rep.push_back("Total Queue");
-        // headers_rep.push_back("Total MQL");
-        //
-        // if (outputFile_rep.tellp() == 0) {
-        //     // Write the headers to the CSV file
-        //     for (const std::string& header : headers_rep) {
-        //         outputFile_rep << header << ";";
-        //     }
-        //     outputFile_rep << "\n";
-        // }
-        // outputFile_rep.close();
-        // std::vector<std::string> headers;
-        // headers = {"Repetition", "Event"};
-        // for (int ts : sizes) {
-        //     headers.push_back("T" + std::to_string(ts) + " Queue");
-        //     headers.push_back("T" + std::to_string(ts) + " Service");
-        // }
-        //
-        // headers.push_back("Total Queue");
-        // headers.push_back("Total Service");
-        //
-        // for (size_t i = 0; i < sizes.size(); ++i) {
-        //     headers.push_back("Fel" + std::to_string(i));
-        // }
-        //
-        // for (size_t i = 0; i < sizes.size(); ++i) {
-        //     headers.push_back("Fel" + std::to_string(i + sizes.size()));
-        // }
-        //
-        // headers.push_back("Simtime");
-        //
-        // {
-        //     remove(logfile_name.c_str());
-        //     std::ofstream outputFile(logfile_name, std::ios::app);
-        //     if (outputFile.tellp() == 0) {
-        //         // Write the headers to the CSV file
-        //         for (const std::string& header : headers) {
-        //             outputFile << header << ";";
-        //         }
-        //         outputFile << "\n";
-        //     }
-        //     outputFile.close();
-        // }
-
         for (unsigned int rep = 0; rep < repetitions; rep++) {
             /*int buf_size = std::reduce(policy->get_state_buf().begin(), policy->get_state_buf().end());
             if (buf_size > 180000000) {
@@ -283,103 +227,22 @@ public:
                     }
                     // std::cout << "out" << std::endl;
                 }
-                /*if (k % 1000 == 0) {
-                    std::ofstream outputFile(logfile_name, std::ios::out);
-                    for (const std::string& header : headers) {
-                        outputFile << header << ";";
-                    }
-                    outputFile << "\n";
-                    outputFile << rep << ";";
-                    outputFile << k << ";";
-                    auto state_buf = policy->get_state_buf();
-                    auto state_ser = policy->get_state_ser();
-                    for (size_t i=0; i<occupancy_buf.size(); i++) {
-                        outputFile << state_buf[i] << ";";
-                        outputFile << state_ser[i] << ";";
-                    }
-                    outputFile << std::accumulate(state_buf.begin(), state_buf.end(), 0.0) << ";";
-                    outputFile << std::accumulate(state_ser.begin(), state_ser.end(), 0.0) << ";";
-                    for (size_t i=0; i<fel.size(); i++) {
-                        outputFile << fel[i] << ";";
-                    }
-                    outputFile << simtime << ";";
-                    outputFile << "\n";
-                    outputFile.close();
-                    //std::cout << "logs" << std::endl;
-                }*/ /*else if ( std::chrono::steady_clock::now() - last_dep >= std::chrono::minutes(1) ) {
-                    std::ofstream outputFile(logfile_name, std::ios::out);
-                    for (const std::string& header : headers) {
-                        outputFile << header << ";";
-                    }
-                    outputFile << "\n";
-                    outputFile << rep << ";";
-                    outputFile << k << ";";
-                    auto state_buf = policy->get_state_buf();
-                    auto state_ser = policy->get_state_ser();
-                    for (size_t i=0; i<occupancy_buf.size(); i++) {
-                        outputFile << state_buf[i] << ";";
-                        outputFile << state_ser[i] << ";";
-                    }
-                    outputFile << std::accumulate(state_buf.begin(), state_buf.end(), 0.0) << ";";
-                    outputFile << std::accumulate(state_ser.begin(), state_ser.end(), 0.0) << ";";
-                    outputFile << "\n";
-                    outputFile.close();
-                    last_dep = std::chrono::steady_clock::now();
-                }*/
             }
 
-            collect_run_statistics();
+            if (rep>0)
+                collect_run_statistics();
 
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
             stats->timings_tot.collect(duration);
 
             std::cout << "Repetition " << std::to_string(rep) << " Done" << std::endl;
-            // this->reset_data();
-            /*auto sb = policy->get_state_buf();
-            for (size_t i = 0; i<sb.size(); ++i) {
-                std::cout << sb[i] << ", ";
-            }
-            std::cout << std::endl;*/
-            // std::ofstream outputFile(out_filename, std::ios::app);
-            // outputFile << rep << ";";
-            // auto state_buf = policy->get_state_buf();
-            // for (size_t i = 0; i < occupancy_buf.size(); i++) {
-            //     outputFile << state_buf[i] << ";";
-            //     outputFile << occupancy_buf[i] << ";";
-            // }
-            // outputFile << std::accumulate(state_buf.begin(), state_buf.end(), 0.0) << ";";
-            // outputFile << std::accumulate(occupancy_buf.begin(), occupancy_buf.end(), 0.0) << ";";
-            // outputFile << "\n";
-            // outputFile.close();
         }
 
         // outputFile.close();
         for (auto& x : rep_free_servers_distro) {
             x /= simtime;
         }
-
-        /*    std::ofstream outFree("freeserversDistro-nClasses" + std::to_string(this->nclasses) + "-N" +
-           std::to_string(this->n) + "-Win" + std::to_string(this->w) + ".csv", std::ios::app);
-           double lambda = std::accumulate(this->l.begin(), this->l.end(), 0.0);
-
-            if (outFree.tellp() == 0) {
-                // Write the headers to the CSV file
-                outFree << "Arrival Rate" << ";";
-                for (size_t i = 0; i < rep_free_servers_distro.size(); ++i) {
-                    outFree << i << ";";
-                }
-                outFree << "\n";
-            }
-            outFree << lambda << ";";
-
-            for (size_t i = 0; i <= rep_free_servers_distro.size(); i++) {
-
-                    outFree << rep_free_servers_distro[i] << ";";
-
-            }
-            outFree << "\n";
-            outFree.close();*/
     }
 
     void produce_statistics(ExperimentStats& stats, const double confidence = 0.05) const {
@@ -455,7 +318,7 @@ private:
 
     void resample() {
         // add arrivals and departures
-        if (this->w == -2 || this->w == -16) { // special blocks for serverFilling (memoryful)
+        if (this->w == -2 || this->w == -16 || this->w == -17) { // special blocks for serverFilling (memoryful)
             auto stopped_jobs = policy->get_stopped_jobs();
             auto ongoing_jobs = policy->get_ongoing_jobs();
             for (int i = 0; i < nclasses; i++) {
@@ -467,7 +330,7 @@ private:
                     if (jobs_inservice[i].contains(job_id)) { // If they are currently being served: stop them
                         if (this->w == -2) {
                             jobs_preempted[i][job_id] = jobs_inservice[i][job_id] - simtime; // Save the remaining service time
-                        } else if (this->w == -16) {
+                        } else if (this->w == -16 || this->w == -17) {
                             jobs_preempted[i][job_id] = holdTime[job_id]; // Save the original whole service time
                         }
                         jobs_inservice[i].erase(job_id);

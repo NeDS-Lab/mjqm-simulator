@@ -196,6 +196,7 @@
         "quick swap",
         "most server first",
         "kill smart",
+        "dual kill",
         "first fit",
         "adaptive msf",
         "static msf"
@@ -209,6 +210,7 @@
           "MSF with Quickswap",
           "Most Server First",
           "Kill Smart",
+          "Dual Kill",
           "First-Fit",
           "Adaptive MSF",
           "Static MSF"
