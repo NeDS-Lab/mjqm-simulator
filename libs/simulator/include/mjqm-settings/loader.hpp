@@ -168,6 +168,8 @@ inline Simulator::Simulator(const std::vector<double>& l, const std::vector<doub
         this->policy = std::make_unique<AdaptiveMSF>(w, servers, nclasses, sizes);
     } else if (w == -8) {
         this->policy = std::make_unique<StaticMSF>(w, servers, nclasses, sizes);
+    } else if (w == -13) {
+        this->policy = std::make_unique<BackFillingImperfect>(w, servers, nclasses, sizes);
     } else if (w == -14) {
         this->policy = std::make_unique<FirstFit>(w, servers, nclasses, sizes);
     } else if (w == -16) {

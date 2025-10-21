@@ -196,6 +196,10 @@ If `mean` is defined, the `min` and `max` will be calculated as $0.5 \times \mu$
 ### Back filling
 - `policy = "back filling"`
 
+### Back filling imperfect
+- `policy = "back filling imperfect"`
+- `policy.overest`: Mean of positive gaussian random over-estimation.
+
 ### Most server first
 - `policy = "most server first"`
 
