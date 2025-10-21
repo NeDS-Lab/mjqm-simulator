@@ -31,6 +31,13 @@ std::unique_ptr<Policy> back_filling_builder(const toml::table&, const Experimen
     return std::make_unique<BackFilling>(-3, conf.cores, n_classes, sizes);
 }
 
+std::unique_ptr<Policy> back_filling_imperfect_builder(const toml::table& data, const ExperimentConfig& conf) {
+    std::vector<unsigned int> sizes;
+    unsigned int n_classes = conf.get_sizes(sizes);
+    const auto overestimate_max = data.at_path("policy.overest").value<double>().value_or(1.0);
+    return std::make_unique<BackFillingImperfect>(-13, conf.cores, n_classes, sizes, overestimate_max);
+}
+
 std::unique_ptr<Policy> kill_smart_builder(const toml::table& data, const ExperimentConfig& conf) {
     std::vector<unsigned int> sizes;
     unsigned int n_classes = conf.get_sizes(sizes);
