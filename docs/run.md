@@ -200,6 +200,10 @@ If `mean` is defined, the `min` and `max` will be calculated as $0.5 \times \mu$
 - `policy = "back filling imperfect"`
 - `policy.overest`: Mean of positive gaussian random over-estimation.
 
+### Balanced splitting
+- `policy = "balanced splitting"`
+- `policy.psi`: Variable for reserved servers partitioning.
+
 ### Most server first
 - `policy = "most server first"`
 

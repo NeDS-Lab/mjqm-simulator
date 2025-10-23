@@ -86,3 +86,5 @@ docs/generated/
 
 # NodeJS
 node_modules/
+
+*.ipynb
