@@ -25,6 +25,8 @@ std::unique_ptr<Policy> back_filling_builder(const toml::table&, const Experimen
 
 std::unique_ptr<Policy> back_filling_imperfect_builder(const toml::table&, const ExperimentConfig& conf);
 
+std::unique_ptr<Policy> balanced_splitting_builder(const toml::table&, const ExperimentConfig& conf);
+
 std::unique_ptr<Policy> kill_smart_builder(const toml::table&, const ExperimentConfig& conf);
 
 std::unique_ptr<Policy> dual_kill_builder(const toml::table&, const ExperimentConfig& conf);
@@ -46,6 +48,7 @@ inline static std::unordered_map<std::string_view, policy_builder> policy_builde
     {"server filling memoryful", server_filling_mem_builder},
     {"back filling", back_filling_builder},
     {"back filling imperfect", back_filling_imperfect_builder},
+    {"balanced splitting", balanced_splitting_builder},
     {"kill smart", kill_smart_builder},
     {"dual kill", dual_kill_builder},
     {"quick swap", quick_swap_builder},
