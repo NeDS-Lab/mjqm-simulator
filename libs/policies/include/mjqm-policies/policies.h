@@ -8,6 +8,7 @@
 #include <mjqm-policies/AdaptiveMSF.h>
 #include <mjqm-policies/BackFilling.h>
 #include <mjqm-policies/BackFillingImperfect.h>
+#include <mjqm-policies/BalancedSplitting.h>
 #include <mjqm-policies/DualKill.h>
 #include <mjqm-policies/FirstFit.h>
 #include <mjqm-policies/KillSmart.h>
