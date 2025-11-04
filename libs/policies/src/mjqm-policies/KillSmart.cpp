@@ -31,6 +31,9 @@ void KillSmart::put_jobs_normally(bool treat_as_restart) {
     //std::cout << freeservers << std::endl;
     while (freeservers > 0 && it != buffer.end() && modified == true) {
         if (freeservers >= std::get<1>(*it)) {
+            if (std::get<1>(*it) == sizes[1] && sizes.size()==2) {
+                big_phase += 1;
+            }
             freeservers -= std::get<1>(*it);
             state_ser[std::get<0>(*it)]++;
             state_buf[std::get<0>(*it)]--;
@@ -53,17 +56,29 @@ void KillSmart::put_jobs_normally(bool treat_as_restart) {
 
 void KillSmart::flush_buffer() {
 
+    bool just_in = false;
+    bool big_phase_cond = (big_phase < (max_kill_cycle+1) && sizes.size()==2) || (sizes.size() > 2);
+    if (freeservers == servers and (!buffer.empty()) && std::get<1>(buffer.front()) == 1 && 
+        reach_max_stopped_size == false && kill_cycle < max_kill_cycle && big_phase_cond) {
+        put_jobs_normally(false);
+        //std::cout << "SMALL EARLY " << servers-freeservers << std::endl;
+        just_in = true;
+    }
     //ongoing_jobs[i].push_back(*it);
     //it = stopped_jobs[i].erase(it);
     int servers_occupied = servers - freeservers;
     if (service_jobs >=1 && servers_occupied <= kill_threshold  && servers_occupied <= (max_stopped_size-stopped_size) && kill_cycle < max_kill_cycle &&
-        (!buffer.empty()) && std::get<1>(buffer.front()) > freeservers && std::get<1>(buffer.front()) > servers_occupied && no_killing == false) {
+        (!buffer.empty()) && std::get<1>(buffer.front()) > freeservers && std::get<1>(buffer.front()) > servers_occupied && no_killing == false &&
+        big_phase_cond) {
         // put all ongoing jobs into stopped
         //std::cout << "KILLING TIME" << std::endl;
+        //std::cout << "BEFORE KILL " << servers-freeservers << std::endl;
         if (service_jobs == 1 && servers_occupied == servers) {
             std::cerr << "killing big jobs?" << std::endl;
         }
-        violations_counter++;
+        if (just_in) {
+            violations_counter++;
+        }
         for (int i = 0; i < ongoing_jobs.size(); i++) {
             for (auto it = ongoing_jobs[i].begin(); it != ongoing_jobs[i].end(); ) {
                 // kill jobs if killing it won't make us overflow
@@ -93,6 +108,7 @@ void KillSmart::flush_buffer() {
         }
         after_kill = true;
         kill_cycle += 1;
+        //std::cout << "AFTER KILL " << servers-freeservers << std::endl;
     }
 
     if (after_kill) {
@@ -103,6 +119,8 @@ void KillSmart::flush_buffer() {
         }
         put_jobs_normally(false);
         //std::cout << freeservers << std::endl;
+        //std::cout << "BIG IN " << servers-freeservers << std::endl;
+        //std::cout << "-------" << std::endl;
     }
 
     if (no_killing && restarted_jobs.empty()) {
@@ -111,8 +129,9 @@ void KillSmart::flush_buffer() {
 
     bool empty_state = (service_jobs == 0 && waiting_jobs == 0);
     bool kill_wins = (service_jobs == 0 && (!buffer.empty()) && std::get<1>(buffer.front()) < stopped_size);
-    if (reach_max_stopped_size || (empty_state && stopped_size > 0) || kill_cycle == max_kill_cycle) {
+    if (reach_max_stopped_size || (empty_state && stopped_size > 0) || kill_cycle == max_kill_cycle || (big_phase == (max_kill_cycle+1)&& sizes.size()==2)) {
         // not letting any jobs untill we have enough servers to accomodate stopped jobs
+        //std::cout << kill_cycle << " " << stopped_size << std::endl;
         if (freeservers < stopped_size) {
             //std::cerr << "why aint we kill em all? " << freeservers << std::endl;
             after_kill = false;
@@ -133,9 +152,13 @@ void KillSmart::flush_buffer() {
                     stopped_size -= sizes[i];
                 }
             }
-            //std::cout << "AFTER " << stopped_size <<std::endl;
+            if (stopped_size > 0) {
+                std::cout << "AFTER " << stopped_size <<std::endl;
+            }
+            
             reach_max_stopped_size = false;
             kill_cycle = 0;
+            big_phase = 0;
             no_killing = true;
             if (freeservers > 0) {
                 put_jobs_normally(true);

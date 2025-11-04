@@ -82,6 +82,10 @@ public:
             arrTime[job_id->first] -= simtime;
         }
 
+        for (auto job_id = startSer.begin(); job_id != startSer.end(); ++job_id) {
+            startSer[job_id->first] -= simtime;
+        }
+
         phase_two_start -= simtime;
         phase_three_start -= simtime;
 
@@ -142,7 +146,7 @@ public:
         stats->window_size.collect(std::accumulate(windowSize.begin(), windowSize.end(), 0.0) / simtime);
 
         stats->wasted.collect(waste / simtime);
-        stats->violations.collect(viol / simtime);
+        stats->violations.collect(policy->get_violations_counter());
         stats->utilisation.collect(utilisation / n);
         stats->occupancy_tot.collect(totq);
 
@@ -155,7 +159,7 @@ public:
         stats->resp_var_tot.collect(rt_mean_var.second);
 
         stats->phase_two_dur.collect((phase_two_duration * 1.0) / job_seq_amount[0]);
-        stats->phase_three_dur.collect((phase_three_duration * 1.0) / job_seq_amount[0]);
+        stats->phase_three_dur.collect((phase_three_duration * 1.0) / job_seq_amount[1]);
     }
 
     void simulate(unsigned long nevents, unsigned int repetitions = 1) {
@@ -195,11 +199,15 @@ public:
                     rawWaitingTime[pos].push_back(waitTime[job_fel[pos]]);
                     rawResponseTime[pos].push_back(waitTime[job_fel[pos]] + holdTime[job_fel[pos]]);
                     arrTime.erase(job_fel[pos]);
+                    startSer.erase(job_fel[pos]);
                     waitTime.erase(job_fel[pos]);
                     holdTime.erase(job_fel[pos]);
                     holdTimeDeclared.erase(job_fel[pos]);
                     // std::cout << "before dep" << std::endl;
 
+                    //if (pos == 1) {
+                    //    std::cout << "BIG JOB OUT " << *itmin << std::endl;
+                    //}
                     policy->departure(pos, sizes[pos], job_fel[pos]);
                     // std::cout << "dep" << std::endl;
                 } else {
@@ -301,6 +309,7 @@ private:
     std::vector<unsigned long> preemption;
 
     std::unordered_map<long int, double> arrTime;
+    std::unordered_map<long int, double> startSer;
     std::unordered_map<long int, double> waitTime;
     std::unordered_map<long int, double> holdTime;
     std::unordered_map<long int, double> holdTimeDeclared;
@@ -355,6 +364,17 @@ private:
                         jobs_inservice[i].erase(job_id);
                         arrTime[job_id] = simtime;
                         preemption[i]++;
+                    } else { // they were never even started
+                        if ((this->w == -16 || this->w == -17) && waitTime.find(job_id) == waitTime.end() ) {
+                            double sampled = ser_time_samplers[i]->sample();
+                            waitTime[job_id] = simtime - arrTime[job_id];
+                            holdTime[job_id] = sampled;
+                            startSer[job_id] = simtime;
+
+                            jobs_preempted[i][job_id] = holdTime[job_id];
+                            arrTime[job_id] = simtime;
+                            preemption[i]++;
+                        }
                     }
                 }
 
@@ -366,14 +386,23 @@ private:
                             jobs_inservice[i][job_id] = jobs_preempted[i][job_id] + simtime;
                             jobs_preempted[i].erase(job_id);
                             waitTime[job_id] = simtime - arrTime[job_id] + waitTime[job_id];
+                            phase_two_duration += (simtime - arrTime[job_id]);
+                            job_seq_amount[0] += 1;
+                            phase_three_duration += (simtime - startSer[job_id]);
+                            job_seq_amount[1] += 1;
                         } else { // or they are just new jobs about to be served for the first time: add them with new
                                  // service time
                             double sampled = ser_time_samplers[i]->sample();
+                            //if (i == 1) {
+                               // std::cout << "BIG JOB IN " << simtime << std::endl;
+                                //std::cout << "---------------"<< std::endl;
+                            //}
                             jobs_inservice[i][job_id] = sampled + simtime;
                             // rawWaitingTime[i].push_back(simtime-arrTime[job_id]);
                             // arrTime.erase(*job_id); //update waitingTime
                             waitTime[job_id] = simtime - arrTime[job_id];
                             holdTime[job_id] = sampled;
+                            startSer[job_id] = simtime;
                         }
 
                         if (jobs_inservice[i][job_id] < fastest_job_fel) {

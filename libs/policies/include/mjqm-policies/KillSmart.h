@@ -17,7 +17,7 @@ public:
         state_buf(classes), state_ser(classes), stopped_jobs(classes), ongoing_jobs(classes), freeservers(servers),
         servers(servers), w(w), sizes(sizes), violations_counter(0), service_jobs(0), waiting_jobs(0),
         stopped_size(0), max_stopped_size((k)*kill_threshold), after_kill(false), reach_max_stopped_size(false), kill_threshold(kill_threshold),
-        max_kill_cycle(k-1), kill_cycle(0), no_killing(false), original_k(k) {}
+        max_kill_cycle(k-1), kill_cycle(0), no_killing(false), original_k(k), big_phase(0) {}
     void arrival(int c, int size, long int id) override;
     void departure(int c, int size, long int id) override;
     bool fit_jobs(std::unordered_map<long int, double> holdTime, double simTime) override { return false; };
@@ -69,6 +69,7 @@ private:
     int kill_cycle;
     bool no_killing;
     int original_k;
+    int big_phase;
 
     void put_jobs_normally(bool treat_as_restart); 
     void flush_buffer() override;
