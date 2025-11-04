@@ -1,6 +1,6 @@
 identifier = "killsmart_ex"
-#events = 100000
-repetitions = 20
+events = 1000000
+repetitions = 21
 cores = 2048
 
 arrival.distribution = "exponential"
@@ -21,7 +21,7 @@ service.mean = 10
 
 [[pivot]]
 policy = [
-    "fifo",
+#    "fifo",
 #    "back filling",
 #    "most server first",
 #    "server filling memoryful",
@@ -33,17 +33,27 @@ policy = [
 #    { name = "smash", window = 2 },
 #    { name = "smash", window = 5 },
 #    { name = "smash", window = 10 },
+     { name = "kill smart", k = 21, v = 1},
+#     { name = "kill smart", k = 21, v = 3},
+     { name = "kill smart", k = 21, v = 5},
+     { name = "kill smart", k = 21, v = 19},
+     { name = "kill smart", k = 21, v = 100},
      { name = "kill smart", k = 14, v = 1},
 #     { name = "kill smart", k = 14, v = 3},
      { name = "kill smart", k = 14, v = 5},
-#     { name = "kill smart", k = 14, v = 19},
+     { name = "kill smart", k = 14, v = 19},
      { name = "kill smart", k = 14, v = 100},
      { name = "kill smart", k = 7, v = 1},
 #     { name = "kill smart", k = 7, v = 3},
-     { name = "kill smart", k = 7, v = 5},
-#     { name = "kill smart", k = 7, v = 19},
+    { name = "kill smart", k = 7, v = 5},
+     { name = "kill smart", k = 7, v = 19},
      { name = "kill smart", k = 7, v = 100},
-#      { name = "kill smart", k = 1, v = 5},
+#      { name = "kill smart", k = 2, v = 100},
+#     { name = "kill smart", k = 1, v = 5},
+#     { name = "kill smart", k = 41, v = 50},
+#     { name = "kill smart", k = 51, v = 40},
+#     { name = "kill smart", k = 81, v = 25},
+#     { name = "kill smart", k = 101, v = 20},
 ]
 
 arrival.rate = [
@@ -94,4 +104,9 @@ arrival.rate = [
     1.74,
     1.77,
     1.80,
+    1.82,
+    1.84,
+    1.86,
+    1.88,
+    1.90,
 ]
