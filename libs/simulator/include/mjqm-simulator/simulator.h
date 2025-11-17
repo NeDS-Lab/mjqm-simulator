@@ -98,6 +98,7 @@ public:
         windowSize.clear();
         phase_two_duration = 0;
         phase_three_duration = 0;
+        viol_ctr = policy->get_violations_counter();
     }
 
     void collect_run_statistics() {
@@ -146,7 +147,7 @@ public:
         stats->window_size.collect(std::accumulate(windowSize.begin(), windowSize.end(), 0.0) / simtime);
 
         stats->wasted.collect(waste / simtime);
-        stats->violations.collect(policy->get_violations_counter());
+        stats->violations.collect(policy->get_violations_counter()-viol_ctr);
         stats->utilisation.collect(utilisation / n);
         stats->occupancy_tot.collect(totq);
 
@@ -158,7 +159,7 @@ public:
         stats->resp_tot.collect(rt_mean_var.first);
         stats->resp_var_tot.collect(rt_mean_var.second);
 
-        stats->phase_two_dur.collect((phase_two_duration * 1.0) / job_seq_amount[0]);
+        stats->phase_two_dur.collect((phase_two_duration * 1.0) / simtime);
         stats->phase_three_dur.collect((phase_three_duration * 1.0) / job_seq_amount[1]);
     }
 
@@ -209,6 +210,7 @@ public:
                     //    std::cout << "BIG JOB OUT " << *itmin << std::endl;
                     //}
                     policy->departure(pos, sizes[pos], job_fel[pos]);
+                    last_ev_arr = false;
                     // std::cout << "dep" << std::endl;
                 } else {
                     auto job_id = k + (nevents * rep);
@@ -217,13 +219,20 @@ public:
                         // std::cout << holdTime[job_id] << std::endl;
                     } else if (this->w == -13) {
                         double hold = ser_time_samplers[pos - nclasses]->sample();
+                        //std::cout << hold << std::endl;
                         holdTime[job_id] = hold;
                         double overest = (ser_time_samplers[pos - nclasses]->sample())*policy->get_overest_max();
+                        //double overest = hold*policy->get_overest_max();
+                        //std::cout << overest << std::endl;
                         holdTimeDeclared[job_id] = hold + overest;
+                        //std::cout << holdTimeDeclared[job_id] << std::endl;
+                        //std::cout << "-------------------" << std::endl;
                         //std::cout << holdTime[job_id] << " " << holdTimeDeclared[job_id] << std::endl;
                     }
                     policy->arrival(pos - nclasses, sizes[pos - nclasses], job_id);
                     arrTime[job_id] = *itmin;
+                    last_arr = pos-nclasses;
+                    last_ev_arr = true;
                     // std::cout << "arr" << std::endl;
                 }
 
@@ -318,6 +327,11 @@ private:
 
     std::list<double> windowSize;
 
+    int viol_ctr;
+
+    int last_arr = 0;
+    bool last_ev_arr;
+
     double waste = 0.0;
     double viol = 0.0;
     double occ = 0.0;
@@ -350,9 +364,13 @@ private:
             auto stopped_jobs = policy->get_stopped_jobs();
             auto ongoing_jobs = policy->get_ongoing_jobs();
             for (int i = 0; i < nclasses; i++) {
-                if (fel[i + nclasses] <= simtime) { // only update arrival that is executed at the time
-                    fel[i + nclasses] = arr_time_samplers[i]->sample() + simtime;
+                if (last_ev_arr) {
+                    fel[i + nclasses] = arr_time_samplers[(last_arr*nclasses)+i]->sample() + simtime;
                 }
+                
+                /*if (fel[i + nclasses] <= simtime) { // only update arrival that is executed at the time
+                    fel[i + nclasses] = arr_time_samplers[i]->sample() + simtime;
+                }*/
 
                 for (auto job_id : stopped_jobs[i]) {
                     if (jobs_inservice[i].contains(job_id)) { // If they are currently being served: stop them
@@ -364,6 +382,8 @@ private:
                         jobs_inservice[i].erase(job_id);
                         arrTime[job_id] = simtime;
                         preemption[i]++;
+                        phase_two_duration += ((simtime - startSer[job_id])*sizes[i]);
+                        job_seq_amount[0] += 1;
                     } else { // they were never even started
                         if ((this->w == -16 || this->w == -17) && waitTime.find(job_id) == waitTime.end() ) {
                             double sampled = ser_time_samplers[i]->sample();
@@ -374,6 +394,8 @@ private:
                             jobs_preempted[i][job_id] = holdTime[job_id];
                             arrTime[job_id] = simtime;
                             preemption[i]++;
+                            phase_two_duration += ((simtime - startSer[job_id])*sizes[i]);
+                            job_seq_amount[0] += 1;
                         }
                     }
                 }
@@ -386,8 +408,6 @@ private:
                             jobs_inservice[i][job_id] = jobs_preempted[i][job_id] + simtime;
                             jobs_preempted[i].erase(job_id);
                             waitTime[job_id] = simtime - arrTime[job_id] + waitTime[job_id];
-                            phase_two_duration += (simtime - arrTime[job_id]);
-                            job_seq_amount[0] += 1;
                             phase_three_duration += (simtime - startSer[job_id]);
                             job_seq_amount[1] += 1;
                         } else { // or they are just new jobs about to be served for the first time: add them with new
@@ -434,8 +454,11 @@ private:
                     pooled_i = 1;
                 }
 
-                if (fel[i + nclasses] <= simtime) { // only update arrival that is executed at the time
+                /*if (fel[i + nclasses] <= simtime) { // only update arrival that is executed at the time
                     fel[i + nclasses] = arr_time_samplers[i]->sample() + simtime;
+                }*/
+               if (last_ev_arr) {
+                    fel[i + nclasses] = arr_time_samplers[(last_arr*nclasses)+i]->sample() + simtime;
                 }
 
                 // std::cout << ongoing_jobs[i].size() << std::endl;
